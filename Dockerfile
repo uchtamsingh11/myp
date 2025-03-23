@@ -16,6 +16,14 @@ COPY . .
 
 # Set environment variables
 ENV NEXT_TELEMETRY_DISABLED 1
+# Add NODE_ENV for the build step to ensure proper optimization
+ENV NODE_ENV production
+
+# Create a .env.local file if it doesn't exist (prevents build errors)
+RUN touch .env.local
+
+# Run the prebuild script to set up environment
+RUN node prebuild.js
 
 # Build the application
 RUN npm run build
@@ -46,4 +54,4 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-CMD ["node", "server.js"] 
+CMD ["node", "server.js"]
