@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px; /* Increased padding for better spacing */
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .btn-primary {
+    @apply bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 px-6 rounded-md transition-all duration-300 border border-zinc-700;
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent hover:bg-zinc-800 text-white font-bold py-3 px-6 rounded-md transition-all duration-300 border border-zinc-700;
+  }
+  
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold mb-6 text-white;
+  }
+  
+  .section-subtitle {
+    @apply text-lg text-zinc-400 mb-12 max-w-3xl mx-auto;
+  }
+  
+  .card {
+    @apply bg-zinc-900 border border-zinc-800 rounded-xl p-6 transition-all duration-300 hover:border-zinc-700;
+  }
+}
