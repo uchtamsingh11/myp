@@ -3,7 +3,7 @@
   "scss.lint.unknownAtRules": "ignore",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll": true
+    "source.fixAll": "explicit"
   },
   "tailwindCSS.includeLanguages": {
     "javascript": "javascript",
