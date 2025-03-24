@@ -75,15 +75,15 @@ const FeatureCard = ({ feature, index }) => {
   return (
     <motion.div
       ref={ref}
-      className="card"
+      className="card bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800 transition-all duration-300 h-full flex flex-col"
       variants={cardVariants}
       initial="hidden"
       animate={inView ? "visible" : "hidden"}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <div className="text-zinc-400 mb-4">{feature.icon}</div>
-      <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-      <p className="text-zinc-400">{feature.description}</p>
+      <div className="text-indigo-400 mb-4">{feature.icon}</div>
+      <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
+      <p className="text-zinc-400 text-sm md:text-base flex-grow">{feature.description}</p>
     </motion.div>
   );
 };
@@ -95,24 +95,24 @@ const Features = () => {
   });
 
   return (
-    <section id="features" className="py-24 bg-black relative">
+    <section id="features" className="py-16 md:py-24 bg-black relative">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-800/20 to-transparent"></div>
       
-      <div className="container-custom relative z-10">
+      <div className="container-custom relative z-10 px-4 md:px-6">
         <motion.div
           ref={ref}
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12 md:mb-16 max-w-3xl mx-auto"
         >
-          <h2 className="section-title">Advanced Tools for Traders</h2>
-          <p className="section-subtitle">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Advanced Tools for Traders</h2>
+          <p className="text-zinc-400 text-base md:text-lg">
             Our platform combines cutting-edge technology with intuitive design to give you the edge in today's competitive markets.
           </p>
         </motion.div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {features.map((feature, index) => (
             <FeatureCard key={index} feature={feature} index={index} />
           ))}

@@ -21,30 +21,85 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 @layer components {
   .container-custom {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full;
   }
   
   .btn-primary {
-    @apply bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 px-6 rounded-md transition-all duration-300 border border-zinc-700;
+    @apply bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 text-center inline-flex items-center justify-center;
   }
   
   .btn-secondary {
-    @apply bg-transparent hover:bg-zinc-800 text-white font-bold py-3 px-6 rounded-md transition-all duration-300 border border-zinc-700;
+    @apply bg-transparent hover:bg-zinc-800 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 border border-zinc-700 text-center inline-flex items-center justify-center;
   }
   
   .section-title {
-    @apply text-3xl md:text-4xl font-bold mb-6 text-white;
+    @apply text-2xl sm:text-3xl md:text-4xl font-bold mb-4 md:mb-6 text-white;
   }
   
   .section-subtitle {
-    @apply text-lg text-zinc-400 mb-12 max-w-3xl mx-auto;
+    @apply text-base sm:text-lg text-zinc-400 mb-8 md:mb-12 max-w-3xl mx-auto;
   }
   
   .card {
-    @apply bg-zinc-900 border border-zinc-800 rounded-xl p-6 transition-all duration-300 hover:border-zinc-700;
+    @apply bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-5 md:p-6 transition-all duration-300 hover:bg-zinc-800;
   }
+
+  /* Dashboard specific styles */
+  .dashboard-card {
+    @apply bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-5 md:p-6 hover:bg-zinc-800/80 transition-all;
+  }
+
+  /* Form elements */
+  .form-input {
+    @apply w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500;
+  }
+
+  .form-label {
+    @apply block text-zinc-300 mb-2 text-sm font-medium;
+  }
+
+  /* Responsive helpers */
+  .mobile-only {
+    @apply block md:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden md:block;
+  }
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(24, 24, 27); /* zinc-900 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(63, 63, 70); /* zinc-700 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(82, 82, 91); /* zinc-600 */
+}
+
+/* Fix for iOS input fields */
+input, textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Fix for mobile tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
 }

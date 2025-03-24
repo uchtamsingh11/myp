@@ -86,7 +86,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   };
 
   return (
-    <aside className="w-64 bg-zinc-900 border-r border-zinc-800 min-h-[calc(100vh-64px)]">
+    <aside className="w-64 md:min-w-[16rem] bg-zinc-900 border-r border-zinc-800 min-h-[calc(100vh-64px)] transition-all duration-300 overflow-y-auto max-h-[calc(100vh-64px)] hidden md:block">
       <nav className="p-4">
         <ul className="space-y-2">
           <li>

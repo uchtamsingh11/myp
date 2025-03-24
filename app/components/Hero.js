@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 
 const Hero = () => {
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden pt-32">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 md:pt-24">
       {/* Background gradient with animation */}
       <motion.div 
         className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-black"
@@ -174,13 +174,14 @@ const Hero = () => {
         ))}
       </div>
       
-      <div className="container-custom relative z-10 text-left pt-24 md:pt-8">
+      <div className="container-custom relative z-10 text-left px-4 md:px-6 pt-12 md:pt-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
+          className="max-w-5xl mx-auto"
         >
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight">
             <motion.span 
               className="bg-clip-text text-transparent bg-gradient-to-r from-zinc-100 to-zinc-500 block"
               animate={{ 
@@ -210,19 +211,32 @@ const Hero = () => {
           </h1>
           
           <motion.p 
-            className="text-xl md:text-2xl text-zinc-400 mb-10 max-w-3xl"
+            className="text-lg sm:text-xl md:text-2xl text-zinc-400 mb-8 md:mb-10 max-w-3xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             Maximize gains and safeguard investments with next-generation algorithmic trading solutions
           </motion.p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <a href="/auth" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+                Get Started Now
+              </button>
+            </a>
+            <a href="#features" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto bg-transparent border border-zinc-700 hover:border-zinc-500 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+                Explore Features
+              </button>
+            </a>
+          </div>
         </motion.div>
       </div>
       
       {/* Scroll indicator */}
       <motion.div 
-        className="absolute bottom-10 left-1/2 transform -translate-x-1/2"
+        className="absolute bottom-10 left-1/2 transform -translate-x-1/2 hidden md:block"
         animate={{ 
           y: [0, 10, 0],
         }}

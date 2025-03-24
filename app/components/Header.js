@@ -37,7 +37,7 @@ const Header = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="container-custom flex justify-between items-center">
+      <div className="container-custom flex justify-between items-center px-4 md:px-6">
         <motion.div 
           className="flex items-center"
           initial={{ opacity: 0 }}
@@ -55,7 +55,7 @@ const Header = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="text-white font-semibold px-4 py-2 rounded-md bg-zinc-800">
+            <div className="text-white font-semibold px-4 py-2 rounded-md bg-zinc-800 max-w-[200px] truncate">
               {user.email}
             </div>
           </motion.div>
@@ -87,7 +87,7 @@ const Header = () => {
         <div className="md:hidden">
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-zinc-300 hover:text-white"
+            className="text-zinc-300 hover:text-white p-2"
           >
             {mobileMenuOpen ? (
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
@@ -105,12 +105,12 @@ const Header = () => {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <motion.div 
-          className="md:hidden bg-zinc-900 border-t border-zinc-800 py-4"
+          className="md:hidden bg-zinc-900 border-t border-zinc-800 py-4 absolute w-full top-full left-0 z-40"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           transition={{ duration: 0.3 }}
         >
-          <div className="container-custom flex flex-col space-y-4">
+          <div className="container-custom flex flex-col space-y-4 px-4">
             {/* Navigation items removed */}
             <div className="flex flex-col space-y-3 pt-3 border-t border-zinc-800">
               <a href="/auth">

@@ -502,55 +502,140 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="bg-zinc-900 border-b border-zinc-800">
-        <div className="container-custom mx-auto py-4 px-4 flex items-center">
-          <h1 className="text-2xl font-bold">AlgoZ</h1>
-          {/* Middle content can be added here */}
-          <div className="flex-grow"></div>
-          {isAdmin && (
-            <div className="text-sm mr-4 px-3 py-1.5 rounded-md bg-purple-900 flex items-center">
-              Admin
-            </div>
-          )}
-          <div className="text-sm mr-4 px-3 py-1.5 rounded-md bg-zinc-700 flex items-center hover:bg-zinc-600 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-            </svg>
-            <span className="font-medium">{coinBalance}</span>
-            <span className="ml-1 text-xs text-zinc-300">coins</span>
+      <header className="bg-zinc-900 border-b border-zinc-800 h-16 flex items-center justify-between px-4 md:px-6 sticky top-0 z-40">
+        <div className="flex items-center">
+          <div className="md:hidden mr-4">
+            <button 
+              onClick={() => {
+                // Toggle sidebar visibility for mobile
+                const sidebar = document.querySelector('.sidebar-mobile');
+                if (sidebar) {
+                  sidebar.classList.toggle('hidden');
+                }
+              }}
+              className="text-zinc-300 hover:text-white p-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
+          <span className="text-xl font-bold">AlgoZ</span>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          {/* Coin balance */}
+          <div className="bg-zinc-800 rounded-lg px-3 py-1.5 flex items-center text-sm">
+            <span className="text-yellow-400 mr-1.5">🪙</span>
+            <span>{coinBalance || 0}</span>
+          </div>
+
+          {/* User email display - truncated for mobile */}
           {userEmail && (
-            <div className="text-sm mr-4 px-3 py-1.5 rounded-md bg-zinc-800">
+            <div className="hidden sm:block bg-zinc-800 rounded-lg px-3 py-1.5 max-w-[150px] md:max-w-[200px] truncate">
               {userEmail}
             </div>
           )}
-          <button 
+          
+          {/* Logout button */}
+          <button
             onClick={handleSignOut}
-            className="p-2 rounded-lg hover:bg-zinc-800 transition-colors"
-            title="Logout"
+            className="text-zinc-300 hover:text-white"
           >
-            <img src="/logout.svg" alt="Logout" className="w-5 h-5" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
           </button>
         </div>
       </header>
 
-      {/* Main Content with Sidebar */}
       <div className="flex">
-        {/* Import and use the Sidebar component */}
+        {/* Mobile Sidebar - hidden by default */}
+        <div className="sidebar-mobile fixed inset-0 z-30 hidden">
+          <div 
+            className="absolute inset-0 bg-black opacity-50"
+            onClick={() => {
+              const sidebar = document.querySelector('.sidebar-mobile');
+              if (sidebar) {
+                sidebar.classList.add('hidden');
+              }
+            }}
+          ></div>
+          <div className="absolute left-0 top-0 h-full w-64 bg-zinc-900 border-r border-zinc-800 z-40 overflow-y-auto">
+            <Sidebar 
+              onMenuItemClick={handleMenuItemClick} 
+              activeMenuItem={activeMenuItem} 
+              isAdmin={isAdmin}
+            />
+          </div>
+        </div>
+        
+        {/* Desktop Sidebar */}
         <Sidebar 
           onMenuItemClick={handleMenuItemClick} 
           activeMenuItem={activeMenuItem} 
           isAdmin={isAdmin}
         />
         
-        {/* Main Content Area */}
-        <main className="flex-1 p-8">
+        {/* Main Content */}
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+          <p className="text-zinc-400 mb-6">Choose from the menu on the left to get started.</p>
+            
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {/* Quick access cards */}
+            <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
+              <div className="mb-4 p-3 rounded-full bg-indigo-500/20 w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium mb-2">Connect Broker</h3>
+              <p className="text-zinc-400 text-sm">Link your trading account to start using our services.</p>
+              <button 
+                onClick={() => handleMenuItemClick('Broker Auth')}
+                className="mt-4 text-indigo-400 hover:text-indigo-300 text-sm font-medium"
+              >
+                Configure Now →
+              </button>
+            </div>
+              
+            <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
+              <div className="mb-4 p-3 rounded-full bg-purple-500/20 w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium mb-2">Trading View Setup</h3>
+              <p className="text-zinc-400 text-sm">Integrate with TradingView for automated signals.</p>
+              <button 
+                onClick={() => handleMenuItemClick('Trading View Webhook URL')}
+                className="mt-4 text-purple-400 hover:text-purple-300 text-sm font-medium"
+              >
+                Setup Now →
+              </button>
+            </div>
+              
+            <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
+              <div className="mb-4 p-3 rounded-full bg-blue-500/20 w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium mb-2">Manage Subscription</h3>
+              <p className="text-zinc-400 text-sm">View and upgrade your subscription plan.</p>
+              <button 
+                onClick={() => handleMenuItemClick('Pricing')}
+                className="mt-4 text-blue-400 hover:text-blue-300 text-sm font-medium"
+              >
+                View Plans →
+              </button>
+            </div>
+          </div>
           {renderContent()}
-        </main>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
