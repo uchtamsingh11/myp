@@ -156,7 +156,13 @@ export async function POST(request, { params }) {
       processed_at: new Date().toISOString(),
       action: payload?.action || 'none',
       signal: payload?.signal || 'none',
-      symbol: payload?.symbol || 'unknown'
+      symbol: payload?.symbol || 'unknown',
+      broker_response: {
+        status: 'pending',
+        message: 'Broker not connected',
+        order_id: null,
+        details: {}
+      }
     };
     
     // Log the webhook call to the database
@@ -223,7 +229,8 @@ export async function POST(request, { params }) {
         success: true,
         message: 'Webhook received and processed successfully',
         log_id: logId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        broker_response: processResult.broker_response
       },
       { 
         status: 200,
@@ -254,7 +261,13 @@ export async function POST(request, { params }) {
     return NextResponse.json(
       { 
         error: 'Error processing webhook: ' + error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        broker_response: {
+          status: 'error',
+          message: 'Failed to process webhook',
+          order_id: null,
+          details: { error: error.message }
+        }
       },
       { 
         status: 500,
