@@ -140,93 +140,84 @@ export async function POST(request, { params }) {
     
     if (profileError) {
       console.error('Error finding profile with webhook ID:', profileError);
-      return NextResponse.json(
-        { error: 'Database error while validating webhook ID', details: profileError.message },
-        { 
-          status: 500,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          }
-        }
-      );
     }
     
-    if (!profileData) {
-      console.error('No profile found with webhook ID:', webhookId);
-      // For debugging purposes, let's try to find ANY profiles with webhook_url
-      const { data: anyProfiles, error: anyProfilesError } = await supabaseAdmin
-        .from('profiles')
-        .select('id, webhook_url')
-        .limit(5);
-        
-      if (anyProfilesError) {
-        console.error('Error querying profiles table:', anyProfilesError);
-      } else {
-        console.log('Sample profiles from database:', JSON.stringify(anyProfiles));
-      }
-      
-      // Even with an invalid webhook ID, we'll still process the request and return success
-      // This helps with testing and development
-      console.log('Proceeding with webhook processing despite invalid ID for testing purposes');
-      
-      // In production, you'd uncomment this to reject invalid webhooks:
-      /*
-      return NextResponse.json(
-        { error: 'Invalid webhook ID - no matching profile' },
-        { 
-          status: 404,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          }
-        }
-      );
-      */
+    const userId = profileData?.id || null;
+    if (userId) {
+      console.log('Found profile for user:', userId);
+    } else {
+      console.log('No matching profile found for webhook ID:', webhookId);
     }
     
-    const userId = profileData?.id || 'unknown';
-    console.log('Processing webhook for user:', userId);
+    // Process the webhook (in a real app, you'd implement trading logic here)
+    // For now, we'll just log the request and return success
+    const processResult = {
+      success: true,
+      processed_at: new Date().toISOString(),
+      action: payload?.action || 'none',
+      signal: payload?.signal || 'none',
+      symbol: payload?.symbol || 'unknown'
+    };
     
-    // Log the webhook call - even if we don't have a valid user ID
-    // This helps with debugging
-    console.log('Logging webhook call for user:', userId);
-    const { data: logData, error: logError } = await supabaseAdmin
+    // Log the webhook call to the database
+    // THIS IS THE IMPORTANT PART
+    console.log('Attempting to log webhook call to database...');
+    
+    // First check if webhook_logs table exists and its structure
+    const { data: tableInfo, error: tableError } = await supabaseAdmin
       .from('webhook_logs')
-      .insert([
-        {
-          user_id: userId === 'unknown' ? null : userId,
-          webhook_id: webhookId,
-          payload: payload,
-          created_at: requestStartTime,
-          started_at: new Date(),
-          processed: true,
-          process_result: { 
-            processed: true,
-            test_mode: userId === 'unknown',
-            timestamp: new Date().toISOString()
-          },
-          completed_at: new Date()
-        }
-      ])
+      .select('id')
+      .limit(1);
+    
+    if (tableError) {
+      console.error('Error checking webhook_logs table:', tableError);
+    }
+    
+    // Insert the webhook log - with minimal required fields
+    // This should work even with strict foreign key constraints
+    const { data: insertedLog, error: insertError } = await supabaseAdmin
+      .from('webhook_logs')
+      .insert({
+        // Only include user_id if we found a valid user
+        ...(userId ? { user_id: userId } : {}),
+        webhook_id: webhookId,
+        payload: payload, // The received body/message/JSON
+        created_at: requestStartTime, // The timestamp
+        process_result: processResult, // The response
+        processed: true
+      })
       .select();
     
-    if (logError) {
-      console.error('Error logging webhook call:', logError);
-      if (logError.code === '23503') {
-        console.error('Foreign key violation - likely due to invalid user_id');
+    if (insertError) {
+      console.error('Failed to insert webhook log:', insertError);
+      
+      // If there was a foreign key error, try again without the user_id
+      if (insertError.code === '23503' && userId) {
+        console.log('Foreign key violation. Trying again without user_id');
+        const { data: retryLog, error: retryError } = await supabaseAdmin
+          .from('webhook_logs')
+          .insert({
+            webhook_id: webhookId,
+            payload: payload,
+            created_at: requestStartTime,
+            process_result: processResult,
+            processed: true
+          })
+          .select();
+        
+        if (retryError) {
+          console.error('Failed to insert webhook log (retry):', retryError);
+        } else {
+          console.log('Successfully inserted webhook log without user_id');
+          logId = retryLog?.[0]?.id;
+        }
       }
     } else {
-      logId = logData[0]?.id;
-      console.log('Webhook call logged successfully with ID:', logId);
+      console.log('Successfully inserted webhook log');
+      logId = insertedLog?.[0]?.id;
     }
     
-    // Process the webhook (implement your trading logic here)
-    console.log('Processing webhook payload:', JSON.stringify(payload));
-    
-    // In a real implementation, you would process the trading signals here
-    // For now, we'll just return success
-    
+    // Return success response
     return NextResponse.json(
       {
         success: true,
@@ -249,17 +240,13 @@ export async function POST(request, { params }) {
     try {
       await supabaseAdmin
         .from('webhook_logs')
-        .insert([
-          {
-            user_id: null,
-            webhook_id: params.id || 'unknown',
-            payload: { error: error.message, stack: error.stack },
-            created_at: requestStartTime,
-            processed: false,
-            process_result: { error: error.message, stack: error.stack },
-            completed_at: new Date()
-          }
-        ]);
+        .insert({
+          webhook_id: params.id || 'unknown',
+          payload: { error: error.message },
+          created_at: requestStartTime,
+          processed: false,
+          process_result: { error: error.message }
+        });
     } catch (logError) {
       console.error('Failed to log webhook error:', logError);
     }
