@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
@@ -6,11 +5,11 @@ export default function Home() {
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center">
         <h1 className="text-4xl font-bold text-center">Welcome to AlgoZ</h1>
-        
+
         <p className="text-xl text-center max-w-2xl">
           Your platform for algorithmic trading and financial analysis
         </p>
-        
+
         <div className="flex gap-4 items-center flex-col sm:flex-row mt-8">
           <Link
             className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-indigo-600 text-white gap-2 hover:bg-indigo-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-6 sm:px-8 sm:w-auto"
