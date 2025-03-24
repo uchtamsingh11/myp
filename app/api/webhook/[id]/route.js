@@ -134,7 +134,7 @@ export async function POST(request, { params }) {
     console.log('Looking up profile with webhook_url:', webhookId);
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, email')
+      .select('id, full_name')
       .eq('webhook_url', webhookId)
       .maybeSingle();
     
