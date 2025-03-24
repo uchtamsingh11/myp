@@ -28,6 +28,16 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Navigation links data
+  const navLinks = [
+    { label: 'Home', href: '/#' },
+    { label: 'Features', href: '/#features' },
+    { label: 'How it Works', href: '/#how-it-works' },
+    { label: 'Testimonials', href: '/#testimonials' },
+    { label: 'Pricing', href: '/#pricing' },
+    { label: 'FAQ', href: '/#faq' }
+  ];
+
   return (
     <motion.header 
       className={`fixed w-full z-50 transition-all duration-300 ${
@@ -63,12 +73,20 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <motion.nav 
-          className="hidden md:flex space-x-8"
+          className="hidden md:flex space-x-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          {/* Navigation items removed */}
+          {navLinks.map((link, index) => (
+            <a 
+              key={index}
+              href={link.href}
+              className="text-zinc-300 hover:text-white font-medium transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
         </motion.nav>
 
         {/* CTA Buttons */}
@@ -88,6 +106,7 @@ const Header = () => {
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="text-zinc-300 hover:text-white p-2"
+            aria-label="Toggle mobile menu"
           >
             {mobileMenuOpen ? (
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
@@ -103,23 +122,41 @@ const Header = () => {
       </div>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <motion.div 
-          className="md:hidden bg-zinc-900 border-t border-zinc-800 py-4 absolute w-full top-full left-0 z-40"
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="container-custom flex flex-col space-y-4 px-4">
-            {/* Navigation items removed */}
-            <div className="flex flex-col space-y-3 pt-3 border-t border-zinc-800">
-              <a href="/auth">
-                <button className="btn-primary">Get Started</button>
-              </a>
+      <motion.div 
+        className={`md:hidden bg-zinc-900/95 backdrop-blur-md py-4 absolute w-full top-full left-0 z-40 shadow-lg border-t border-zinc-800 ${mobileMenuOpen ? 'block' : 'hidden'}`}
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ 
+          opacity: mobileMenuOpen ? 1 : 0, 
+          height: mobileMenuOpen ? 'auto' : 0 
+        }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="container-custom flex flex-col space-y-4 px-4">
+          {navLinks.map((link, index) => (
+            <a 
+              key={index}
+              href={link.href}
+              className="text-zinc-300 hover:text-white py-2 px-3 font-medium transition-colors border-b border-zinc-800/50 last:border-0"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {link.label}
+            </a>
+          ))}
+          
+          {/* User Email on Mobile */}
+          {user && (
+            <div className="py-2 text-white font-semibold truncate">
+              {user.email}
             </div>
+          )}
+
+          <div className="flex flex-col space-y-3 pt-3 border-t border-zinc-800">
+            <a href="/auth" onClick={() => setMobileMenuOpen(false)}>
+              <button className="btn-primary w-full">Get Started</button>
+            </a>
           </div>
-        </motion.div>
-      )}
+        </div>
+      </motion.div>
     </motion.header>
   );
 };

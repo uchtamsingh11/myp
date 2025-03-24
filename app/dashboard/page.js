@@ -305,97 +305,96 @@ export default function Dashboard() {
     }
   };
   
-  const handleMenuItemClick = (itemName) => {
-    // Prevent redundant updates if already on the same page
-    if (activeMenuItem === itemName) {
-      console.log('Already on', itemName, '- skipping state updates');
-      return;
-    }
+  // Function to handle menu item click and load appropriate content
+  const handleMenuItemClick = (menuItem) => {
+    // First save the menu item to state
+    setActiveMenuItem(menuItem);
     
-    console.log('Menu item clicked:', itemName);
-    setActiveMenuItem(itemName);
-    
-    // Save the active menu item to sessionStorage
+    // Save to sessionStorage for persistence across refreshes
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('dashboardActiveMenuItem', itemName);
+      sessionStorage.setItem('dashboardActiveMenuItem', menuItem);
     }
-    
-    // Reset all view states first
-    setPricingOpen(false);
-    setBrokerAuthOpen(false);
-    setAdminUsersOpen(false);
+
+    // Reset all open states first
+    setTradingViewOpen(false);
     setWebhookUrlOpen(false);
     setWebhookLogsOpen(false);
-    setTradingViewManageOpen(false);
     setTradingViewJSONOpen(false);
     setTradingViewSymbolOpen(false);
+    setTradingViewManageOpen(false);
     setScalpingToolManageOpen(false);
     setCopyTradingManageOpen(false);
+    setStrategyPineScriptOpen(false);
+    setStrategyMQLOpen(false);
+    setStrategyAFLOpen(false);
+    setBotsOpen(false);
     setBotsMyBotsOpen(false);
     setBotsNseBseOpen(false);
     setBotsForexOpen(false);
     setBotsCryptoOpen(false);
-    setStrategyPineScriptOpen(false);
-    setStrategyMQLOpen(false);
-    setStrategyAFLOpen(false);
-    
-    // Then set only the relevant one to true
-    // Use a small timeout to ensure the previous state updates complete
-    setTimeout(() => {
-      // Handle specific menu items based on exact name match
-      if (itemName === 'Pricing') {
-        console.log('Setting pricing open to true');
+    setPricingOpen(false);
+    setFaqOpen(false);
+    setSupportOpen(false);
+    setBrokerAuthOpen(false);
+    setAdminUsersOpen(false);
+
+    // Now set the appropriate view based on menu item
+    switch (menuItem) {
+      case 'Pricing':
         setPricingOpen(true);
-      } else if (itemName === 'Broker Auth') {
-        console.log('Setting broker auth open to true');
+        break;
+      case 'Broker Auth':
         setBrokerAuthOpen(true);
-      } else if (itemName === 'Admin Users') {
-        console.log('Setting admin users open to true');
+        break;
+      case 'Admin Users':
         setAdminUsersOpen(true);
-      } else if (itemName === 'Trading View Webhook URL') {
-        console.log('Setting webhook URL open to true');
+        break;
+      case 'Trading View Webhook URL':
         setWebhookUrlOpen(true);
-      } else if (itemName === 'Trading View Trade Logs') {
-        console.log('Setting webhook logs open to true');
+        break;
+      case 'Trading View Trade Logs':
         setWebhookLogsOpen(true);
-      } else if (itemName === 'Trading View Manage') {
-        console.log('Setting Trading View Manage open to true');
-        setTradingViewManageOpen(true);
-      } else if (itemName === 'Trading View JSON') {
-        console.log('Setting Trading View JSON open to true');
+        break;
+      case 'Trading View JSON':
         setTradingViewJSONOpen(true);
-      } else if (itemName === 'Trading View Symbol') {
-        console.log('Setting Trading View Symbol open to true');
+        break;
+      case 'Trading View Symbol':
         setTradingViewSymbolOpen(true);
-      } else if (itemName === 'Scalping Tool Manage') {
-        console.log('Setting Scalping Tool Manage open to true');
+        break;
+      case 'Trading View Manage':
+        setTradingViewManageOpen(true);
+        break;
+      case 'Scalping Tool Manage':
         setScalpingToolManageOpen(true);
-      } else if (itemName === 'Copy Trading Manage') {
-        console.log('Setting Copy Trading Manage open to true');
+        break;
+      case 'Copy Trading Manage':
         setCopyTradingManageOpen(true);
-      } else if (itemName === 'Bots My Bots') {
-        console.log('Setting Bots My Bots open to true');
-        setBotsMyBotsOpen(true);
-      } else if (itemName === 'Bots NSE/BSE') {
-        console.log('Setting Bots NSE/BSE open to true');
-        setBotsNseBseOpen(true);
-      } else if (itemName === 'Bots Forex') {
-        console.log('Setting Bots Forex open to true');
-        setBotsForexOpen(true);
-      } else if (itemName === 'Bots Crypto') {
-        console.log('Setting Bots Crypto open to true');
-        setBotsCryptoOpen(true);
-      } else if (itemName === 'Strategy Pine Script') {
-        console.log('Setting Strategy Pine Script open to true');
+        break;
+      case 'Strategy Pine Script':
         setStrategyPineScriptOpen(true);
-      } else if (itemName === 'Strategy MQL') {
-        console.log('Setting Strategy MQL open to true');
+        break;
+      case 'Strategy MQL':
         setStrategyMQLOpen(true);
-      } else if (itemName === 'Strategy AFL') {
-        console.log('Setting Strategy AFL open to true');
+        break;
+      case 'Strategy AFL':
         setStrategyAFLOpen(true);
-      }
-    }, 50);
+        break;
+      case 'Bots My Bots':
+        setBotsMyBotsOpen(true);
+        break;
+      case 'Bots NSE/BSE':
+        setBotsNseBseOpen(true);
+        break;
+      case 'Bots Forex':
+        setBotsForexOpen(true);
+        break;
+      case 'Bots Crypto':
+        setBotsCryptoOpen(true);
+        break;
+      default:
+        // Dashboard is default, all states are already reset
+        break;
+    }
   };
   
   const handlePurchase = async (plan) => {
@@ -572,68 +571,75 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* Desktop Sidebar */}
-        <Sidebar 
-          onMenuItemClick={handleMenuItemClick} 
-          activeMenuItem={activeMenuItem} 
-          isAdmin={isAdmin}
-        />
+        {/* Desktop Sidebar - now fixed position for static layout */}
+        <aside className="hidden md:block sticky top-16 h-[calc(100vh-64px)] overflow-y-auto">
+          <Sidebar 
+            onMenuItemClick={handleMenuItemClick} 
+            activeMenuItem={activeMenuItem} 
+            isAdmin={isAdmin}
+          />
+        </aside>
         
         {/* Main Content */}
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
-          <p className="text-zinc-400 mb-6">Choose from the menu on the left to get started.</p>
-            
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {/* Quick access cards */}
-            <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
-              <div className="mb-4 p-3 rounded-full bg-indigo-500/20 w-fit">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+          {activeMenuItem === 'Dashboard' ? (
+            <>
+              <p className="text-zinc-400 mb-6">Choose from the menu on the left to get started.</p>
+                
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {/* Quick access cards */}
+                <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
+                  <div className="mb-4 p-3 rounded-full bg-indigo-500/20 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Connect Broker</h3>
+                  <p className="text-zinc-400 text-sm">Link your trading account to start using our services.</p>
+                  <button 
+                    onClick={() => handleMenuItemClick('Broker Auth')}
+                    className="mt-4 text-indigo-400 hover:text-indigo-300 text-sm font-medium"
+                  >
+                    Configure Now →
+                  </button>
+                </div>
+                  
+                <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
+                  <div className="mb-4 p-3 rounded-full bg-purple-500/20 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Trading View Setup</h3>
+                  <p className="text-zinc-400 text-sm">Integrate with TradingView for automated signals.</p>
+                  <button 
+                    onClick={() => handleMenuItemClick('Trading View Webhook URL')}
+                    className="mt-4 text-purple-400 hover:text-purple-300 text-sm font-medium"
+                  >
+                    Setup Now →
+                  </button>
+                </div>
+                  
+                <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
+                  <div className="mb-4 p-3 rounded-full bg-blue-500/20 w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Manage Subscription</h3>
+                  <p className="text-zinc-400 text-sm">View and upgrade your subscription plan.</p>
+                  <button 
+                    onClick={() => handleMenuItemClick('Pricing')}
+                    className="mt-4 text-blue-400 hover:text-blue-300 text-sm font-medium"
+                  >
+                    View Plans →
+                  </button>
+                </div>
               </div>
-              <h3 className="text-lg font-medium mb-2">Connect Broker</h3>
-              <p className="text-zinc-400 text-sm">Link your trading account to start using our services.</p>
-              <button 
-                onClick={() => handleMenuItemClick('Broker Auth')}
-                className="mt-4 text-indigo-400 hover:text-indigo-300 text-sm font-medium"
-              >
-                Configure Now →
-              </button>
-            </div>
-              
-            <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
-              <div className="mb-4 p-3 rounded-full bg-purple-500/20 w-fit">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium mb-2">Trading View Setup</h3>
-              <p className="text-zinc-400 text-sm">Integrate with TradingView for automated signals.</p>
-              <button 
-                onClick={() => handleMenuItemClick('Trading View Webhook URL')}
-                className="mt-4 text-purple-400 hover:text-purple-300 text-sm font-medium"
-              >
-                Setup Now →
-              </button>
-            </div>
-              
-            <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer">
-              <div className="mb-4 p-3 rounded-full bg-blue-500/20 w-fit">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium mb-2">Manage Subscription</h3>
-              <p className="text-zinc-400 text-sm">View and upgrade your subscription plan.</p>
-              <button 
-                onClick={() => handleMenuItemClick('Pricing')}
-                className="mt-4 text-blue-400 hover:text-blue-300 text-sm font-medium"
-              >
-                View Plans →
-              </button>
-            </div>
-          </div>
-          {renderContent()}
+            </>
+          ) : (
+            renderContent()
+          )}
         </div>
       </div>
     </main>
