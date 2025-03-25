@@ -83,16 +83,106 @@ export default function ChooseBrokerPage() {
       
       console.log(`Submitting ${selectedBroker} credentials`);
       
-      // Get current user
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        setCredentialsError('You must be logged in to connect to a broker');
-        setConnecting(false);
-        return;
-      }
-      
-      if (selectedBroker === 'dhan') {
+      if (selectedBroker === 'fyers') {
+        // For Fyers, we need to follow the proper authentication flow
+        try {
+          // Step 1: Save the credentials first (if user is authenticated)
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            const userId = session.user.id;
+            console.log('User authenticated, saving credentials');
+            
+            // Check if the user already has Fyers credentials
+            const { data: existingCredentials, error: fetchError } = await supabase
+              .from('fyers_credentials')
+              .select('id')
+              .eq('user_id', userId);
+            
+            if (fetchError) {
+              console.error('Error fetching existing credentials:', fetchError);
+              // Continue anyway - we'll generate the auth URL regardless
+            }
+            
+            // If credentials exist, update them; otherwise create new ones
+            let storeError;
+            
+            if (existingCredentials && existingCredentials.length > 0) {
+              console.log('Updating existing Fyers credentials');
+              const { error } = await supabase
+                .from('fyers_credentials')
+                .update({
+                  app_id: credentials.clientId,
+                  api_secret: credentials.clientSecret,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('user_id', userId);
+                
+              storeError = error;
+            } else {
+              console.log('Creating new Fyers credentials');
+              const { error } = await supabase
+                .from('fyers_credentials')
+                .insert({
+                  user_id: userId,
+                  app_id: credentials.clientId,
+                  api_secret: credentials.clientSecret,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                });
+                
+              storeError = error;
+            }
+            
+            if (storeError) {
+              console.error('Error storing Fyers credentials:', storeError);
+              // Continue anyway - we'll generate the auth URL regardless
+            }
+          } else {
+            console.log('User not authenticated, proceeding with auth URL generation only');
+          }
+          
+          // Step 2: Generate authorization URL regardless of whether user is authenticated
+          console.log('Initiating Fyers authentication flow');
+          const response = await fetch('/api/fyers/auth-url', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              appId: credentials.clientId
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            console.error('Failed to get auth URL:', data);
+            throw new Error(data.error || 'Failed to generate authorization URL');
+          }
+          
+          // Step 3: Redirect to Fyers login page
+          console.log('Received auth URL:', data.authUrl);
+          console.log('Redirecting to Fyers authorization page...');
+          
+          window.location.href = data.authUrl;
+          return;
+        } catch (error) {
+          console.error('Error initiating Fyers authentication:', error);
+          setCredentialsError(`Failed to initiate Fyers authentication: ${error.message}`);
+          setConnecting(false);
+          return;
+        }
+      } else if (selectedBroker === 'dhan') {
+        // Get current user
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          setCredentialsError('You must be logged in to connect to a broker');
+          setConnecting(false);
+          return;
+        }
+        
         // First check if the user already has Dhan credentials
         const { data: existingCredentials } = await supabase
           .from('dhan_credentials')
@@ -134,105 +224,10 @@ export default function ChooseBrokerPage() {
         }
         
         console.log('Dhan credentials saved successfully');
-      } else if (selectedBroker === 'fyers') {
-        // First check if the user already has Fyers credentials
-        const { data: existingCredentials, error: fetchError } = await supabase
-          .from('fyers_credentials')
-          .select('id')
-          .eq('user_id', session.user.id);
         
-        if (fetchError) {
-          console.error('Error fetching existing credentials:', fetchError);
-          setCredentialsError('Error checking your existing credentials');
-          setConnecting(false);
-          return;
-        }
-          
-        let storeError;
-        
-        if (existingCredentials && existingCredentials.length > 0) {
-          console.log('Updating existing Fyers credentials');
-          // Update existing credentials
-          const { error } = await supabase
-            .from('fyers_credentials')
-            .update({
-              app_id: credentials.clientId,
-              api_secret: credentials.clientSecret,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', session.user.id);
-            
-          storeError = error;
-        } else {
-          console.log('Creating new Fyers credentials');
-          // Insert new credentials
-          const { error } = await supabase
-            .from('fyers_credentials')
-            .insert({
-              user_id: session.user.id,
-              app_id: credentials.clientId,
-              api_secret: credentials.clientSecret,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-            
-          storeError = error;
-        }
-        
-        if (storeError) {
-          console.error('Error storing Fyers credentials:', storeError);
-          setCredentialsError('Failed to save credentials. Please try again.');
-          setConnecting(false);
-          return;
-        }
-        
-        console.log('Fyers credentials saved successfully');
-        
-        // Proceed to Fyers authentication if credentials are saved successfully
-        try {
-          console.log('Initiating Fyers authentication flow');
-          // Make API call to get the authorization URL
-          const response = await fetch('/api/fyers/auth-url', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              appId: credentials.clientId
-            })
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Failed to get auth URL:', errorData);
-            throw new Error(errorData.error || 'Failed to generate authorization URL');
-          }
-          
-          const { authUrl } = await response.json();
-          
-          console.log('Received auth URL:', authUrl);
-          console.log('Redirecting to Fyers authorization page...');
-          
-          // Redirect to Fyers authorization page
-          window.location.href = authUrl;
-          return;
-        } catch (error) {
-          console.error('Error initiating Fyers authentication:', error);
-          setCredentialsError(`Failed to initiate Fyers authentication: ${error.message}`);
-          setConnecting(false);
-          return;
-        }
+        // Redirect to broker auth page
+        router.push('/dashboard');
       }
-      
-      // Redirect to broker auth page
-      router.push('/dashboard');
-      
-      // Set a small timeout to ensure navigation completes before activating Broker Auth
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.activateDashboardSection) {
-          window.activateDashboardSection('Broker Auth');
-        }
-      }, 100);
       
     } catch (error) {
       console.error(`Error saving ${selectedBroker} credentials:`, error);
