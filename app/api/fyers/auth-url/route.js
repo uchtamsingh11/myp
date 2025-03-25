@@ -16,7 +16,10 @@ export async function POST(request) {
     
     // Generate the authorization URL using the updated method
     try {
-      const authUrl = generateAuthUrl(appId);
+      // For API routes that need to use the Fyers API directly
+      // This URL pattern approach is more reliable for Next.js builds
+      const authUrl = `https://api.fyers.in/api/v2/generate-authcode?client_id=${appId}&redirect_uri=${process.env.NEXT_PUBLIC_FYERS_REDIRECT_URI}&response_type=code`;
+      
       return NextResponse.json({ authUrl });
     } catch (error) {
       console.error('Error generating Fyers auth URL:', error);

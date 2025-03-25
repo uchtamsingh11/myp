@@ -1,7 +1,17 @@
 import { supabase } from './supabase';
 
-// Import the fyers-api-v3 package properly
-const fyersModel = require("fyers-api-v3").fyersModel;
+// Import the fyers-api-v3 package safely with dynamic import pattern for Next.js
+let fyersModel: any = null;
+
+// Only load the module on the server side, not during build or on client
+if (typeof window === 'undefined') {
+  try {
+    // Dynamic import to prevent build-time errors
+    fyersModel = require("fyers-api-v3").fyersModel;
+  } catch (error) {
+    console.error("Failed to load fyers-api-v3. The module will be loaded at runtime.");
+  }
+}
 
 // Only the redirect URI is needed as an environment variable
 // The frontend's callback URL for Fyers auth
@@ -9,6 +19,10 @@ const REDIRECT_URI = process.env.NEXT_PUBLIC_FYERS_REDIRECT_URI || 'http://local
 
 // Initialize the Fyers API client with proper logging configuration
 const getFyersClient = (enableLogging = false) => {
+  if (!fyersModel) {
+    throw new Error('Fyers API module is not available in this environment');
+  }
+  
   return new fyersModel({
     "path": process.env.NODE_ENV === 'production' ? "/tmp" : "./logs",
     "enableLogging": enableLogging
