@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../../src/utils/supabase';
-const { fyersModel } = require('fyers-api-v3');
 
 // Explicitly mark this route as dynamic to suppress build warnings
 export const dynamic = 'force-dynamic';
@@ -41,30 +40,30 @@ export async function POST(request) {
     console.log('Using user ID:', userIdToUse);
 
     try {
-      // Create a new instance of the Fyers API model
-      // Note: We don't need to set a logging path in production
-      const fyers = new fyersModel({
-        enableLogging: false
+      // Direct API call to generate access token using fetch instead of fyers-api-v3
+      console.log('Generating access token with direct API call');
+      
+      const tokenResponse = await fetch('https://api-v3.fyers.in/api/v3/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          grant_type: 'authorization_code',
+          appIdHash: appId,
+          code: authCode,
+          secret_key: apiSecret
+        })
       });
+      
+      const tokenData = await tokenResponse.json();
+      console.log('Token response:', JSON.stringify(tokenData));
 
-      // Set the app ID
-      fyers.setAppId(appId);
-
-      // Generate the access token using the auth code
-      console.log('Generating access token with Fyers API');
-      const tokenResponse = await fyers.generate_access_token({
-        client_id: appId,
-        secret_key: apiSecret,
-        auth_code: authCode
-      });
-
-      console.log('Token response:', JSON.stringify(tokenResponse));
-
-      if (tokenResponse.s !== 'ok' || !tokenResponse.access_token) {
-        throw new Error(tokenResponse.message || 'Failed to generate access token');
+      if (!tokenResponse.ok || !tokenData.access_token) {
+        throw new Error(tokenData.message || `Failed to generate access token: ${tokenResponse.status}`);
       }
 
-      const accessToken = tokenResponse.access_token;
+      const accessToken = tokenData.access_token;
 
       // Calculate expiry (1 day from now)
       const expiryDate = new Date();
@@ -92,16 +91,21 @@ export async function POST(request) {
         );
       }
 
-      // Set the access token in the Fyers model to verify it works
-      fyers.setAccessToken(accessToken);
-
       // Try to fetch the user profile to verify the token works
       try {
-        const profileResponse = await fyers.get_profile();
-        console.log('Profile response:', JSON.stringify(profileResponse));
+        const profileResponse = await fetch('https://api-v3.fyers.in/api/v3/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const profileData = await profileResponse.json();
+        console.log('Profile response:', JSON.stringify(profileData));
 
-        if (profileResponse.s !== 'ok') {
-          console.warn('Token appears to be valid but profile fetch failed:', profileResponse);
+        if (!profileResponse.ok) {
+          console.warn('Token appears to be valid but profile fetch failed:', profileData);
           // Continue anyway as the token was generated successfully
         } else {
           console.log('Successfully validated token with profile check');
