@@ -61,7 +61,7 @@ const Pricing = () => {
   return (
     <section id="pricing" className="py-16 sm:py-24 bg-black relative">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-zinc-800/10 to-transparent"></div>
-      
+
       <div className="container-custom relative z-10">
         <motion.div
           ref={ref}
@@ -75,23 +75,22 @@ const Pricing = () => {
             Choose the plan that fits your trading needs. All plans include access to our platform with different levels of features.
           </p>
         </motion.div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8 px-4 sm:px-0">
           {pricingPlans.map((plan, index) => {
             const [planRef, planInView] = useInView({
               triggerOnce: true,
               threshold: 0.1,
             });
-            
+
             return (
               <motion.div
                 key={index}
                 ref={planRef}
-                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${
-                  plan.popular 
-                    ? 'bg-gradient-to-b from-zinc-800/70 to-zinc-900/70 border border-indigo-500/30 shadow-lg shadow-indigo-500/10' 
+                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${plan.popular
+                    ? 'bg-gradient-to-b from-zinc-800/70 to-zinc-900/70 border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
                     : 'bg-gradient-to-b from-zinc-800/40 to-zinc-900/40 border border-zinc-700/30'
-                }`}
+                  }`}
                 initial={{ opacity: 0, y: 30 }}
                 animate={planInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -103,10 +102,10 @@ const Pricing = () => {
                     </span>
                   </div>
                 )}
-                
+
                 <div className="p-5 sm:p-6 md:p-8">
                   <h3 className="text-xl md:text-2xl font-bold mb-2 text-center">{plan.name}</h3>
-                  
+
                   <div className="mb-6 text-center">
                     <div className="flex items-center justify-center">
                       <span className="text-4xl font-bold">{plan.coins}</span>
@@ -116,9 +115,9 @@ const Pricing = () => {
                       <span className="text-3xl font-bold">₹{plan.price}</span>
                     </div>
                   </div>
-                  
+
                   <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent my-6"></div>
-                  
+
                   <ul className="space-y-3 mb-8">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-start">
@@ -129,12 +128,11 @@ const Pricing = () => {
                       </li>
                     ))}
                   </ul>
-                  
-                  <button className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
-                    plan.popular 
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-700/20 hover:shadow-indigo-700/40' 
+
+                  <button className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 ${plan.popular
+                      ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-700/20 hover:shadow-indigo-700/40'
                       : 'bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600'
-                  }`}>
+                    }`}>
                     {plan.cta}
                   </button>
                 </div>
@@ -142,9 +140,8 @@ const Pricing = () => {
             );
           })}
         </div>
-        
+
         <div className="mt-12 text-center">
-          <p className="text-zinc-400 text-sm mb-5">All plans include a 7-day money-back guarantee</p>
           <a href="#faq" className="text-indigo-400 hover:text-indigo-300 text-sm inline-flex items-center">
             Have questions? Check our FAQ
             <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
