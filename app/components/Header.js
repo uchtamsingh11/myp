@@ -33,7 +33,6 @@ const Header = () => {
     { label: 'Home', href: '/#' },
     { label: 'Features', href: '/#features' },
     { label: 'How it Works', href: '/#how-it-works' },
-    { label: 'Testimonials', href: '/#testimonials' },
     { label: 'Pricing', href: '/#pricing' },
     { label: 'FAQ', href: '/#faq' }
   ];
@@ -56,20 +55,6 @@ const Header = () => {
         >
           <span className="text-2xl font-bold tracking-tight">AlgoZ</span>
         </motion.div>
-
-        {/* User Email Display */}
-        {user && (
-          <motion.div
-            className="hidden md:flex items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="text-white font-semibold px-4 py-2 rounded-md bg-zinc-800 max-w-[200px] truncate">
-              {user.email}
-            </div>
-          </motion.div>
-        )}
 
         {/* Desktop Navigation */}
         <motion.nav 
