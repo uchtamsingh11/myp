@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../src/utils/supabase';
+import toast from 'react-hot-toast';
 
 export default function ChooseBrokerPage() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function ChooseBrokerPage() {
     clientSecret: ''
   });
   const [credentialsError, setCredentialsError] = useState(null);
+  const [authError, setAuthError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const brokers = [
     {
@@ -65,6 +68,7 @@ export default function ChooseBrokerPage() {
     alert(`Integration with ${brokerId} is coming soon!`);
   };
   
+  // Handle credential submission for broker connection
   const handleCredentialSubmit = async () => {
     try {
       setConnecting(true);
@@ -76,6 +80,8 @@ export default function ChooseBrokerPage() {
         setConnecting(false);
         return;
       }
+      
+      console.log(`Submitting ${selectedBroker} credentials`);
       
       // Get current user
       const { data: { session } } = await supabase.auth.getSession();
@@ -130,15 +136,22 @@ export default function ChooseBrokerPage() {
         console.log('Dhan credentials saved successfully');
       } else if (selectedBroker === 'fyers') {
         // First check if the user already has Fyers credentials
-        const { data: existingCredentials } = await supabase
+        const { data: existingCredentials, error: fetchError } = await supabase
           .from('fyers_credentials')
           .select('id')
-          .eq('user_id', session.user.id)
-          .single();
+          .eq('user_id', session.user.id);
+        
+        if (fetchError) {
+          console.error('Error fetching existing credentials:', fetchError);
+          setCredentialsError('Error checking your existing credentials');
+          setConnecting(false);
+          return;
+        }
           
         let storeError;
         
-        if (existingCredentials) {
+        if (existingCredentials && existingCredentials.length > 0) {
+          console.log('Updating existing Fyers credentials');
           // Update existing credentials
           const { error } = await supabase
             .from('fyers_credentials')
@@ -151,6 +164,7 @@ export default function ChooseBrokerPage() {
             
           storeError = error;
         } else {
+          console.log('Creating new Fyers credentials');
           // Insert new credentials
           const { error } = await supabase
             .from('fyers_credentials')
@@ -176,6 +190,7 @@ export default function ChooseBrokerPage() {
         
         // Proceed to Fyers authentication if credentials are saved successfully
         try {
+          console.log('Initiating Fyers authentication flow');
           // Make API call to get the authorization URL
           const response = await fetch('/api/fyers/auth-url', {
             method: 'POST',
@@ -188,17 +203,22 @@ export default function ChooseBrokerPage() {
           });
           
           if (!response.ok) {
-            throw new Error('Failed to generate authorization URL');
+            const errorData = await response.json();
+            console.error('Failed to get auth URL:', errorData);
+            throw new Error(errorData.error || 'Failed to generate authorization URL');
           }
           
           const { authUrl } = await response.json();
+          
+          console.log('Received auth URL:', authUrl);
+          console.log('Redirecting to Fyers authorization page...');
           
           // Redirect to Fyers authorization page
           window.location.href = authUrl;
           return;
         } catch (error) {
           console.error('Error initiating Fyers authentication:', error);
-          setCredentialsError('Failed to initiate Fyers authentication. Please try again.');
+          setCredentialsError(`Failed to initiate Fyers authentication: ${error.message}`);
           setConnecting(false);
           return;
         }
@@ -216,11 +236,11 @@ export default function ChooseBrokerPage() {
       
     } catch (error) {
       console.error(`Error saving ${selectedBroker} credentials:`, error);
-      setCredentialsError('Failed to save credentials. Please check your input and try again.');
+      setCredentialsError(`Failed to save credentials: ${error.message}`);
       setConnecting(false);
     }
   };
-  
+
   const handleBack = () => {
     // Navigate back to dashboard and activate Broker Auth
     router.push('/dashboard');
@@ -326,6 +346,12 @@ export default function ChooseBrokerPage() {
               </div>
             )}
             
+            {authError && (
+              <div className="bg-red-900/30 border border-red-800 text-red-200 px-4 py-3 rounded-lg mb-4 text-sm">
+                {authError}
+              </div>
+            )}
+            
             <div className="space-y-4 mb-6">
               <div>
                 <label htmlFor="clientId" className="block text-zinc-300 mb-2 text-sm">
@@ -367,9 +393,9 @@ export default function ChooseBrokerPage() {
               <button
                 onClick={handleCredentialSubmit}
                 className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition-colors"
-                disabled={connecting}
+                disabled={isSubmitting}
               >
-                {connecting ? (
+                {isSubmitting ? (
                   <span className="flex items-center">
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
