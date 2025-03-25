@@ -18,6 +18,13 @@ export default function ChooseBrokerPage() {
   
   const brokers = [
     {
+      id: 'fyers',
+      name: 'Fyers',
+      logo: '/fyers-logo.svg',
+      description: 'Connect to Fyers for trading',
+      status: 'available'
+    },
+    {
       id: 'dhan',
       name: 'Dhan',
       logo: '/dhan-logo.svg',
@@ -43,8 +50,13 @@ export default function ChooseBrokerPage() {
   const handleConnect = async (brokerId) => {
     setSelectedBroker(brokerId);
     
-    // Show credentials modal for Dhan
-    if (brokerId === 'dhan') {
+    // Show credentials modal for Dhan or Fyers
+    if (brokerId === 'dhan' || brokerId === 'fyers') {
+      // Reset credentials when opening modal
+      setCredentials({
+        clientId: '',
+        clientSecret: ''
+      });
       setShowCredentialsModal(true);
       return;
     }
@@ -60,7 +72,7 @@ export default function ChooseBrokerPage() {
       
       // Validate credentials
       if (!credentials.clientId.trim() || !credentials.clientSecret.trim()) {
-        setCredentialsError('Both Client ID and Client Secret are required');
+        setCredentialsError('Both fields are required');
         setConnecting(false);
         return;
       }
@@ -74,23 +86,123 @@ export default function ChooseBrokerPage() {
         return;
       }
       
-      // Store credentials in dhan_credentials table
-      const { error: storeError } = await supabase
-        .from('dhan_credentials')
-        .upsert({
-          user_id: session.user.id,
-          client_id: credentials.clientId,
-          client_secret: credentials.clientSecret,
-        });
-      
-      if (storeError) {
-        console.error('Error storing Dhan credentials:', storeError);
-        setCredentialsError('Failed to save credentials. Please try again.');
-        setConnecting(false);
-        return;
+      if (selectedBroker === 'dhan') {
+        // First check if the user already has Dhan credentials
+        const { data: existingCredentials } = await supabase
+          .from('dhan_credentials')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        let storeError;
+        
+        if (existingCredentials) {
+          // Update existing credentials
+          const { error } = await supabase
+            .from('dhan_credentials')
+            .update({
+              client_id: credentials.clientId,
+              client_secret: credentials.clientSecret,
+            })
+            .eq('user_id', session.user.id);
+            
+          storeError = error;
+        } else {
+          // Insert new credentials
+          const { error } = await supabase
+            .from('dhan_credentials')
+            .insert({
+              user_id: session.user.id,
+              client_id: credentials.clientId,
+              client_secret: credentials.clientSecret,
+            });
+            
+          storeError = error;
+        }
+        
+        if (storeError) {
+          console.error('Error storing Dhan credentials:', storeError);
+          setCredentialsError('Failed to save credentials. Please try again.');
+          setConnecting(false);
+          return;
+        }
+        
+        console.log('Dhan credentials saved successfully');
+      } else if (selectedBroker === 'fyers') {
+        // First check if the user already has Fyers credentials
+        const { data: existingCredentials } = await supabase
+          .from('fyers_credentials')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        let storeError;
+        
+        if (existingCredentials) {
+          // Update existing credentials
+          const { error } = await supabase
+            .from('fyers_credentials')
+            .update({
+              app_id: credentials.clientId,
+              api_secret: credentials.clientSecret,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', session.user.id);
+            
+          storeError = error;
+        } else {
+          // Insert new credentials
+          const { error } = await supabase
+            .from('fyers_credentials')
+            .insert({
+              user_id: session.user.id,
+              app_id: credentials.clientId,
+              api_secret: credentials.clientSecret,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+            
+          storeError = error;
+        }
+        
+        if (storeError) {
+          console.error('Error storing Fyers credentials:', storeError);
+          setCredentialsError('Failed to save credentials. Please try again.');
+          setConnecting(false);
+          return;
+        }
+        
+        console.log('Fyers credentials saved successfully');
+        
+        // Proceed to Fyers authentication if credentials are saved successfully
+        try {
+          // Make API call to get the authorization URL
+          const response = await fetch('/api/fyers/auth-url', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              appId: credentials.clientId
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to generate authorization URL');
+          }
+          
+          const { authUrl } = await response.json();
+          
+          // Redirect to Fyers authorization page
+          window.location.href = authUrl;
+          return;
+        } catch (error) {
+          console.error('Error initiating Fyers authentication:', error);
+          setCredentialsError('Failed to initiate Fyers authentication. Please try again.');
+          setConnecting(false);
+          return;
+        }
       }
-      
-      console.log('Dhan credentials saved successfully');
       
       // Redirect to broker auth page
       router.push('/dashboard');
@@ -103,7 +215,7 @@ export default function ChooseBrokerPage() {
       }, 100);
       
     } catch (error) {
-      console.error('Error saving Dhan credentials:', error);
+      console.error(`Error saving ${selectedBroker} credentials:`, error);
       setCredentialsError('Failed to save credentials. Please check your input and try again.');
       setConnecting(false);
     }
@@ -166,7 +278,7 @@ export default function ChooseBrokerPage() {
                   >
                     {connecting && selectedBroker === broker.id ? (
                       <span className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -199,8 +311,14 @@ export default function ChooseBrokerPage() {
             transition={{ duration: 0.2 }}
             className="bg-zinc-900 border border-zinc-700 rounded-xl p-5 md:p-6 max-w-md w-full mx-auto"
           >
-            <h2 className="text-xl font-bold mb-4">Connect to Dhan</h2>
-            <p className="text-zinc-400 text-sm mb-6">Enter your Dhan API credentials to connect your account.</p>
+            <h2 className="text-xl font-bold mb-4">
+              {selectedBroker === 'dhan' ? 'Connect to Dhan' : 'Connect to Fyers'}
+            </h2>
+            <p className="text-zinc-400 text-sm mb-6">
+              {selectedBroker === 'dhan' 
+                ? 'Enter your Dhan API credentials to connect your account.' 
+                : 'Enter your Fyers API credentials to connect your account.'}
+            </p>
             
             {credentialsError && (
               <div className="bg-red-900/30 border border-red-800 text-red-200 px-4 py-3 rounded-lg mb-4 text-sm">
@@ -210,26 +328,30 @@ export default function ChooseBrokerPage() {
             
             <div className="space-y-4 mb-6">
               <div>
-                <label htmlFor="clientId" className="block text-zinc-300 mb-2 text-sm">Client ID</label>
+                <label htmlFor="clientId" className="block text-zinc-300 mb-2 text-sm">
+                  {selectedBroker === 'dhan' ? 'Client ID' : 'App ID'}
+                </label>
                 <input
                   id="clientId"
                   type="text"
                   value={credentials.clientId}
                   onChange={(e) => setCredentials({...credentials, clientId: e.target.value})}
                   className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Enter your Client ID"
+                  placeholder={selectedBroker === 'dhan' ? 'Enter your Client ID' : 'Enter your App ID'}
                 />
               </div>
               
               <div>
-                <label htmlFor="clientSecret" className="block text-zinc-300 mb-2 text-sm">Client Secret</label>
+                <label htmlFor="clientSecret" className="block text-zinc-300 mb-2 text-sm">
+                  {selectedBroker === 'dhan' ? 'Client Secret' : 'API Secret'}
+                </label>
                 <input
                   id="clientSecret"
                   type="password"
                   value={credentials.clientSecret}
                   onChange={(e) => setCredentials({...credentials, clientSecret: e.target.value})}
                   className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Enter your Client Secret"
+                  placeholder={selectedBroker === 'dhan' ? 'Enter your Client Secret' : 'Enter your API Secret'}
                 />
               </div>
             </div>
@@ -265,4 +387,4 @@ export default function ChooseBrokerPage() {
       )}
     </div>
   );
-} 
+}
