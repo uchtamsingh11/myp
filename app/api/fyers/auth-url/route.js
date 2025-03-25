@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { generateAuthUrl } from '../../../../src/utils/fyers';
+import { supabase } from '../../../../src/utils/supabase';
+import crypto from 'crypto';
 
 export async function POST(request) {
   try {
@@ -14,25 +15,51 @@ export async function POST(request) {
       );
     }
     
-    // Generate the authorization URL using the updated method
-    try {
-      // For API routes that need to use the Fyers API directly
-      // This URL pattern approach is more reliable for Next.js builds
-      const authUrl = `https://api.fyers.in/api/v2/generate-authcode?client_id=${appId}&redirect_uri=${process.env.NEXT_PUBLIC_FYERS_REDIRECT_URI}&response_type=code`;
-      
-      return NextResponse.json({ authUrl });
-    } catch (error) {
-      console.error('Error generating Fyers auth URL:', error);
+    // Get the current user session to get the user ID
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
       return NextResponse.json(
-        { error: error.message || 'Failed to generate authorization URL' },
+        { error: 'User is not authenticated' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = session.user.id;
+    
+    // Generate a random state parameter for security
+    const state = crypto.randomBytes(16).toString('hex');
+    
+    // Store the state in the user's fyers_credentials record for verification later
+    const { error: updateError } = await supabase
+      .from('fyers_credentials')
+      .update({ auth_state: state })
+      .eq('user_id', userId);
+      
+    if (updateError) {
+      console.error('Error saving auth state:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to save authentication state' },
         { status: 500 }
       );
     }
+    
+    // Make sure redirect URI is properly defined and URL-encoded
+    const redirectUri = process.env.NEXT_PUBLIC_FYERS_REDIRECT_URI || 'https://www.algoz.tech/api/fyers/callback';
+    
+    // Generate the authorization URL with properly encoded parameters
+    const authUrl = `https://api.fyers.in/api/v2/generate-authcode?` +
+      `client_id=${encodeURIComponent(appId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&state=${encodeURIComponent(state)}`;
+    
+    return NextResponse.json({ authUrl });
   } catch (error) {
-    console.error('Error parsing request:', error);
+    console.error('Error generating auth URL:', error);
     return NextResponse.json(
-      { error: 'Invalid request format' },
-      { status: 400 }
+      { error: 'Invalid request format or server error' },
+      { status: 500 }
     );
   }
 }

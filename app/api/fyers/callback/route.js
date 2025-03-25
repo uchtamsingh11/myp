@@ -43,7 +43,8 @@ async function saveAccessTokenDirect(userId, accessToken) {
       .update({
         access_token: accessToken,
         token_expiry: expiryDate.toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        auth_state: null // Clear the state after successful authentication
       })
       .eq('user_id', userId);
       
@@ -61,14 +62,14 @@ async function saveAccessTokenDirect(userId, accessToken) {
 
 export async function GET(request) {
   try {
-    // Get the authorization code from the URL query params
+    // Get the authorization code and state from the URL query params
     const searchParams = new URL(request.url).searchParams;
     const authCode = searchParams.get('code');
+    const returnedState = searchParams.get('state');
     
     if (!authCode) {
-      return NextResponse.json(
-        { error: 'Authorization code is missing' },
-        { status: 400 }
+      return NextResponse.redirect(
+        new URL('/dashboard/choose-broker?error=missing_auth_code', request.url)
       );
     }
     
@@ -81,10 +82,10 @@ export async function GET(request) {
     
     const userId = session.user.id;
     
-    // Get the user's Fyers credentials from the database
+    // Get the user's Fyers credentials including the stored state from the database
     const { data: credentials, error: credentialsError } = await supabase
       .from('fyers_credentials')
-      .select('app_id, api_secret')
+      .select('app_id, api_secret, auth_state')
       .eq('user_id', userId)
       .single();
     
@@ -92,6 +93,14 @@ export async function GET(request) {
       console.error('Error fetching Fyers credentials:', credentialsError);
       return NextResponse.redirect(
         new URL('/dashboard/choose-broker?error=credentials_not_found', request.url)
+      );
+    }
+    
+    // Verify that the returned state matches the stored state
+    if (returnedState !== credentials.auth_state || !credentials.auth_state) {
+      console.error('State parameter mismatch or missing');
+      return NextResponse.redirect(
+        new URL('/dashboard/choose-broker?error=invalid_state_parameter', request.url)
       );
     }
     
