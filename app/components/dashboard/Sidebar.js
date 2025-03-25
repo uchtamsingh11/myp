@@ -14,7 +14,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = false }) {
   const router = useRouter();
   const pathname = usePathname();
-  
+
   // State for tracking which menu is open
   const [tradingViewOpen, setTradingViewOpen] = useState(false);
   const [scalpingToolOpen, setScalpingToolOpen] = useState(false);
@@ -601,7 +601,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   try {
                     const { error } = await supabase.auth.signOut();
                     if (error) throw error;
-                    router.push('/login');
+                    router.push('/auth');
                   } catch (error) {
                     console.error('Error logging out:', error.message);
                   }
