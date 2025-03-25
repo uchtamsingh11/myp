@@ -4,10 +4,60 @@ import { supabase } from '../../../../src/utils/supabase';
 // Explicitly mark this route as dynamic to suppress build warnings
 export const dynamic = 'force-dynamic';
 
+// Direct API functions to replace fyers-api-v3 package
+async function generateAccessToken(appId, secretKey, authCode) {
+  console.log('Making direct API call to Fyers for token exchange');
+  
+  const response = await fetch('https://api.fyers.in/api/v2/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      grant_type: 'authorization_code',
+      client_id: appId,
+      secret_key: secretKey,
+      auth_code: authCode
+    })
+  });
+  
+  const data = await response.json();
+  
+  if (!response.ok || data.s !== 'ok') {
+    throw new Error(data.message || 'Failed to generate access token');
+  }
+  
+  return data.access_token;
+}
+
+// Direct API function to validate token by fetching profile
+async function validateToken(appId, accessToken) {
+  try {
+    console.log('Validating token by fetching profile');
+    
+    const response = await fetch('https://api.fyers.in/api/v2/profile', {
+      method: 'GET',
+      headers: {
+        'Authorization': `${appId}:${accessToken}`
+      }
+    });
+    
+    const data = await response.json();
+    
+    return {
+      valid: data.s === 'ok',
+      profileData: data
+    };
+  } catch (error) {
+    console.warn('Error validating token:', error);
+    return { valid: false, error: error.message };
+  }
+}
+
 export async function POST(request) {
   try {
     // Parse the request body
-    const { authCode, appId, apiSecret } = await request.json();
+    const { authCode, appId, apiSecret, userId } = await request.json();
     
     console.log('Token exchange request received');
     console.log('Auth code:', authCode);
@@ -21,80 +71,81 @@ export async function POST(request) {
       );
     }
     
-    // Get the user's session
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get the user's session if userId is not provided
+    let userIdToUse = userId;
     
-    if (!session) {
-      console.error('No active session found');
-      return NextResponse.json(
-        { error: 'You must be logged in to exchange a token' },
-        { status: 401 }
-      );
+    if (!userIdToUse) {
+      const { data: { session } } = await supabase.auth.getSession();
+      userIdToUse = session?.user?.id;
+      
+      if (!userIdToUse) {
+        console.error('No user ID provided and no active session found');
+        return NextResponse.json(
+          { error: 'User identification required' },
+          { status: 401 }
+        );
+      }
     }
     
-    const userId = session.user.id;
-    console.log('User ID:', userId);
+    console.log('Using user ID:', userIdToUse);
     
-    // Exchange the auth code for an access token
     try {
-      const response = await fetch('https://api.fyers.in/api/v2/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          grant_type: 'authorization_code',
-          client_id: appId,
-          secret_key: apiSecret,
-          auth_code: authCode
-        })
-      });
+      // Generate access token using direct API call
+      const accessToken = await generateAccessToken(appId, apiSecret, authCode);
+      console.log('Access token obtained successfully');
       
-      const data = await response.json();
-      console.log('Token API response:', data);
-      
-      if (!response.ok || data.s !== 'ok') {
-        throw new Error(`Failed to get access token: ${data.message || response.statusText}`);
-      }
-      
-      const accessToken = data.access_token;
-      
-      // Save the access token to the database
+      // Calculate expiry (1 day from now)
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 1);
       
-      console.log('Saving access token for user:', userId);
-      console.log('Token will expire at:', expiryDate.toISOString());
-      
-      const { error } = await supabase
+      // Update the user's record with the new token
+      const { error: updateError } = await supabase
         .from('fyers_credentials')
-        .update({
+        .upsert({
+          user_id: userIdToUse,
+          app_id: appId,
+          api_secret: apiSecret,
           access_token: accessToken,
           token_expiry: expiryDate.toISOString(),
-          updated_at: new Date().toISOString(),
-          auth_state: null // Clear the state after successful authentication
-        })
-        .eq('user_id', userId);
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
         
-      if (error) {
-        console.error('Error saving Fyers access token:', error);
-        throw error;
+      if (updateError) {
+        console.error('Error saving token to database:', updateError);
+        return NextResponse.json(
+          { error: 'Failed to save access token to database' },
+          { status: 500 }
+        );
       }
       
-      console.log('Access token saved successfully');
+      // Try to validate the token
+      const validationResult = await validateToken(appId, accessToken);
       
-      return NextResponse.json({ success: true });
+      if (!validationResult.valid) {
+        console.warn('Token appears to be valid but profile fetch failed:', validationResult);
+        // Continue anyway as the token was generated successfully
+      } else {
+        console.log('Successfully validated token with profile check');
+      }
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Access token generated and saved successfully'
+      });
+      
     } catch (error) {
-      console.error('Error in token exchange:', error);
+      console.error('Error in Fyers API operations:', error);
       return NextResponse.json(
-        { error: error.message },
+        { error: `Fyers API error: ${error.message}` },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Error in token exchange endpoint:', error);
+    console.error('Unexpected error in token exchange:', error);
     return NextResponse.json(
-      { error: 'An unexpected error occurred: ' + error.message },
+      { error: `Unexpected error: ${error.message}` },
       { status: 500 }
     );
   }

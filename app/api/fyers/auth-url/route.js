@@ -1,80 +1,60 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../../src/utils/supabase';
+import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
 // Explicitly mark this route as dynamic to suppress build warnings
 export const dynamic = 'force-dynamic';
 
-// For consistency, ensure this exactly matches what's registered in Fyers API dashboard
-const REDIRECT_URI = 'https://www.algoz.tech/api/fyers/callback';
+// Use the registered redirect URI from environment variable
+// IMPORTANT: This must match exactly what's registered in Fyers API dashboard
+const REDIRECT_URI = process.env.NEXT_PUBLIC_FYERS_REDIRECT_URI || 'https://www.algoz.tech/api/fyers/callback';
 
 export async function POST(request) {
   try {
-    // Parse the request body
-    const body = await request.json();
-    const { appId } = body;
+    const { appId } = await request.json();
     
     console.log('Received auth URL request with appId:', appId);
+    console.log('Using redirect URI:', REDIRECT_URI);
     
     if (!appId) {
-      console.error('Missing appId in request');
-      return NextResponse.json(
-        { error: 'Missing required parameter: appId' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'App ID is required' }, { status: 400 });
     }
     
-    // Generate a random state parameter for security
+    // Generate a secure random state for CSRF protection
     const state = crypto.randomBytes(16).toString('hex');
     console.log('Generated state:', state);
     
-    // We'll store this state in a cookie for verification later
-    // This allows the flow to work even if the user isn't authenticated
-    const response = NextResponse.json({ 
-      authUrl: `https://api.fyers.in/api/v2/generate-authcode?` +
-        `client_id=${encodeURIComponent(appId)}` +
-        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-        `&response_type=code` +
-        `&state=${encodeURIComponent(state)}`
-    });
+    // Store the state and appId in cookies for validation during callback
+    const cookieStore = cookies();
     
-    // Set a cookie with the state and appId for the callback to use
-    response.cookies.set('fyers_auth_state', state, { 
+    // Set cookies with same-site and secure attributes for better security
+    cookieStore.set('fyers_auth_state', state, {
       httpOnly: true,
+      path: '/',
       maxAge: 60 * 15, // 15 minutes
-      path: '/'
+      sameSite: 'lax'
     });
     
-    response.cookies.set('fyers_app_id', appId, {
+    cookieStore.set('fyers_app_id', appId, {
       httpOnly: true,
+      path: '/',
       maxAge: 60 * 15, // 15 minutes
-      path: '/'
+      sameSite: 'lax'
     });
     
-    console.log('Auth URL generated and state stored in cookie');
+    // Following Fyers API v3 documentation format:
+    // 1. Encode the redirect URI
+    const encodedRedirectURI = encodeURIComponent(REDIRECT_URI);
     
-    // Try to also store in DB if a session exists
-    const { data: { session } } = await supabase.auth.getSession();
+    // 2. Construct the authorization URL
+    const authUrl = `https://api.fyers.in/api/v2/generate-authcode?client_id=${appId}&redirect_uri=${encodedRedirectURI}&response_type=code&state=${state}`;
     
-    if (session) {
-      const userId = session.user.id;
-      console.log('User ID:', userId);
-      
-      // Store the state in the user's fyers_credentials record for verification later
-      const { error: updateError } = await supabase
-        .from('fyers_credentials')
-        .update({ auth_state: state })
-        .eq('user_id', userId);
-        
-      if (updateError) {
-        console.error('Error saving auth state to DB:', updateError);
-        // Continue anyway as we're using cookies now
-      }
-    } else {
-      console.log('No session found, using cookie-based state only');
-    }
+    console.log('Generated Fyers auth URL:', authUrl);
     
-    return response;
+    return NextResponse.json({
+      success: true,
+      authUrl: authUrl
+    });
   } catch (error) {
     console.error('Error generating auth URL:', error);
     return NextResponse.json(

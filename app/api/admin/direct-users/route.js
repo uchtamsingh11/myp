@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Explicitly mark this route as dynamic to suppress build warnings
+export const dynamic = 'force-dynamic';
+
 // Admin email for access control
 const ADMIN_EMAIL = 'uchtamsingh@gmail.com';
 

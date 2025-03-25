@@ -55,23 +55,32 @@ export default function ChooseBrokerPage() {
   useEffect(() => {
     const checkUrlParams = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const authCode = urlParams.get('authCode');
-      const appId = urlParams.get('appId');
-      const needSecret = urlParams.get('needSecret');
+      
+      // Check for direct Fyers callback parameters
+      const authCode = urlParams.get('auth_code') || urlParams.get('authCode');
+      const appId = urlParams.get('client_id') || urlParams.get('appId');
+      const state = urlParams.get('state');
+      const error = urlParams.get('error');
+      
+      if (error) {
+        setAuthError(error);
+        toast.error(`Authentication error: ${error}`);
+      }
       
       if (authCode) {
         console.log('Found auth code in URL:', authCode);
         setPreservedAuthCode(authCode);
+        setSelectedBroker('fyers'); // Set selected broker to Fyers
         
         if (appId) {
           console.log('Found app ID in URL:', appId);
           setCredentials(prev => ({ ...prev, clientId: appId }));
         }
         
-        if (needSecret === 'true') {
-          console.log('User needs to provide API secret to complete flow');
-          setNeedApiSecret(true);
-        }
+        // If we received auth code directly from Fyers, we need API secret
+        setNeedApiSecret(true);
+        setShowCredentialsModal(true); // Automatically show the credentials modal
+        toast.success('Authentication in progress. Please enter your API secret to complete.');
       }
     };
     
@@ -107,38 +116,43 @@ export default function ChooseBrokerPage() {
       console.log(`Submitting ${selectedBroker} credentials`);
       
       if (selectedBroker === 'fyers') {
-        if (preservedAuthCode && needApiSecret) {
+        if (preservedAuthCode) {
           console.log('Completing auth flow with preserved auth code:', preservedAuthCode);
           
           try {
+            // Get user session information
             const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
             
-            if (!session) {
-              setCredentialsError('You must be logged in to complete this process');
-              setConnecting(false);
-              return;
+            if (!userId) {
+              console.log('No active session found, will try to continue with token exchange anyway');
+            } else {
+              console.log('User ID from session:', userId);
             }
             
-            const userId = session.user.id;
-            
-            const { error: credentialError } = await supabase
-              .from('fyers_credentials')
-              .upsert({
-                user_id: userId,
-                app_id: credentials.clientId,
-                api_secret: credentials.clientSecret,
-                updated_at: new Date().toISOString()
-              }, {
-                onConflict: 'user_id'
-              });
-              
-            if (credentialError) {
-              console.error('Error saving credentials:', credentialError);
-              setCredentialsError('Failed to save credentials');
-              setConnecting(false);
-              return;
+            // Save credentials to Supabase regardless of having a token
+            if (userId) {
+              const { error: credentialError } = await supabase
+                .from('fyers_credentials')
+                .upsert({
+                  user_id: userId,
+                  app_id: credentials.clientId,
+                  api_secret: credentials.clientSecret,
+                  updated_at: new Date().toISOString()
+                }, {
+                  onConflict: 'user_id'
+                });
+                
+              if (credentialError) {
+                console.error('Error saving credentials:', credentialError);
+                // Continue with token exchange even if saving credentials fails
+              } else {
+                console.log('Credentials saved successfully');
+              }
             }
             
+            // Exchange token using our endpoint
+            console.log('Exchanging token with app ID:', credentials.clientId);
             const response = await fetch('/api/fyers/token-exchange', {
               method: 'POST',
               headers: {
@@ -147,103 +161,106 @@ export default function ChooseBrokerPage() {
               body: JSON.stringify({
                 authCode: preservedAuthCode,
                 appId: credentials.clientId,
-                apiSecret: credentials.clientSecret
+                apiSecret: credentials.clientSecret,
+                userId: userId // Pass the userId in case the server can't detect the session
+              })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+              throw new Error(result.error || 'Failed to exchange token');
+            }
+            
+            console.log('Token exchange successful:', result);
+            toast.success('Fyers account connected successfully!');
+            
+            // Clear URL parameters and redirect to dashboard
+            router.push('/dashboard?fyers_connected=true');
+          } catch (error) {
+            console.error('Error in token exchange:', error);
+            setCredentialsError(`Error: ${error.message}`);
+            setConnecting(false);
+          }
+        } else {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            const userId = session.user.id;
+            console.log('User authenticated, saving credentials');
+            
+            const { data: existingCredentials } = await supabase
+              .from('fyers_credentials')
+              .select('id')
+              .eq('user_id', userId);
+            
+            if (existingCredentials && existingCredentials.length > 0) {
+              const { error } = await supabase
+                .from('fyers_credentials')
+                .update({
+                  app_id: credentials.clientId,
+                  api_secret: credentials.clientSecret,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('user_id', userId);
+                
+              if (error) {
+                console.error('Error updating credentials:', error);
+                setCredentialsError('Failed to update credentials');
+                setConnecting(false);
+                return;
+              }
+            } else {
+              const { error } = await supabase
+                .from('fyers_credentials')
+                .insert({
+                  user_id: userId,
+                  app_id: credentials.clientId,
+                  api_secret: credentials.clientSecret,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                });
+                
+              if (error) {
+                console.error('Error inserting credentials:', error);
+                setCredentialsError('Failed to save credentials');
+                setConnecting(false);
+                return;
+              }
+            }
+            
+            console.log('Credentials saved successfully');
+          } else {
+            console.log('User not logged in, skipping credential save');
+          }
+          
+          try {
+            console.log('Generating Fyers authentication URL');
+            const response = await fetch('/api/fyers/auth-url', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                appId: credentials.clientId
               })
             });
             
             const data = await response.json();
             
             if (!response.ok) {
-              throw new Error(data.error || 'Failed to exchange token');
+              throw new Error(data.error || 'Failed to generate authorization URL');
             }
             
-            router.push('/dashboard?fyers_connected=true');
-            return;
+            console.log('Auth URL generated:', data.authUrl);
+            console.log('Redirecting to Fyers authorization page...');
+            
+            window.location.href = data.authUrl;
           } catch (error) {
-            console.error('Error completing auth flow:', error);
-            setCredentialsError('Failed to complete authentication: ' + error.message);
+            console.error('Error generating auth URL:', error);
+            setCredentialsError('Failed to start authentication: ' + error.message);
             setConnecting(false);
-            return;
           }
-        }
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          const userId = session.user.id;
-          console.log('User authenticated, saving credentials');
-          
-          const { data: existingCredentials } = await supabase
-            .from('fyers_credentials')
-            .select('id')
-            .eq('user_id', userId);
-          
-          if (existingCredentials && existingCredentials.length > 0) {
-            const { error } = await supabase
-              .from('fyers_credentials')
-              .update({
-                app_id: credentials.clientId,
-                api_secret: credentials.clientSecret,
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', userId);
-              
-            if (error) {
-              console.error('Error updating credentials:', error);
-              setCredentialsError('Failed to update credentials');
-              setConnecting(false);
-              return;
-            }
-          } else {
-            const { error } = await supabase
-              .from('fyers_credentials')
-              .insert({
-                user_id: userId,
-                app_id: credentials.clientId,
-                api_secret: credentials.clientSecret,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              });
-              
-            if (error) {
-              console.error('Error inserting credentials:', error);
-              setCredentialsError('Failed to save credentials');
-              setConnecting(false);
-              return;
-            }
-          }
-          
-          console.log('Credentials saved successfully');
-        } else {
-          console.log('User not logged in, skipping credential save');
-        }
-        
-        try {
-          console.log('Generating Fyers authentication URL');
-          const response = await fetch('/api/fyers/auth-url', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              appId: credentials.clientId
-            })
-          });
-          
-          const data = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(data.error || 'Failed to generate authorization URL');
-          }
-          
-          console.log('Auth URL generated:', data.authUrl);
-          console.log('Redirecting to Fyers authorization page...');
-          
-          window.location.href = data.authUrl;
-        } catch (error) {
-          console.error('Error generating auth URL:', error);
-          setCredentialsError('Failed to start authentication: ' + error.message);
-          setConnecting(false);
         }
       } else if (selectedBroker === 'dhan') {
         const { data: { session } } = await supabase.auth.getSession();
