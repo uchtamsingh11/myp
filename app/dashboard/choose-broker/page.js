@@ -20,7 +20,7 @@ export default function ChooseBrokerPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [preservedAuthCode, setPreservedAuthCode] = useState(null);
   const [needApiSecret, setNeedApiSecret] = useState(false);
-  
+
   const brokers = [
     {
       id: 'fyers',
@@ -51,45 +51,45 @@ export default function ChooseBrokerPage() {
       status: 'coming_soon'
     }
   ];
-  
+
   useEffect(() => {
     const checkUrlParams = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      
+
       // Check for direct Fyers callback parameters
       const authCode = urlParams.get('auth_code') || urlParams.get('authCode');
       const appId = urlParams.get('client_id') || urlParams.get('appId');
       const state = urlParams.get('state');
       const error = urlParams.get('error');
-      
+
       if (error) {
         setAuthError(error);
         toast.error(`Authentication error: ${error}`);
       }
-      
+
       if (authCode) {
         console.log('Found auth code in URL:', authCode);
         setPreservedAuthCode(authCode);
         setSelectedBroker('fyers'); // Set selected broker to Fyers
-        
+
         if (appId) {
           console.log('Found app ID in URL:', appId);
           setCredentials(prev => ({ ...prev, clientId: appId }));
         }
-        
+
         // If we received auth code directly from Fyers, we need API secret
         setNeedApiSecret(true);
         setShowCredentialsModal(true); // Automatically show the credentials modal
         toast.success('Authentication in progress. Please enter your API secret to complete.');
       }
     };
-    
+
     checkUrlParams();
   }, []);
 
   const handleConnect = async (brokerId) => {
     setSelectedBroker(brokerId);
-    
+
     if (brokerId === 'dhan' || brokerId === 'fyers') {
       setCredentials({
         clientId: '',
@@ -98,38 +98,38 @@ export default function ChooseBrokerPage() {
       setShowCredentialsModal(true);
       return;
     }
-    
+
     alert(`Integration with ${brokerId} is coming soon!`);
   };
-  
+
   const handleCredentialSubmit = async () => {
     try {
       setConnecting(true);
       setCredentialsError(null);
-      
+
       if (!credentials.clientId.trim() || !credentials.clientSecret.trim()) {
         setCredentialsError('Both fields are required');
         setConnecting(false);
         return;
       }
-      
+
       console.log(`Submitting ${selectedBroker} credentials`);
-      
+
       if (selectedBroker === 'fyers') {
         if (preservedAuthCode) {
           console.log('Completing auth flow with preserved auth code:', preservedAuthCode);
-          
+
           try {
             // Get user session information
             const { data: { session } } = await supabase.auth.getSession();
             const userId = session?.user?.id;
-            
+
             if (!userId) {
               console.log('No active session found, will try to continue with token exchange anyway');
             } else {
               console.log('User ID from session:', userId);
             }
-            
+
             // Save credentials to Supabase regardless of having a token
             if (userId) {
               const { error: credentialError } = await supabase
@@ -142,7 +142,7 @@ export default function ChooseBrokerPage() {
                 }, {
                   onConflict: 'user_id'
                 });
-                
+
               if (credentialError) {
                 console.error('Error saving credentials:', credentialError);
                 // Continue with token exchange even if saving credentials fails
@@ -150,7 +150,7 @@ export default function ChooseBrokerPage() {
                 console.log('Credentials saved successfully');
               }
             }
-            
+
             // Exchange token using our endpoint
             console.log('Exchanging token with app ID:', credentials.clientId);
             const response = await fetch('/api/fyers/token-exchange', {
@@ -165,16 +165,16 @@ export default function ChooseBrokerPage() {
                 userId: userId // Pass the userId in case the server can't detect the session
               })
             });
-            
+
             const result = await response.json();
-            
+
             if (!response.ok) {
               throw new Error(result.error || 'Failed to exchange token');
             }
-            
+
             console.log('Token exchange successful:', result);
             toast.success('Fyers account connected successfully!');
-            
+
             // Clear URL parameters and redirect to dashboard
             router.push('/dashboard?fyers_connected=true');
           } catch (error) {
@@ -184,16 +184,16 @@ export default function ChooseBrokerPage() {
           }
         } else {
           const { data: { session } } = await supabase.auth.getSession();
-          
+
           if (session) {
             const userId = session.user.id;
             console.log('User authenticated, saving credentials');
-            
+
             const { data: existingCredentials } = await supabase
               .from('fyers_credentials')
               .select('id')
               .eq('user_id', userId);
-            
+
             if (existingCredentials && existingCredentials.length > 0) {
               const { error } = await supabase
                 .from('fyers_credentials')
@@ -203,7 +203,7 @@ export default function ChooseBrokerPage() {
                   updated_at: new Date().toISOString()
                 })
                 .eq('user_id', userId);
-                
+
               if (error) {
                 console.error('Error updating credentials:', error);
                 setCredentialsError('Failed to update credentials');
@@ -220,7 +220,7 @@ export default function ChooseBrokerPage() {
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
                 });
-                
+
               if (error) {
                 console.error('Error inserting credentials:', error);
                 setCredentialsError('Failed to save credentials');
@@ -228,12 +228,12 @@ export default function ChooseBrokerPage() {
                 return;
               }
             }
-            
+
             console.log('Credentials saved successfully');
           } else {
             console.log('User not logged in, skipping credential save');
           }
-          
+
           try {
             console.log('Generating Fyers authentication URL');
             const response = await fetch('/api/fyers/auth-url', {
@@ -245,16 +245,16 @@ export default function ChooseBrokerPage() {
                 appId: credentials.clientId
               })
             });
-            
+
             const data = await response.json();
-            
+
             if (!response.ok) {
               throw new Error(data.error || 'Failed to generate authorization URL');
             }
-            
+
             console.log('Auth URL generated:', data.authUrl);
             console.log('Redirecting to Fyers authorization page...');
-            
+
             window.location.href = data.authUrl;
           } catch (error) {
             console.error('Error generating auth URL:', error);
@@ -264,21 +264,21 @@ export default function ChooseBrokerPage() {
         }
       } else if (selectedBroker === 'dhan') {
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!session) {
           setCredentialsError('You must be logged in to connect to a broker');
           setConnecting(false);
           return;
         }
-        
+
         const { data: existingCredentials } = await supabase
           .from('dhan_credentials')
           .select('id')
           .eq('user_id', session.user.id)
           .single();
-          
+
         let storeError;
-        
+
         if (existingCredentials) {
           const { error } = await supabase
             .from('dhan_credentials')
@@ -287,7 +287,7 @@ export default function ChooseBrokerPage() {
               client_secret: credentials.clientSecret,
             })
             .eq('user_id', session.user.id);
-            
+
           storeError = error;
         } else {
           const { error } = await supabase
@@ -297,22 +297,22 @@ export default function ChooseBrokerPage() {
               client_id: credentials.clientId,
               client_secret: credentials.clientSecret,
             });
-            
+
           storeError = error;
         }
-        
+
         if (storeError) {
           console.error('Error storing Dhan credentials:', storeError);
           setCredentialsError('Failed to save credentials. Please try again.');
           setConnecting(false);
           return;
         }
-        
+
         console.log('Dhan credentials saved successfully');
-        
+
         router.push('/dashboard');
       }
-      
+
     } catch (error) {
       console.error(`Error saving ${selectedBroker} credentials:`, error);
       setCredentialsError(`Failed to save credentials: ${error.message}`);
@@ -328,7 +328,7 @@ export default function ChooseBrokerPage() {
       }
     }, 100);
   };
-  
+
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-40">
@@ -362,9 +362,9 @@ export default function ChooseBrokerPage() {
                     <p className="text-sm text-zinc-400">{broker.description}</p>
                   </div>
                 </div>
-                
+
                 {broker.status === 'available' ? (
-                  <button 
+                  <button
                     onClick={() => handleConnect(broker.id)}
                     className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors font-medium text-sm md:text-base"
                     disabled={connecting}
@@ -382,7 +382,7 @@ export default function ChooseBrokerPage() {
                     )}
                   </button>
                 ) : (
-                  <button 
+                  <button
                     className="w-full py-3 bg-zinc-700 cursor-not-allowed rounded-lg font-medium opacity-70 text-sm md:text-base"
                     disabled
                   >
@@ -394,7 +394,7 @@ export default function ChooseBrokerPage() {
           ))}
         </div>
       </main>
-      
+
       {showCredentialsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <motion.div
@@ -407,23 +407,23 @@ export default function ChooseBrokerPage() {
               {selectedBroker === 'dhan' ? 'Connect to Dhan' : 'Connect to Fyers'}
             </h2>
             <p className="text-zinc-400 text-sm mb-6">
-              {selectedBroker === 'dhan' 
-                ? 'Enter your Dhan API credentials to connect your account.' 
+              {selectedBroker === 'dhan'
+                ? 'Enter your Dhan API credentials to connect your account.'
                 : 'Enter your Fyers API credentials to connect your account.'}
             </p>
-            
+
             {credentialsError && (
               <div className="bg-red-900/30 border border-red-800 text-red-200 px-4 py-3 rounded-lg mb-4 text-sm">
                 {credentialsError}
               </div>
             )}
-            
+
             {authError && (
               <div className="bg-red-900/30 border border-red-800 text-red-200 px-4 py-3 rounded-lg mb-4 text-sm">
                 {authError}
               </div>
             )}
-            
+
             <div className="space-y-4 mb-6">
               <div>
                 <label htmlFor="clientId" className="block text-zinc-300 mb-2 text-sm">
@@ -433,12 +433,12 @@ export default function ChooseBrokerPage() {
                   id="clientId"
                   type="text"
                   value={credentials.clientId}
-                  onChange={(e) => setCredentials({...credentials, clientId: e.target.value})}
+                  onChange={(e) => setCredentials({ ...credentials, clientId: e.target.value })}
                   className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder={selectedBroker === 'dhan' ? 'Enter your Client ID' : 'Enter your App ID'}
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="clientSecret" className="block text-zinc-300 mb-2 text-sm">
                   {selectedBroker === 'dhan' ? 'Client Secret' : 'API Secret'}
@@ -447,13 +447,13 @@ export default function ChooseBrokerPage() {
                   id="clientSecret"
                   type="password"
                   value={credentials.clientSecret}
-                  onChange={(e) => setCredentials({...credentials, clientSecret: e.target.value})}
+                  onChange={(e) => setCredentials({ ...credentials, clientSecret: e.target.value })}
                   className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder={selectedBroker === 'dhan' ? 'Enter your Client Secret' : 'Enter your API Secret'}
                 />
               </div>
             </div>
-            
+
             <div className="flex items-center justify-end space-x-3">
               <button
                 onClick={() => setShowCredentialsModal(false)}
@@ -461,7 +461,7 @@ export default function ChooseBrokerPage() {
               >
                 Cancel
               </button>
-              
+
               <button
                 onClick={handleCredentialSubmit}
                 className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition-colors"
