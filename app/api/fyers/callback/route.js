@@ -4,28 +4,29 @@ import { supabase } from '../../../../src/utils/supabase';
 // Helper function for getting access token directly without the Fyers package
 async function getAccessTokenDirect(authCode, appId, apiSecret) {
   console.log('Getting access token for auth code:', authCode);
+  
   try {
+    // The API expects client_id, not appId, and secret_key, not apiSecret
     const response = await fetch('https://api.fyers.in/api/v2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        grant_type: 'authorization_code',
         client_id: appId,
         secret_key: apiSecret,
-        auth_code: authCode,
-        grant_type: 'authorization_code'
+        auth_code: authCode
       })
     });
     
     const data = await response.json();
+    console.log('Token API response:', data);
     
-    if (!response.ok) {
-      console.error('Token API error response:', data);
-      throw new Error(`Failed to get access token: ${response.statusText} - ${JSON.stringify(data)}`);
+    if (!response.ok || data.s !== 'ok') {
+      throw new Error(`Failed to get access token: ${data.message || response.statusText}`);
     }
     
-    console.log('Token response received:', data);
     return data.access_token;
   } catch (error) {
     console.error('Error getting access token:', error);
@@ -74,7 +75,7 @@ export async function GET(request) {
   try {
     // Get the authorization code and state from the URL query params
     const searchParams = new URL(request.url).searchParams;
-    const authCode = searchParams.get('code');
+    const authCode = searchParams.get('auth_code') || searchParams.get('code');
     const returnedState = searchParams.get('state');
     
     console.log('Auth code:', authCode);
@@ -92,13 +93,14 @@ export async function GET(request) {
     
     if (!session) {
       console.error('No active session found');
-      return NextResponse.redirect(new URL('/login?error=not_authenticated', request.url));
+      // If user is not authenticated, we'll redirect to auth page
+      return NextResponse.redirect(new URL('/auth?error=session_expired', request.url));
     }
     
     const userId = session.user.id;
     console.log('User ID:', userId);
     
-    // Get the user's Fyers credentials including the stored state from the database
+    // Get the user's Fyers credentials from the database
     const { data: credentials, error: credentialsError } = await supabase
       .from('fyers_credentials')
       .select('app_id, api_secret, auth_state')
@@ -112,19 +114,17 @@ export async function GET(request) {
       );
     }
     
-    console.log('Retrieved credentials with auth state:', credentials.auth_state);
+    console.log('Retrieved credentials:', credentials.app_id);
     
-    // Verify that the returned state matches the stored state
-    if (returnedState !== credentials.auth_state || !credentials.auth_state) {
-      console.error('State parameter mismatch or missing');
-      console.error('Returned state:', returnedState);
-      console.error('Stored state:', credentials.auth_state);
+    // Verify state parameter if it exists
+    if (returnedState && credentials.auth_state && returnedState !== credentials.auth_state) {
+      console.error('State parameter mismatch');
       return NextResponse.redirect(
         new URL('/dashboard/choose-broker?error=invalid_state_parameter', request.url)
       );
     }
     
-    // Exchange the auth code for an access token using direct API call
+    // Exchange the auth code for an access token
     try {
       const accessToken = await getAccessTokenDirect(
         authCode, 
@@ -135,17 +135,15 @@ export async function GET(request) {
       // Save the access token to the database
       await saveAccessTokenDirect(userId, accessToken);
       
-      console.log('Authentication completed successfully');
-      
       // Redirect to the dashboard with success message
       return NextResponse.redirect(
         new URL('/dashboard?fyers_connected=true', request.url)
       );
       
     } catch (tokenError) {
-      console.error('Error getting Fyers access token:', tokenError);
+      console.error('Error getting or saving Fyers access token:', tokenError);
       return NextResponse.redirect(
-        new URL(`/dashboard/choose-broker?error=${encodeURIComponent('Failed to authenticate with Fyers: ' + tokenError.message)}`, request.url)
+        new URL(`/dashboard/choose-broker?error=${encodeURIComponent(tokenError.message)}`, request.url)
       );
     }
     

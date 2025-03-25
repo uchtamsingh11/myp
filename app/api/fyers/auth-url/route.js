@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '../../../../src/utils/supabase';
 import crypto from 'crypto';
 
-// For debugging - this should match exactly what's registered in Fyers API developer dashboard
+// For consistency, ensure this exactly matches what's registered in Fyers API dashboard
 const REDIRECT_URI = 'https://www.algoz.tech/api/fyers/callback';
 
 export async function POST(request) {
@@ -40,14 +40,14 @@ export async function POST(request) {
         
       if (updateError) {
         console.error('Error saving auth state:', updateError);
-        // We'll continue anyway as this is not critical for generating the auth URL
+        // Continue anyway as this is not critical for generating the auth URL
       }
     } else {
       console.log('No session found, will not save state in database');
     }
     
-    // Generate the authorization URL with properly encoded parameters
-    // Based on Fyers API docs: https://myapi.fyers.in/docsv3
+    // Generate the authorization URL based on Fyers API documentation
+    // The correct parameter names are important: client_id, redirect_uri, response_type, state
     const authUrl = `https://api.fyers.in/api/v2/generate-authcode?` +
       `client_id=${encodeURIComponent(appId)}` +
       `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +

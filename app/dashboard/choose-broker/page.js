@@ -84,66 +84,68 @@ export default function ChooseBrokerPage() {
       console.log(`Submitting ${selectedBroker} credentials`);
       
       if (selectedBroker === 'fyers') {
-        // For Fyers, we need to follow the proper authentication flow
-        try {
-          // Step 1: Save the credentials first (if user is authenticated)
-          const { data: { session } } = await supabase.auth.getSession();
+        // For Fyers, we follow a two-step process:
+        // 1. Save credentials to database (if user is logged in)
+        // 2. Generate auth URL and redirect user to Fyers login
+
+        // Step 1: Save the credentials first (if user is authenticated)
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          const userId = session.user.id;
+          console.log('User authenticated, saving credentials');
           
-          if (session) {
-            const userId = session.user.id;
-            console.log('User authenticated, saving credentials');
-            
-            // Check if the user already has Fyers credentials
-            const { data: existingCredentials, error: fetchError } = await supabase
+          // Check if user already has Fyers credentials
+          const { data: existingCredentials } = await supabase
+            .from('fyers_credentials')
+            .select('id')
+            .eq('user_id', userId);
+          
+          // Update or insert credentials
+          if (existingCredentials && existingCredentials.length > 0) {
+            const { error } = await supabase
               .from('fyers_credentials')
-              .select('id')
+              .update({
+                app_id: credentials.clientId,
+                api_secret: credentials.clientSecret,
+                updated_at: new Date().toISOString()
+              })
               .eq('user_id', userId);
-            
-            if (fetchError) {
-              console.error('Error fetching existing credentials:', fetchError);
-              // Continue anyway - we'll generate the auth URL regardless
-            }
-            
-            // If credentials exist, update them; otherwise create new ones
-            let storeError;
-            
-            if (existingCredentials && existingCredentials.length > 0) {
-              console.log('Updating existing Fyers credentials');
-              const { error } = await supabase
-                .from('fyers_credentials')
-                .update({
-                  app_id: credentials.clientId,
-                  api_secret: credentials.clientSecret,
-                  updated_at: new Date().toISOString()
-                })
-                .eq('user_id', userId);
-                
-              storeError = error;
-            } else {
-              console.log('Creating new Fyers credentials');
-              const { error } = await supabase
-                .from('fyers_credentials')
-                .insert({
-                  user_id: userId,
-                  app_id: credentials.clientId,
-                  api_secret: credentials.clientSecret,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                });
-                
-              storeError = error;
-            }
-            
-            if (storeError) {
-              console.error('Error storing Fyers credentials:', storeError);
-              // Continue anyway - we'll generate the auth URL regardless
+              
+            if (error) {
+              console.error('Error updating credentials:', error);
+              setCredentialsError('Failed to update credentials');
+              setConnecting(false);
+              return;
             }
           } else {
-            console.log('User not authenticated, proceeding with auth URL generation only');
+            const { error } = await supabase
+              .from('fyers_credentials')
+              .insert({
+                user_id: userId,
+                app_id: credentials.clientId,
+                api_secret: credentials.clientSecret,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+              
+            if (error) {
+              console.error('Error inserting credentials:', error);
+              setCredentialsError('Failed to save credentials');
+              setConnecting(false);
+              return;
+            }
           }
           
-          // Step 2: Generate authorization URL regardless of whether user is authenticated
-          console.log('Initiating Fyers authentication flow');
+          console.log('Credentials saved successfully');
+        } else {
+          console.log('User not logged in, skipping credential save');
+          // We'll continue with auth URL generation anyway
+        }
+        
+        // Step 2: Generate auth URL and redirect to Fyers login
+        try {
+          console.log('Generating Fyers authentication URL');
           const response = await fetch('/api/fyers/auth-url', {
             method: 'POST',
             headers: {
@@ -157,21 +159,18 @@ export default function ChooseBrokerPage() {
           const data = await response.json();
           
           if (!response.ok) {
-            console.error('Failed to get auth URL:', data);
             throw new Error(data.error || 'Failed to generate authorization URL');
           }
           
-          // Step 3: Redirect to Fyers login page
-          console.log('Received auth URL:', data.authUrl);
+          console.log('Auth URL generated:', data.authUrl);
           console.log('Redirecting to Fyers authorization page...');
           
+          // Redirect to Fyers login page
           window.location.href = data.authUrl;
-          return;
         } catch (error) {
-          console.error('Error initiating Fyers authentication:', error);
-          setCredentialsError(`Failed to initiate Fyers authentication: ${error.message}`);
+          console.error('Error generating auth URL:', error);
+          setCredentialsError('Failed to start authentication: ' + error.message);
           setConnecting(false);
-          return;
         }
       } else if (selectedBroker === 'dhan') {
         // Get current user
