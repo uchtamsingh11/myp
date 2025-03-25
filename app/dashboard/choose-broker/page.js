@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../src/utils/supabase';
@@ -18,6 +18,8 @@ export default function ChooseBrokerPage() {
   const [credentialsError, setCredentialsError] = useState(null);
   const [authError, setAuthError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [preservedAuthCode, setPreservedAuthCode] = useState(null);
+  const [needApiSecret, setNeedApiSecret] = useState(false);
   
   const brokers = [
     {
@@ -50,12 +52,36 @@ export default function ChooseBrokerPage() {
     }
   ];
   
+  useEffect(() => {
+    const checkUrlParams = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const authCode = urlParams.get('authCode');
+      const appId = urlParams.get('appId');
+      const needSecret = urlParams.get('needSecret');
+      
+      if (authCode) {
+        console.log('Found auth code in URL:', authCode);
+        setPreservedAuthCode(authCode);
+        
+        if (appId) {
+          console.log('Found app ID in URL:', appId);
+          setCredentials(prev => ({ ...prev, clientId: appId }));
+        }
+        
+        if (needSecret === 'true') {
+          console.log('User needs to provide API secret to complete flow');
+          setNeedApiSecret(true);
+        }
+      }
+    };
+    
+    checkUrlParams();
+  }, []);
+
   const handleConnect = async (brokerId) => {
     setSelectedBroker(brokerId);
     
-    // Show credentials modal for Dhan or Fyers
     if (brokerId === 'dhan' || brokerId === 'fyers') {
-      // Reset credentials when opening modal
       setCredentials({
         clientId: '',
         clientSecret: ''
@@ -64,17 +90,14 @@ export default function ChooseBrokerPage() {
       return;
     }
     
-    // For other brokers (not implemented yet)
     alert(`Integration with ${brokerId} is coming soon!`);
   };
   
-  // Handle credential submission for broker connection
   const handleCredentialSubmit = async () => {
     try {
       setConnecting(true);
       setCredentialsError(null);
       
-      // Validate credentials
       if (!credentials.clientId.trim() || !credentials.clientSecret.trim()) {
         setCredentialsError('Both fields are required');
         setConnecting(false);
@@ -84,24 +107,77 @@ export default function ChooseBrokerPage() {
       console.log(`Submitting ${selectedBroker} credentials`);
       
       if (selectedBroker === 'fyers') {
-        // For Fyers, we follow a two-step process:
-        // 1. Save credentials to database (if user is logged in)
-        // 2. Generate auth URL and redirect user to Fyers login
-
-        // Step 1: Save the credentials first (if user is authenticated)
+        if (preservedAuthCode && needApiSecret) {
+          console.log('Completing auth flow with preserved auth code:', preservedAuthCode);
+          
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+              setCredentialsError('You must be logged in to complete this process');
+              setConnecting(false);
+              return;
+            }
+            
+            const userId = session.user.id;
+            
+            const { error: credentialError } = await supabase
+              .from('fyers_credentials')
+              .upsert({
+                user_id: userId,
+                app_id: credentials.clientId,
+                api_secret: credentials.clientSecret,
+                updated_at: new Date().toISOString()
+              }, {
+                onConflict: 'user_id'
+              });
+              
+            if (credentialError) {
+              console.error('Error saving credentials:', credentialError);
+              setCredentialsError('Failed to save credentials');
+              setConnecting(false);
+              return;
+            }
+            
+            const response = await fetch('/api/fyers/token-exchange', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                authCode: preservedAuthCode,
+                appId: credentials.clientId,
+                apiSecret: credentials.clientSecret
+              })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+              throw new Error(data.error || 'Failed to exchange token');
+            }
+            
+            router.push('/dashboard?fyers_connected=true');
+            return;
+          } catch (error) {
+            console.error('Error completing auth flow:', error);
+            setCredentialsError('Failed to complete authentication: ' + error.message);
+            setConnecting(false);
+            return;
+          }
+        }
+        
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
           const userId = session.user.id;
           console.log('User authenticated, saving credentials');
           
-          // Check if user already has Fyers credentials
           const { data: existingCredentials } = await supabase
             .from('fyers_credentials')
             .select('id')
             .eq('user_id', userId);
           
-          // Update or insert credentials
           if (existingCredentials && existingCredentials.length > 0) {
             const { error } = await supabase
               .from('fyers_credentials')
@@ -140,10 +216,8 @@ export default function ChooseBrokerPage() {
           console.log('Credentials saved successfully');
         } else {
           console.log('User not logged in, skipping credential save');
-          // We'll continue with auth URL generation anyway
         }
         
-        // Step 2: Generate auth URL and redirect to Fyers login
         try {
           console.log('Generating Fyers authentication URL');
           const response = await fetch('/api/fyers/auth-url', {
@@ -165,7 +239,6 @@ export default function ChooseBrokerPage() {
           console.log('Auth URL generated:', data.authUrl);
           console.log('Redirecting to Fyers authorization page...');
           
-          // Redirect to Fyers login page
           window.location.href = data.authUrl;
         } catch (error) {
           console.error('Error generating auth URL:', error);
@@ -173,7 +246,6 @@ export default function ChooseBrokerPage() {
           setConnecting(false);
         }
       } else if (selectedBroker === 'dhan') {
-        // Get current user
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
@@ -182,7 +254,6 @@ export default function ChooseBrokerPage() {
           return;
         }
         
-        // First check if the user already has Dhan credentials
         const { data: existingCredentials } = await supabase
           .from('dhan_credentials')
           .select('id')
@@ -192,7 +263,6 @@ export default function ChooseBrokerPage() {
         let storeError;
         
         if (existingCredentials) {
-          // Update existing credentials
           const { error } = await supabase
             .from('dhan_credentials')
             .update({
@@ -203,7 +273,6 @@ export default function ChooseBrokerPage() {
             
           storeError = error;
         } else {
-          // Insert new credentials
           const { error } = await supabase
             .from('dhan_credentials')
             .insert({
@@ -224,7 +293,6 @@ export default function ChooseBrokerPage() {
         
         console.log('Dhan credentials saved successfully');
         
-        // Redirect to broker auth page
         router.push('/dashboard');
       }
       
@@ -236,11 +304,8 @@ export default function ChooseBrokerPage() {
   };
 
   const handleBack = () => {
-    // Navigate back to dashboard and activate Broker Auth
     router.push('/dashboard');
-    // Set a small timeout to ensure navigation completes before activating Broker Auth
     setTimeout(() => {
-      // This is a simple way to communicate with parent - in production you might want to use a state management solution
       if (typeof window !== 'undefined' && window.activateDashboardSection) {
         window.activateDashboardSection('Broker Auth');
       }
@@ -249,7 +314,6 @@ export default function ChooseBrokerPage() {
   
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
       <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-40">
         <div className="container-custom mx-auto py-4 px-4 md:px-6 flex items-center">
           <button onClick={handleBack} className="mr-4 text-zinc-400 hover:text-white p-2 rounded-lg hover:bg-zinc-800/50 transition-colors">
@@ -261,7 +325,6 @@ export default function ChooseBrokerPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container-custom mx-auto p-4 md:p-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {brokers.map((broker, index) => (
@@ -275,7 +338,6 @@ export default function ChooseBrokerPage() {
               <div className="p-5 md:p-6">
                 <div className="flex items-center mb-5">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-zinc-700 flex items-center justify-center">
-                    {/* Fallback logo with first letter of broker name */}
                     <span className="text-lg md:text-xl font-bold">{broker.name.charAt(0)}</span>
                   </div>
                   <div className="ml-4">
@@ -316,7 +378,6 @@ export default function ChooseBrokerPage() {
         </div>
       </main>
       
-      {/* Credentials Modal */}
       {showCredentialsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <motion.div

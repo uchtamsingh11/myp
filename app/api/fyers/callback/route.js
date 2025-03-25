@@ -88,63 +88,109 @@ export async function GET(request) {
       );
     }
     
-    // Get the current user
+    // Check cookies for state and appId
+    const cookieState = request.cookies.get('fyers_auth_state')?.value;
+    const cookieAppId = request.cookies.get('fyers_app_id')?.value;
+    
+    console.log('Cookie state:', cookieState);
+    console.log('Cookie app ID:', cookieAppId);
+    
+    // First verify state parameter from cookies
+    if (!cookieState || cookieState !== returnedState) {
+      console.error('State parameter cookie mismatch or missing');
+      return NextResponse.redirect(
+        new URL('/dashboard/choose-broker?error=invalid_state', request.url)
+      );
+    }
+    
+    // Get the current user's session
     const { data: { session } } = await supabase.auth.getSession();
     
-    if (!session) {
-      console.error('No active session found');
-      // If user is not authenticated, we'll redirect to auth page
-      return NextResponse.redirect(new URL('/auth?error=session_expired', request.url));
-    }
-    
-    const userId = session.user.id;
-    console.log('User ID:', userId);
-    
-    // Get the user's Fyers credentials from the database
-    const { data: credentials, error: credentialsError } = await supabase
-      .from('fyers_credentials')
-      .select('app_id, api_secret, auth_state')
-      .eq('user_id', userId)
-      .single();
-    
-    if (credentialsError || !credentials) {
-      console.error('Error fetching Fyers credentials:', credentialsError);
-      return NextResponse.redirect(
-        new URL('/dashboard/choose-broker?error=credentials_not_found', request.url)
-      );
-    }
-    
-    console.log('Retrieved credentials:', credentials.app_id);
-    
-    // Verify state parameter if it exists
-    if (returnedState && credentials.auth_state && returnedState !== credentials.auth_state) {
-      console.error('State parameter mismatch');
-      return NextResponse.redirect(
-        new URL('/dashboard/choose-broker?error=invalid_state_parameter', request.url)
-      );
-    }
-    
-    // Exchange the auth code for an access token
-    try {
-      const accessToken = await getAccessTokenDirect(
-        authCode, 
-        credentials.app_id, 
-        credentials.api_secret
+    if (session) {
+      // User is authenticated - store token in database
+      const userId = session.user.id;
+      console.log('User ID:', userId);
+      
+      // Get the user's Fyers credentials from the database
+      const { data: credentials, error: credentialsError } = await supabase
+        .from('fyers_credentials')
+        .select('app_id, api_secret, auth_state')
+        .eq('user_id', userId)
+        .single();
+      
+      if (credentialsError || !credentials) {
+        console.error('Error fetching Fyers credentials:', credentialsError);
+        
+        // If we have app ID from cookie but no credentials in DB, create them
+        if (cookieAppId) {
+          console.log('Using app ID from cookie:', cookieAppId);
+          
+          // We need to prompt user for API secret since we don't have it
+          const response = NextResponse.redirect(
+            new URL(`/dashboard/choose-broker?appId=${cookieAppId}&needSecret=true&authCode=${authCode}`, request.url)
+          );
+          
+          // Clear the cookies since we've processed them
+          response.cookies.delete('fyers_auth_state');
+          response.cookies.delete('fyers_app_id');
+          
+          return response;
+        }
+        
+        return NextResponse.redirect(
+          new URL('/dashboard/choose-broker?error=credentials_not_found', request.url)
+        );
+      }
+      
+      console.log('Retrieved credentials from DB:', credentials.app_id);
+      
+      // Double check state parameter from database too if present
+      if (credentials.auth_state && credentials.auth_state !== returnedState) {
+        console.error('State parameter DB mismatch');
+        
+        // We'll still proceed if cookie state matched, but log the inconsistency
+        console.warn('Cookie state matched but DB state mismatched - proceeding anyway');
+      }
+      
+      // Exchange the auth code for an access token
+      try {
+        const accessToken = await getAccessTokenDirect(
+          authCode, 
+          credentials.app_id, 
+          credentials.api_secret
+        );
+        
+        // Save the access token to the database
+        await saveAccessTokenDirect(userId, accessToken);
+        
+        // Redirect to the dashboard with success message
+        const response = NextResponse.redirect(
+          new URL('/dashboard?fyers_connected=true', request.url)
+        );
+        
+        // Clear the cookies since we've processed them
+        response.cookies.delete('fyers_auth_state');
+        response.cookies.delete('fyers_app_id');
+        
+        return response;
+        
+      } catch (tokenError) {
+        console.error('Error getting or saving Fyers access token:', tokenError);
+        return NextResponse.redirect(
+          new URL(`/dashboard/choose-broker?error=${encodeURIComponent(tokenError.message)}`, request.url)
+        );
+      }
+    } else {
+      // No user session - direct to auth page with preserved auth code
+      console.log('No session found, redirecting to authentication with preserved auth code');
+      
+      // We need to save the auth code and app ID for after authentication
+      const response = NextResponse.redirect(
+        new URL(`/auth?requiresAuth=true&source=fyers_callback&authCode=${authCode}`, request.url)
       );
       
-      // Save the access token to the database
-      await saveAccessTokenDirect(userId, accessToken);
-      
-      // Redirect to the dashboard with success message
-      return NextResponse.redirect(
-        new URL('/dashboard?fyers_connected=true', request.url)
-      );
-      
-    } catch (tokenError) {
-      console.error('Error getting or saving Fyers access token:', tokenError);
-      return NextResponse.redirect(
-        new URL(`/dashboard/choose-broker?error=${encodeURIComponent(tokenError.message)}`, request.url)
-      );
+      // Keep the cookies for later use
+      return response;
     }
     
   } catch (error) {

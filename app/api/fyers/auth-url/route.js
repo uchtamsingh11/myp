@@ -25,7 +25,32 @@ export async function POST(request) {
     const state = crypto.randomBytes(16).toString('hex');
     console.log('Generated state:', state);
     
-    // Store the state temporarily in the session - we'll validate it later in the callback
+    // We'll store this state in a cookie for verification later
+    // This allows the flow to work even if the user isn't authenticated
+    const response = NextResponse.json({ 
+      authUrl: `https://api.fyers.in/api/v2/generate-authcode?` +
+        `client_id=${encodeURIComponent(appId)}` +
+        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        `&response_type=code` +
+        `&state=${encodeURIComponent(state)}`
+    });
+    
+    // Set a cookie with the state and appId for the callback to use
+    response.cookies.set('fyers_auth_state', state, { 
+      httpOnly: true,
+      maxAge: 60 * 15, // 15 minutes
+      path: '/'
+    });
+    
+    response.cookies.set('fyers_app_id', appId, {
+      httpOnly: true,
+      maxAge: 60 * 15, // 15 minutes
+      path: '/'
+    });
+    
+    console.log('Auth URL generated and state stored in cookie');
+    
+    // Try to also store in DB if a session exists
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session) {
@@ -39,24 +64,14 @@ export async function POST(request) {
         .eq('user_id', userId);
         
       if (updateError) {
-        console.error('Error saving auth state:', updateError);
-        // Continue anyway as this is not critical for generating the auth URL
+        console.error('Error saving auth state to DB:', updateError);
+        // Continue anyway as we're using cookies now
       }
     } else {
-      console.log('No session found, will not save state in database');
+      console.log('No session found, using cookie-based state only');
     }
     
-    // Generate the authorization URL based on Fyers API documentation
-    // The correct parameter names are important: client_id, redirect_uri, response_type, state
-    const authUrl = `https://api.fyers.in/api/v2/generate-authcode?` +
-      `client_id=${encodeURIComponent(appId)}` +
-      `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-      `&response_type=code` +
-      `&state=${encodeURIComponent(state)}`;
-    
-    console.log('Generated auth URL:', authUrl);
-    
-    return NextResponse.json({ authUrl });
+    return response;
   } catch (error) {
     console.error('Error generating auth URL:', error);
     return NextResponse.json(
