@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../../src/utils/supabase';
 
+// Explicitly mark this route as dynamic to suppress build warnings
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   try {
     // Parse the request body

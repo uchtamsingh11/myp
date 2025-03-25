@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { supabase } from '../../../../src/utils/supabase';
 import crypto from 'crypto';
 
+// Explicitly mark this route as dynamic to suppress build warnings
+export const dynamic = 'force-dynamic';
+
 // For consistency, ensure this exactly matches what's registered in Fyers API dashboard
 const REDIRECT_URI = 'https://www.algoz.tech/api/fyers/callback';
 

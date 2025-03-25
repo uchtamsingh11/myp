@@ -56,10 +56,54 @@ const AuthPage = () => {
         // Remove query parameters from URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+      
+      // Check if this is a Fyers callback continuation
+      const requiresAuth = params.get('requiresAuth');
+      const source = params.get('source');
+      const authCode = params.get('authCode');
+      
+      if (requiresAuth === 'true' && source === 'fyers_callback' && authCode) {
+        console.log('Detected Fyers callback continuation, will resume after login');
+        // We'll continue the flow after successful login
+      }
     };
     
     checkEmailVerification();
   }, []);
+
+  // Handle successful authentication
+  const handleAuthSuccess = async (session) => {
+    try {
+      console.log('Authentication successful');
+      
+      // Get the user's profile data
+      const profileData = await fetchUserProfile(session.user.id);
+      
+      if (profileData) {
+        console.log('User profile data:', profileData);
+      }
+      
+      // Check if we need to continue the Fyers flow
+      const params = new URLSearchParams(window.location.search);
+      const requiresAuth = params.get('requiresAuth');
+      const source = params.get('source');
+      const authCode = params.get('authCode');
+      
+      if (requiresAuth === 'true' && source === 'fyers_callback' && authCode) {
+        console.log('Continuing Fyers auth flow after successful login');
+        
+        // Redirect to choose-broker with the auth code for continuation
+        router.push(`/dashboard/choose-broker?authCode=${authCode}&needSecret=true`);
+        return;
+      }
+      
+      // For normal login, redirect to dashboard
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error in handleAuthSuccess:', error);
+      toast.error('An unexpected error occurred');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,9 +113,69 @@ const AuthPage = () => {
     }));
   };
 
-  // Check admin credentials
-  const ADMIN_EMAIL = 'uchtamsingh@gmail.com';
-  const ADMIN_PASSWORD = 'Zuari@11';
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all required fields');
+      return;
+    }
+    
+    // Check if the user is trying to log in as admin
+    const ADMIN_EMAIL = 'uchtamsingh@gmail.com';
+    const ADMIN_PASSWORD = 'Zuari@11';
+    const isAdminLogin = formData.email === ADMIN_EMAIL && formData.password === ADMIN_PASSWORD;
+    
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      if (error) throw error;
+      
+      // Fetch user profile data
+      const profileData = await fetchUserProfile(data.user.id);
+      
+      // Store user data in localStorage for easy access
+      if (profileData) {
+        localStorage.setItem('userProfile', JSON.stringify(profileData));
+      }
+      
+      // If admin login, notify user
+      if (isAdminLogin) {
+        toast.success('Admin login successful! Redirecting to admin dashboard...');
+        // Store admin status in localStorage
+        localStorage.setItem('isAdmin', 'true');
+      } else {
+        // Show regular success notification
+        toast.success('Login successful! Redirecting to dashboard...');
+        // Clear admin status if not admin
+        localStorage.removeItem('isAdmin');
+      }
+      
+      setLoading(false);
+      
+      // Call the handleAuthSuccess function to handle redirects
+      await handleAuthSuccess(data.session);
+      
+    } catch (error) {
+      setLoading(false);
+      
+      if (error.message.includes('Invalid login credentials')) {
+        toast.error('Incorrect email or password. Please try again.');
+      } else if (error.message.includes('Email not confirmed')) {
+        toast.error('Please verify your email before logging in.');
+      } else {
+        toast.error(error.message || 'Error signing in');
+      }
+      
+      console.error('Login error:', error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,43 +184,8 @@ const AuthPage = () => {
 
     try {
       if (isLogin) {
-        // Check if the user is trying to log in as admin
-        const isAdminLogin = formData.email === ADMIN_EMAIL && formData.password === ADMIN_PASSWORD;
-        
-        // Handle login with Supabase
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (error) {
-          // Show error notification for incorrect credentials
-          toast.error('Incorrect email or password. Please try again.');
-          throw error;
-        }
-        
-        // Fetch user profile data
-        const profileData = await fetchUserProfile(data.user.id);
-        
-        // Store user data in localStorage for easy access
-        if (profileData) {
-          localStorage.setItem('userProfile', JSON.stringify(profileData));
-        }
-        
-        // If admin login, notify user
-        if (isAdminLogin) {
-          toast.success('Admin login successful! Redirecting to admin dashboard...');
-          // Store admin status in localStorage
-          localStorage.setItem('isAdmin', 'true');
-        } else {
-          // Show regular success notification
-          toast.success('Login successful! Redirecting to dashboard...');
-          // Clear admin status if not admin
-          localStorage.removeItem('isAdmin');
-        }
-        
-        // Redirect to dashboard
-        router.push('/dashboard');
+        // Call the handleLogin function
+        await handleLogin(e);
       } else {
         // Check if passwords match
         if (formData.password !== formData.confirmPassword) {
