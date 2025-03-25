@@ -173,9 +173,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <ul className="pl-8 mt-1 space-y-1">
                     <li>
                       <a
-                        href="#"
+                        href="/dashboard/admin/users"
                         className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Admin Users') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                        onClick={() => handleMenuItemClick('Admin Users')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleMenuItemClick('Admin Users', '/dashboard/admin/users');
+                        }}
                       >
                         <span>Users</span>
                       </a>

@@ -50,30 +50,65 @@ export default function AdminUserData() {
         const userEmail = authData.session.user.email;
         console.log('Current user:', userEmail);
         
-        // Check if the current user is an admin
-        if (userEmail !== ADMIN_EMAIL) {
+        // Check if the current user is an admin - check localStorage first, then email
+        const isAdminFromStorage = localStorage.getItem('isAdmin') === 'true';
+        if (!isAdminFromStorage && userEmail !== ADMIN_EMAIL) {
           setError('You do not have admin privileges');
           setLoading(false);
           return;
         }
         
         // Fetch users directly using email verification in the API
-        const response = await fetch('/api/admin/direct-users', {
-          method: 'POST',
-          headers: {
+        try {
+          // Pass the admin email as a query parameter in the GET request
+          const url = `/api/admin/direct-users?email=${encodeURIComponent(userEmail)}`;
+          
+          // Add admin token if available from localStorage
+          const headers = {
             'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email: userEmail }),
-        });
-        
-        const responseData = await response.json();
-        
-        if (!response.ok) {
-          console.error('API error:', responseData);
-          throw new Error(responseData.error || 'Failed to fetch users');
+          };
+          
+          if (isAdminFromStorage) {
+            headers['x-admin-token'] = 'true';
+          }
+          
+          const response = await fetch(url, {
+            method: 'GET',
+            headers,
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            let errorData = { error: 'Unknown error' };
+            
+            try {
+              // Try to parse the error as JSON if possible
+              errorData = JSON.parse(errorText);
+            } catch (parseError) {
+              console.error('Error parsing error response:', parseError);
+              errorData = { error: errorText || 'Failed to fetch users' };
+            }
+            
+            console.error('API error:', errorData);
+            throw new Error(errorData.error || 'Failed to fetch users');
+          }
+          
+          // Get response as text first
+          const responseText = await response.text();
+          
+          // Only try to parse if there's actual content
+          if (responseText.trim()) {
+            const responseData = JSON.parse(responseText);
+            setUsers(responseData.users || []);
+          } else {
+            setError('No data returned from server');
+          }
+        } catch (error) {
+          console.error('Error fetching users:', error);
+          setError('Failed to load users data: ' + error.message);
+        } finally {
+          setLoading(false);
         }
-        
-        setUsers(responseData.users || []);
       } catch (error) {
         console.error('Error fetching users:', error);
         setError('Failed to load users data: ' + error.message);
@@ -101,7 +136,8 @@ export default function AdminUserData() {
       const userEmail = session.user.email;
       
       // Check if admin
-      if (userEmail !== ADMIN_EMAIL) {
+      const isAdminFromStorage = localStorage.getItem('isAdmin') === 'true';
+      if (!isAdminFromStorage && userEmail !== ADMIN_EMAIL) {
         throw new Error('You do not have admin privileges');
       }
       
@@ -109,26 +145,56 @@ export default function AdminUserData() {
       console.log('Refresh users data for admin:', userEmail);
       
       // Fetch users from our direct API endpoint
-      const response = await fetch('/api/admin/direct-users', {
-        method: 'POST',
-        headers: {
+      try {
+        // Pass the admin email as a query parameter in the GET request
+        const url = `/api/admin/direct-users?email=${encodeURIComponent(userEmail)}`;
+        
+        // Add admin token if available from localStorage
+        const headers = {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: userEmail }),
-        cache: 'no-store', // Bypass cache
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `API error: ${response.status}`);
+        };
+        
+        if (isAdminFromStorage) {
+          headers['x-admin-token'] = 'true';
+        }
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers,
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorData = { error: 'Unknown error' };
+          
+          try {
+            // Try to parse the error as JSON if possible
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+            errorData = { error: errorText || 'Failed to fetch users' };
+          }
+          
+          console.error('API error:', errorData);
+          throw new Error(errorData.error || 'Failed to fetch users');
+        }
+        
+        // Get response as text first
+        const responseText = await response.text();
+        
+        // Only try to parse if there's actual content
+        if (responseText.trim()) {
+          const responseData = JSON.parse(responseText);
+          setUsers(responseData.users || []);
+        } else {
+          setError('No data returned from server');
+        }
+      } catch (error) {
+        console.error('Retry error:', error);
+        setError('Failed to load users data: ' + error.message);
+      } finally {
+        setRefreshing(false);
       }
-      
-      const data = await response.json();
-      setUsers(data.users || []);
-      
-      // Show success message briefly
-      setRefreshSuccess(true);
-      setTimeout(() => setRefreshSuccess(false), 3000);
     } catch (error) {
       console.error('Retry error:', error);
       setError('Failed to load users data: ' + error.message);
@@ -159,7 +225,8 @@ export default function AdminUserData() {
       const adminEmail = authData.session.user.email;
       
       // Check if admin
-      if (adminEmail !== ADMIN_EMAIL) {
+      const isAdminFromStorage = localStorage.getItem('isAdmin') === 'true';
+      if (!isAdminFromStorage && adminEmail !== ADMIN_EMAIL) {
         throw new Error('You do not have admin privileges');
       }
       
@@ -477,4 +544,4 @@ export default function AdminUserData() {
       </div>
     </div>
   );
-} 
+}

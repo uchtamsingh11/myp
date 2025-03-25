@@ -106,9 +106,13 @@ const AuthPage = () => {
         // If admin login, notify user
         if (isAdminLogin) {
           toast.success('Admin login successful! Redirecting to admin dashboard...');
+          // Store admin status in localStorage
+          localStorage.setItem('isAdmin', 'true');
         } else {
           // Show regular success notification
           toast.success('Login successful! Redirecting to dashboard...');
+          // Clear admin status if not admin
+          localStorage.removeItem('isAdmin');
         }
         
         // Redirect to dashboard

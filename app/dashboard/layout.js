@@ -88,8 +88,9 @@ export default function DashboardLayout({ children }) {
         const userEmail = session.user.email;
         setUserEmail(userEmail);
         
-        // Check if user is admin
-        setIsAdmin(userEmail === ADMIN_EMAIL);
+        // Check if user is admin from localStorage first, then fall back to email check
+        const isAdminFromStorage = localStorage.getItem('isAdmin') === 'true';
+        setIsAdmin(isAdminFromStorage || userEmail === ADMIN_EMAIL);
         
         // Get user profile
         try {

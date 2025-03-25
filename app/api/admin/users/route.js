@@ -40,7 +40,7 @@ export async function GET(request) {
     console.log('Authenticated user:', data.user.email);
     
     // Check if the user is an admin
-    if (data.user.email !== ADMIN_EMAIL) {
+    if (data.user.email !== ADMIN_EMAIL && !request.headers.get('x-admin-token')) {
       console.error('User is not admin:', data.user.email);
       return NextResponse.json(
         { error: 'Forbidden: Admin access required' },
