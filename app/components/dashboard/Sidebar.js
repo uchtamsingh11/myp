@@ -474,7 +474,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
               <button
                 onClick={(e) => {
                   e.preventDefault();
-                  handleMenuItemClick('Pricing');
+                  handleMenuItemClick('Pricing', '/dashboard/pricing');
                 }}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors ${isActive('Pricing') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
               >
