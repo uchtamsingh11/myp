@@ -191,6 +191,7 @@ export default function BrokerAuthPage() {
         const [isModalOpen, setIsModalOpen] = useState(false);
         const [selectedBroker, setSelectedBroker] = useState(null);
         const [credentials, setCredentials] = useState({});
+        const [accountLabel, setAccountLabel] = useState('Primary Account');
         const [savingCredentials, setSavingCredentials] = useState(false);
         const [removingBroker, setRemovingBroker] = useState(null);
         const { user } = useAuth();
@@ -234,7 +235,7 @@ export default function BrokerAuthPage() {
         };
 
         // Handle opening the credentials modal
-        const handleOpenModal = broker => {
+        const handleOpenModal = (broker, existingAccount = null) => {
                 setSelectedBroker(broker);
 
                 // Initialize empty credentials object
@@ -245,23 +246,27 @@ export default function BrokerAuthPage() {
 
                 setCredentials(initialCredentials);
 
-                // Check if credentials already exist for this broker
-                const existingBroker = savedBrokers.find(saved => saved.broker_id === broker.id);
-                if (existingBroker && existingBroker.credentials) {
-                        // For each field in the broker's fields, set the value from existingBroker if available
+                // Set account label if editing an existing account
+                if (existingAccount) {
+                        setAccountLabel(existingAccount.account_label);
+
+                        // For each field in the broker's fields, set the value from existingAccount if available
                         const storedCredentials = {};
                         broker.fields.forEach(field => {
-                                if (existingBroker.credentials[field.name]) {
+                                if (existingAccount.credentials[field.name]) {
                                         // For password fields, don't show the actual value
                                         storedCredentials[field.name] = field.type === 'password'
                                                 ? '' // Don't reveal stored passwords
-                                                : existingBroker.credentials[field.name];
+                                                : existingAccount.credentials[field.name];
                                 } else {
                                         storedCredentials[field.name] = '';
                                 }
                         });
 
                         setCredentials(storedCredentials);
+                } else {
+                        // Reset account label when adding a new account
+                        setAccountLabel('Primary Account');
                 }
 
                 setIsModalOpen(true);
@@ -289,7 +294,8 @@ export default function BrokerAuthPage() {
                         // Call the Supabase function to save the credentials
                         const { data, error } = await supabase.rpc('save_broker_credentials_v2', {
                                 p_broker_id: selectedBroker.id,
-                                p_credentials: credentials
+                                p_credentials: credentials,
+                                p_account_label: accountLabel
                         });
 
                         if (error) {
@@ -323,7 +329,8 @@ export default function BrokerAuthPage() {
 
                         // Call the Supabase function to delete the credentials
                         const { data, error } = await supabase.rpc('delete_broker_credentials_v2', {
-                                p_broker_id: savedBroker.broker_id
+                                p_broker_id: savedBroker.broker_id,
+                                p_account_label: savedBroker.account_label
                         });
 
                         if (error) {
@@ -354,7 +361,8 @@ export default function BrokerAuthPage() {
 
                         // Call the Supabase function to toggle the broker active state
                         const { data, error } = await supabase.rpc('toggle_broker_active_v2', {
-                                p_broker_id: savedBroker.broker_id
+                                p_broker_id: savedBroker.broker_id,
+                                p_account_label: savedBroker.account_label
                         });
 
                         if (error) {
@@ -389,12 +397,29 @@ export default function BrokerAuthPage() {
                 return savedBrokers.some(saved => saved.broker_id === brokerId);
         };
 
+        // Helper function to get the count of accounts for a broker
+        const getBrokerAccountCount = brokerId => {
+                return savedBrokers.filter(saved => saved.broker_id === brokerId).length;
+        };
+
         // Render credential modal fields based on selected broker
         const renderCredentialFields = () => {
                 if (!selectedBroker) return null;
 
                 return (
                         <div className="space-y-4">
+                                <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Account Label
+                                        </label>
+                                        <input
+                                                type="text"
+                                                className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800"
+                                                value={accountLabel}
+                                                onChange={e => setAccountLabel(e.target.value)}
+                                                placeholder="Enter a name for this account"
+                                        />
+                                </div>
                                 {selectedBroker.fields.map(field => (
                                         <div key={field.name} className="mb-4">
                                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -478,6 +503,9 @@ export default function BrokerAuthPage() {
                                                                                                         <div>
                                                                                                                 <h3 className="text-lg font-medium text-white">{brokerDetails.name}</h3>
                                                                                                                 <p className="text-xs text-gray-400">
+                                                                                                                        {broker.account_label || 'Primary Account'}
+                                                                                                                </p>
+                                                                                                                <p className="text-xs text-gray-500">
                                                                                                                         {Object.keys(broker.credentials)[0] && broker.credentials[Object.keys(broker.credentials)[0]]}
                                                                                                                 </p>
                                                                                                         </div>
@@ -500,7 +528,7 @@ export default function BrokerAuthPage() {
                                                                                                                         b => b.id === broker.broker_id
                                                                                                                 );
                                                                                                                 if (originalBroker) {
-                                                                                                                        handleOpenModal(originalBroker);
+                                                                                                                        handleOpenModal(originalBroker, broker);
                                                                                                                 }
                                                                                                         }}
                                                                                                         className="flex-1 py-1 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-md transition-all shadow-md hover:shadow-lg"
@@ -582,12 +610,29 @@ export default function BrokerAuthPage() {
                                                                         {broker.status === 'available' ? (
                                                                                 <div className="mt-3">
                                                                                         {isBrokerSaved(broker.id) ? (
-                                                                                                <button
-                                                                                                        className="w-full py-1.5 px-3 bg-gray-600 text-white text-sm rounded-md opacity-70 cursor-not-allowed"
-                                                                                                        disabled
-                                                                                                >
-                                                                                                        Already Connected
-                                                                                                </button>
+                                                                                                <div className="flex flex-col space-y-2">
+                                                                                                        <div className="text-xs text-gray-400 mb-1">
+                                                                                                                {getBrokerAccountCount(broker.id)} account{getBrokerAccountCount(broker.id) !== 1 ? 's' : ''} connected
+                                                                                                        </div>
+                                                                                                        <button
+                                                                                                                onClick={() => handleOpenModal(broker)}
+                                                                                                                className="w-full py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-md transition-all shadow-md hover:shadow-lg"
+                                                                                                        >
+                                                                                                                Add Another Account
+                                                                                                        </button>
+                                                                                                        <button
+                                                                                                                onClick={() => {
+                                                                                                                        const accounts = savedBrokers.filter(saved => saved.broker_id === broker.id);
+                                                                                                                        if (accounts.length > 0) {
+                                                                                                                                // Show broker accounts in a dropdown or menu
+                                                                                                                                toast.success(`View accounts in the Connected Brokers section`);
+                                                                                                                        }
+                                                                                                                }}
+                                                                                                                className="w-full py-1.5 px-3 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-md transition-all"
+                                                                                                        >
+                                                                                                                Manage Accounts
+                                                                                                        </button>
+                                                                                                </div>
                                                                                         ) : (
                                                                                                 <button
                                                                                                         onClick={() => handleOpenModal(broker)}
