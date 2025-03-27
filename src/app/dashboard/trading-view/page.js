@@ -46,8 +46,8 @@ const TradingViewContent = () => {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">TradingView</h1>
+    <div className="mt-[-3rem]">
+      <h1 className="text-2xl font-bold mb-1">TradingView</h1>
 
       {/* Tab Content */}
       <div className="mt-4">{renderTabContent()}</div>
@@ -60,8 +60,8 @@ export default function TradingViewPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-4">
-          <h1 className="text-2xl font-bold mb-6">TradingView</h1>
+        <div className="mt-[-3rem]">
+          <h1 className="text-2xl font-bold mb-1">TradingView</h1>
           <div className="mt-4 flex justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
           </div>

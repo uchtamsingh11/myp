@@ -9,8 +9,8 @@ export default function BrokerAuth() {
         }, []);
 
         return (
-                <div className="p-4">
-                        <h1 className="text-2xl font-bold mb-6">Broker Authentication</h1>
+                <div className="mt-[-3rem]">
+                        <h1 className="text-2xl font-bold mb-1">Broker Authentication</h1>
                         <BrokerAuthPage />
                 </div>
         );
