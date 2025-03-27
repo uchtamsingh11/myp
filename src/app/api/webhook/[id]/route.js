@@ -24,29 +24,29 @@ export async function GET(request, { params }) {
   try {
     const webhookId = params.id;
     console.log('GET request received for webhook ID:', webhookId);
-    
+
     // Check if the webhook ID is valid (matches a profile)
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('id, full_name')
       .eq('webhook_url', webhookId)
       .maybeSingle();
-      
+
     if (profileError) {
       console.error('Profile lookup error:', profileError);
     }
-    
+
     if (profileData) {
       console.log('Valid webhook ID, found profile:', profileData.id);
     } else {
       console.log('No profile found for webhook ID:', webhookId);
     }
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       message: 'Webhook endpoint is active. Use POST method to submit webhook data.',
       webhookId: params.id,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     return NextResponse.json(
@@ -60,29 +60,29 @@ export async function POST(request, { params }) {
   const requestStartTime = new Date();
   console.log('Webhook call received at:', requestStartTime.toISOString());
   let logId = null;
-  
+
   try {
     console.log('Webhook call received with ID:', params.id);
     const webhookId = params.id;
-    
+
     if (!webhookId) {
       console.error('No webhook ID provided in request');
       return NextResponse.json(
         { error: 'Webhook ID is required' },
-        { 
+        {
           status: 400,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          }
+          },
         }
       );
     }
-    
+
     // Get the payload from the request
     let payload = {};
     const contentType = request.headers.get('content-type') || '';
-    
+
     if (contentType.includes('application/json')) {
       try {
         payload = await request.json();
@@ -116,20 +116,23 @@ export async function POST(request, { params }) {
       try {
         const text = await request.text();
         payload = { raw_content: text, content_type: contentType };
-        console.log('Fallback text payload:', text.substring(0, 200) + (text.length > 200 ? '...' : ''));
+        console.log(
+          'Fallback text payload:',
+          text.substring(0, 200) + (text.length > 200 ? '...' : '')
+        );
       } catch (e) {
         console.error('Failed to read request content:', e);
         payload = { error: 'Unsupported content type', content_type: contentType };
       }
     }
-    
+
     // Log request headers for debugging
     const headers = {};
     request.headers.forEach((value, key) => {
       headers[key] = value;
     });
     console.log('Request headers:', JSON.stringify(headers));
-    
+
     // Find user by webhook_url
     console.log('Looking up profile with webhook_url:', webhookId);
     const { data: profileData, error: profileError } = await supabaseAdmin
@@ -137,18 +140,18 @@ export async function POST(request, { params }) {
       .select('id, full_name')
       .eq('webhook_url', webhookId)
       .maybeSingle();
-    
+
     if (profileError) {
       console.error('Error finding profile with webhook ID:', profileError);
     }
-    
+
     const userId = profileData?.id || null;
     if (userId) {
       console.log('Found profile for user:', userId);
     } else {
       console.log('No matching profile found for webhook ID:', webhookId);
     }
-    
+
     // Process the webhook (in a real app, you'd implement trading logic here)
     // For now, we'll just log the request and return success
     const processResult = {
@@ -161,24 +164,24 @@ export async function POST(request, { params }) {
         status: 'pending',
         message: 'Broker not connected',
         order_id: null,
-        details: {}
-      }
+        details: {},
+      },
     };
-    
+
     // Log the webhook call to the database
     // THIS IS THE IMPORTANT PART
     console.log('Attempting to log webhook call to database...');
-    
+
     // First check if webhook_logs table exists and its structure
     const { data: tableInfo, error: tableError } = await supabaseAdmin
       .from('webhook_logs')
       .select('id')
       .limit(1);
-    
+
     if (tableError) {
       console.error('Error checking webhook_logs table:', tableError);
     }
-    
+
     // Insert the webhook log - with minimal required fields
     // This should work even with strict foreign key constraints
     const { data: insertedLog, error: insertError } = await supabaseAdmin
@@ -190,13 +193,13 @@ export async function POST(request, { params }) {
         payload: payload, // The received body/message/JSON
         created_at: requestStartTime, // The timestamp
         process_result: processResult, // The response
-        processed: true
+        processed: true,
       })
       .select();
-    
+
     if (insertError) {
       console.error('Failed to insert webhook log:', insertError);
-      
+
       // If there was a foreign key error, try again without the user_id
       if (insertError.code === '23503' && userId) {
         console.log('Foreign key violation. Trying again without user_id');
@@ -207,10 +210,10 @@ export async function POST(request, { params }) {
             payload: payload,
             created_at: requestStartTime,
             process_result: processResult,
-            processed: true
+            processed: true,
           })
           .select();
-        
+
         if (retryError) {
           console.error('Failed to insert webhook log (retry):', retryError);
         } else {
@@ -222,7 +225,7 @@ export async function POST(request, { params }) {
       console.log('Successfully inserted webhook log');
       logId = insertedLog?.[0]?.id;
     }
-    
+
     // Return success response
     return NextResponse.json(
       {
@@ -230,51 +233,49 @@ export async function POST(request, { params }) {
         message: 'Webhook received and processed successfully',
         log_id: logId,
         timestamp: new Date().toISOString(),
-        broker_response: processResult.broker_response
+        broker_response: processResult.broker_response,
       },
-      { 
+      {
         status: 200,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        }
+        },
       }
     );
   } catch (error) {
     console.error('Unexpected error in webhook processing:', error);
-    
+
     // Try to log the error
     try {
-      await supabaseAdmin
-        .from('webhook_logs')
-        .insert({
-          webhook_id: params.id || 'unknown',
-          payload: { error: error.message },
-          created_at: requestStartTime,
-          processed: false,
-          process_result: { error: error.message }
-        });
+      await supabaseAdmin.from('webhook_logs').insert({
+        webhook_id: params.id || 'unknown',
+        payload: { error: error.message },
+        created_at: requestStartTime,
+        processed: false,
+        process_result: { error: error.message },
+      });
     } catch (logError) {
       console.error('Failed to log webhook error:', logError);
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Error processing webhook: ' + error.message,
         timestamp: new Date().toISOString(),
         broker_response: {
           status: 'error',
           message: 'Failed to process webhook',
           order_id: null,
-          details: { error: error.message }
-        }
+          details: { error: error.message },
+        },
       },
-      { 
+      {
         status: 500,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        }
+        },
       }
     );
   }

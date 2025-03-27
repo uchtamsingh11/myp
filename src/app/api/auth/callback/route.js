@@ -33,7 +33,10 @@ export async function GET(request) {
         // Handle case where redirectTo might be URL encoded
         try {
           const decodedRedirect = decodeURIComponent(redirectTo);
-          targetUrl = new URL(decodedRedirect.startsWith('/') ? decodedRedirect : `/${decodedRedirect}`, request.url);
+          targetUrl = new URL(
+            decodedRedirect.startsWith('/') ? decodedRedirect : `/${decodedRedirect}`,
+            request.url
+          );
         } catch (e) {
           console.error('Error decoding redirectTo:', e);
           targetUrl = new URL('/dashboard', request.url);
@@ -55,4 +58,4 @@ export async function GET(request) {
       new URL(`/auth?error=${encodeURIComponent(error.message || 'Unknown error')}`, request.url)
     );
   }
-} 
+}

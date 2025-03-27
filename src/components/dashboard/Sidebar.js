@@ -23,7 +23,11 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   const [adminOpen, setAdminOpen] = useState(false);
 
   // State for tracking which menu item is active
-  const [activeItem, setActiveItem] = useState(activeMenuItem || (typeof window !== 'undefined' && sessionStorage.getItem('dashboardActiveMenuItem')) || 'Dashboard');
+  const [activeItem, setActiveItem] = useState(
+    activeMenuItem ||
+      (typeof window !== 'undefined' && sessionStorage.getItem('dashboardActiveMenuItem')) ||
+      'Dashboard'
+  );
 
   // Sync activeItem with the prop when it changes
   useEffect(() => {
@@ -48,38 +52,41 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   }, [activeMenuItem, activeItem]);
 
   // Function to handle menu item click
-  const handleMenuItemClick = useCallback((itemName, route) => {
-    setActiveItem(itemName);
+  const handleMenuItemClick = useCallback(
+    (itemName, route) => {
+      setActiveItem(itemName);
 
-    // Store the active menu item in sessionStorage to preserve it across page refreshes
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('dashboardActiveMenuItem', itemName);
-    }
-
-    // Pass the active item to the parent component
-    if (onMenuItemClick) {
-      onMenuItemClick(itemName);
-    }
-
-    // Navigate to the route if provided
-    if (route) {
-      router.push(route);
-    }
-
-    // Close the sidebar on mobile after clicking a menu item
-    if (window.innerWidth < 768) {
-      const sidebar = document.querySelector('.sidebar-mobile');
-      if (sidebar) {
-        sidebar.classList.add('hidden');
+      // Store the active menu item in sessionStorage to preserve it across page refreshes
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('dashboardActiveMenuItem', itemName);
       }
-    }
-  }, [onMenuItemClick, router]);
+
+      // Pass the active item to the parent component
+      if (onMenuItemClick) {
+        onMenuItemClick(itemName);
+      }
+
+      // Navigate to the route if provided
+      if (route) {
+        router.push(route);
+      }
+
+      // Close the sidebar on mobile after clicking a menu item
+      if (window.innerWidth < 768) {
+        const sidebar = document.querySelector('.sidebar-mobile');
+        if (sidebar) {
+          sidebar.classList.add('hidden');
+        }
+      }
+    },
+    [onMenuItemClick, router]
+  );
 
   // Function to determine if a menu item is active
-  const isActive = (itemName) => activeItem === itemName;
+  const isActive = itemName => activeItem === itemName;
 
   // Function to toggle a menu's open state and close others
-  const toggleMenu = (menuName) => {
+  const toggleMenu = menuName => {
     switch (menuName) {
       case 'Trading View':
         setTradingViewOpen(!tradingViewOpen);
@@ -120,7 +127,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <a
               href="#"
               className={`flex items-center p-2 rounded-lg transition-colors ${isActive('Dashboard') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-              onClick={(e) => {
+              onClick={e => {
                 e.preventDefault();
                 handleMenuItemClick('Dashboard', '/dashboard');
               }}
@@ -134,7 +141,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <a
               href="#"
               className={`flex items-center p-2 rounded-lg transition-colors ${isActive('Broker Auth') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-              onClick={(e) => {
+              onClick={e => {
                 e.preventDefault();
                 handleMenuItemClick('Broker Auth', '/dashboard/broker-auth');
               }}
@@ -152,17 +159,22 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   onClick={() => toggleMenu('Admin')}
                   className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Admin') || isActive('Admin Users') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
                 >
-                  <div className="flex items-center" onClick={(e) => {
-                    e.stopPropagation();
-                    handleMenuItemClick('Admin');
-                    toggleMenu('Admin');
-                  }}>
+                  <div
+                    className="flex items-center"
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleMenuItemClick('Admin');
+                      toggleMenu('Admin');
+                    }}
+                  >
                     <img src="/admin.svg" alt="Admin" className="w-5 h-5 mr-3" />
                     <span>Admin</span>
                   </div>
-                  {adminOpen ?
-                    <ChevronDown className="w-4 h-4" /> :
-                    <ChevronRight className="w-4 h-4" />}
+                  {adminOpen ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
                 </button>
 
                 {adminOpen && (
@@ -171,7 +183,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                       <a
                         href="/dashboard/admin/users"
                         className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Admin Users') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                        onClick={(e) => {
+                        onClick={e => {
                           e.preventDefault();
                           handleMenuItemClick('Admin Users', '/dashboard/admin/users');
                         }}
@@ -191,16 +203,21 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 onClick={() => toggleMenu('Trading View')}
                 className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Trading View') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
               >
-                <div className="flex items-center" onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick('Trading View', '/dashboard/trading-view');
-                }}>
+                <div
+                  className="flex items-center"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Trading View', '/dashboard/trading-view');
+                  }}
+                >
                   <img src="/chart.svg" alt="Trading View" className="w-5 h-5 mr-3" />
                   <span>Trading View</span>
                 </div>
-                {tradingViewOpen ?
-                  <ChevronDown className="w-4 h-4" /> :
-                  <ChevronRight className="w-4 h-4" />}
+                {tradingViewOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
               </button>
 
               {tradingViewOpen && (
@@ -209,9 +226,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="#"
                       className="flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.preventDefault();
-                        handleMenuItemClick('Trading View: Manage', '/dashboard/trading-view?tab=manage');
+                        handleMenuItemClick(
+                          'Trading View: Manage',
+                          '/dashboard/trading-view?tab=manage'
+                        );
                       }}
                     >
                       <span>Manage</span>
@@ -221,9 +241,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="#"
                       className="flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.preventDefault();
-                        handleMenuItemClick('Trading View: Webhook URL', '/dashboard/trading-view?tab=webhook');
+                        handleMenuItemClick(
+                          'Trading View: Webhook URL',
+                          '/dashboard/trading-view?tab=webhook'
+                        );
                       }}
                     >
                       <span>Webhook URL</span>
@@ -233,9 +256,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="#"
                       className="flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.preventDefault();
-                        handleMenuItemClick('Trading View: JSON Generator', '/dashboard/trading-view?tab=json');
+                        handleMenuItemClick(
+                          'Trading View: JSON Generator',
+                          '/dashboard/trading-view?tab=json'
+                        );
                       }}
                     >
                       <span>JSON Generator</span>
@@ -245,9 +271,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="#"
                       className="flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.preventDefault();
-                        handleMenuItemClick('Trading View: Symbol', '/dashboard/trading-view?tab=symbol');
+                        handleMenuItemClick(
+                          'Trading View: Symbol',
+                          '/dashboard/trading-view?tab=symbol'
+                        );
                       }}
                     >
                       <span>Symbol</span>
@@ -257,9 +286,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="#"
                       className="flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.preventDefault();
-                        handleMenuItemClick('Trading View: Trade Logs', '/dashboard/trading-view?tab=logs');
+                        handleMenuItemClick(
+                          'Trading View: Trade Logs',
+                          '/dashboard/trading-view?tab=logs'
+                        );
                       }}
                     >
                       <span>Trade Logs</span>
@@ -275,17 +307,22 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 onClick={() => toggleMenu('Scalping Tool')}
                 className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Scalping Tool') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
               >
-                <div className="flex items-center" onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick('Scalping Tool');
-                  toggleMenu('Scalping Tool');
-                }}>
+                <div
+                  className="flex items-center"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Scalping Tool');
+                    toggleMenu('Scalping Tool');
+                  }}
+                >
                   <img src="/scalping.svg" alt="Scalping Tool" className="w-5 h-5 mr-3" />
                   <span>Scalping Tool</span>
                 </div>
-                {scalpingToolOpen ?
-                  <ChevronDown className="w-4 h-4" /> :
-                  <ChevronRight className="w-4 h-4" />}
+                {scalpingToolOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
               </button>
 
               {scalpingToolOpen && (
@@ -294,7 +331,9 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/scalping-tool"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Scalping Tool Manage') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                      onClick={() => handleMenuItemClick('Scalping Tool Manage', '/dashboard/scalping-tool')}
+                      onClick={() =>
+                        handleMenuItemClick('Scalping Tool Manage', '/dashboard/scalping-tool')
+                      }
                     >
                       <span>Manage</span>
                     </a>
@@ -303,7 +342,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/scalping-tool/scalp-tool"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Scalping Tool Scalp Tool') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                      onClick={() => handleMenuItemClick('Scalping Tool Scalp Tool', '/dashboard/scalping-tool/scalp-tool')}
+                      onClick={() =>
+                        handleMenuItemClick(
+                          'Scalping Tool Scalp Tool',
+                          '/dashboard/scalping-tool/scalp-tool'
+                        )
+                      }
                     >
                       <span>Scalp Tool</span>
                     </a>
@@ -318,17 +362,22 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 onClick={() => toggleMenu('Copy Trading')}
                 className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Copy Trading') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
               >
-                <div className="flex items-center" onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick('Copy Trading');
-                  toggleMenu('Copy Trading');
-                }}>
+                <div
+                  className="flex items-center"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Copy Trading');
+                    toggleMenu('Copy Trading');
+                  }}
+                >
                   <img src="/copy-trading.svg" alt="Copy Trading" className="w-5 h-5 mr-3" />
                   <span>Copy Trading</span>
                 </div>
-                {copyTradingOpen ?
-                  <ChevronDown className="w-4 h-4" /> :
-                  <ChevronRight className="w-4 h-4" />}
+                {copyTradingOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
               </button>
 
               {copyTradingOpen && (
@@ -337,7 +386,9 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/copy-trading"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Copy Trading Manage') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                      onClick={() => handleMenuItemClick('Copy Trading Manage', '/dashboard/copy-trading')}
+                      onClick={() =>
+                        handleMenuItemClick('Copy Trading Manage', '/dashboard/copy-trading')
+                      }
                     >
                       <span>Manage</span>
                     </a>
@@ -346,7 +397,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/copy-trading/strategy"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Copy Trading Strategy') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                      onClick={() => handleMenuItemClick('Copy Trading Strategy', '/dashboard/copy-trading/strategy')}
+                      onClick={() =>
+                        handleMenuItemClick(
+                          'Copy Trading Strategy',
+                          '/dashboard/copy-trading/strategy'
+                        )
+                      }
                     >
                       <span>Strategy</span>
                     </a>
@@ -361,17 +417,22 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 onClick={() => toggleMenu('Strategy')}
                 className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Strategy') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
               >
-                <div className="flex items-center" onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick('Strategy');
-                  toggleMenu('Strategy');
-                }}>
+                <div
+                  className="flex items-center"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Strategy');
+                    toggleMenu('Strategy');
+                  }}
+                >
                   <img src="/strategy.svg" alt="Strategy" className="w-5 h-5 mr-3" />
                   <span>Strategy</span>
                 </div>
-                {strategyOpen ?
-                  <ChevronDown className="w-4 h-4" /> :
-                  <ChevronRight className="w-4 h-4" />}
+                {strategyOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
               </button>
 
               {strategyOpen && (
@@ -380,7 +441,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/strategy/pine-script"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy Pine Script') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                      onClick={() => handleMenuItemClick('Strategy Pine Script', '/dashboard/strategy/pine-script')}
+                      onClick={() =>
+                        handleMenuItemClick(
+                          'Strategy Pine Script',
+                          '/dashboard/strategy/pine-script'
+                        )
+                      }
                     >
                       <span>Pine Script</span>
                     </a>
@@ -413,17 +479,22 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 onClick={() => toggleMenu('Bots')}
                 className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Bots') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
               >
-                <div className="flex items-center" onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick('Bots');
-                  toggleMenu('Bots');
-                }}>
+                <div
+                  className="flex items-center"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Bots');
+                    toggleMenu('Bots');
+                  }}
+                >
                   <img src="/bot.svg" alt="Bots" className="w-5 h-5 mr-3" />
                   <span>Bots</span>
                 </div>
-                {botsOpen ?
-                  <ChevronDown className="w-4 h-4" /> :
-                  <ChevronRight className="w-4 h-4" />}
+                {botsOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
               </button>
 
               {botsOpen && (
@@ -471,7 +542,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
           <li>
             <div className="relative">
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault();
                   handleMenuItemClick('Pricing', '/dashboard/pricing');
                 }}
@@ -491,17 +562,22 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 onClick={() => toggleMenu('FAQ')}
                 className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('FAQ') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
               >
-                <div className="flex items-center" onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick('FAQ');
-                  toggleMenu('FAQ');
-                }}>
+                <div
+                  className="flex items-center"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('FAQ');
+                    toggleMenu('FAQ');
+                  }}
+                >
                   <img src="/faq.svg" alt="FAQ" className="w-5 h-5 mr-3" />
                   <span>FAQ</span>
                 </div>
-                {faqOpen ?
-                  <ChevronDown className="w-4 h-4" /> :
-                  <ChevronRight className="w-4 h-4" />}
+                {faqOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
               </button>
 
               {faqOpen && (
@@ -543,17 +619,22 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 onClick={() => toggleMenu('Support')}
                 className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Support') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
               >
-                <div className="flex items-center" onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick('Support');
-                  toggleMenu('Support');
-                }}>
+                <div
+                  className="flex items-center"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Support');
+                    toggleMenu('Support');
+                  }}
+                >
                   <img src="/support.svg" alt="Support" className="w-5 h-5 mr-3" />
                   <span>Support</span>
                 </div>
-                {supportOpen ?
-                  <ChevronDown className="w-4 h-4" /> :
-                  <ChevronRight className="w-4 h-4" />}
+                {supportOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
               </button>
 
               {supportOpen && (
@@ -562,7 +643,9 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/support/contact-us"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Contact Us') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                      onClick={() => handleMenuItemClick('Support Contact Us', '/dashboard/support/contact-us')}
+                      onClick={() =>
+                        handleMenuItemClick('Support Contact Us', '/dashboard/support/contact-us')
+                      }
                     >
                       <span>Contact Us</span>
                     </a>
@@ -571,7 +654,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/support/submit-ticket"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Submit Ticket') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                      onClick={() => handleMenuItemClick('Support Submit Ticket', '/dashboard/support/submit-ticket')}
+                      onClick={() =>
+                        handleMenuItemClick(
+                          'Support Submit Ticket',
+                          '/dashboard/support/submit-ticket'
+                        )
+                      }
                     >
                       <span>Submit Ticket</span>
                     </a>
@@ -580,7 +668,9 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/support/live-chat"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Live Chat') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
-                      onClick={() => handleMenuItemClick('Support Live Chat', '/dashboard/support/live-chat')}
+                      onClick={() =>
+                        handleMenuItemClick('Support Live Chat', '/dashboard/support/live-chat')
+                      }
                     >
                       <span>Live Chat</span>
                     </a>
@@ -594,7 +684,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <a
               href="#"
               className="flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
-              onClick={(e) => {
+              onClick={e => {
                 e.preventDefault();
                 signOut();
               }}
@@ -612,16 +702,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
     <>
       {/* Desktop Sidebar */}
       <aside className="w-64 md:min-w-[16rem] bg-zinc-900 border-r border-zinc-800 min-h-[calc(100vh-64px)] transition-all duration-300 overflow-y-auto max-h-[calc(100vh-64px)] hidden md:block">
-        <nav className="p-4">
-          {renderSidebarContent()}
-        </nav>
+        <nav className="p-4">{renderSidebarContent()}</nav>
       </aside>
 
       {/* Mobile Sidebar - This is just a placeholder div for the dashboard page to target */}
       <div className="md:hidden">
-        <nav className="p-4">
-          {renderSidebarContent()}
-        </nav>
+        <nav className="p-4">{renderSidebarContent()}</nav>
       </div>
     </>
   );

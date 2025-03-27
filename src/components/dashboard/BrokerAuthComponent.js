@@ -7,8 +7,20 @@ import { useAuth } from '../../contexts/AuthContext';
 
 // Static broker data - only Fyers and Dhan
 const AVAILABLE_BROKERS = [
-  { id: 'fyers', name: 'Fyers', description: 'Online trading and investing platform', status: 'available', logo: '💹' },
-  { id: 'dhan', name: 'Dhan', description: 'Modern broker for option traders', status: 'available', logo: '📉' },
+  {
+    id: 'fyers',
+    name: 'Fyers',
+    description: 'Online trading and investing platform',
+    status: 'available',
+    logo: '💹',
+  },
+  {
+    id: 'dhan',
+    name: 'Dhan',
+    description: 'Modern broker for option traders',
+    status: 'available',
+    logo: '📉',
+  },
 ];
 
 export default function BrokerAuthComponent() {
@@ -69,7 +81,7 @@ export default function BrokerAuthComponent() {
             },
             connected: true,
             created_at: cred.created_at,
-            updated_at: cred.updated_at
+            updated_at: cred.updated_at,
           });
         });
       }
@@ -97,7 +109,7 @@ export default function BrokerAuthComponent() {
             },
             connected: true,
             created_at: cred.created_at,
-            updated_at: cred.updated_at
+            updated_at: cred.updated_at,
           });
         });
       }
@@ -113,7 +125,7 @@ export default function BrokerAuthComponent() {
   };
 
   // Handle opening the credentials modal
-  const handleOpenModal = (broker) => {
+  const handleOpenModal = broker => {
     setSelectedBroker(broker);
 
     // Initialize credentials object based on broker type
@@ -129,12 +141,12 @@ export default function BrokerAuthComponent() {
       if (broker.id === 'fyers') {
         setCredentials({
           app_id: existingBroker.credentials?.app_id || '',
-          secret_id: '' // Don't show the actual secret
+          secret_id: '', // Don't show the actual secret
         });
       } else if (broker.id === 'dhan') {
         setCredentials({
           api_key: existingBroker.credentials?.api_key || '',
-          secret_key: '' // Don't show the actual secret
+          secret_key: '', // Don't show the actual secret
         });
       }
     }
@@ -178,18 +190,16 @@ export default function BrokerAuthComponent() {
             .update({
               app_id: credentials.app_id.trim(),
               api_secret: credentials.secret_id.trim(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .eq('id', existingCreds.id);
         } else {
           // Insert new credentials
-          saveResult = await supabase
-            .from('fyers_credentials')
-            .insert({
-              user_id: user.id,
-              app_id: credentials.app_id.trim(),
-              api_secret: credentials.secret_id.trim()
-            });
+          saveResult = await supabase.from('fyers_credentials').insert({
+            user_id: user.id,
+            app_id: credentials.app_id.trim(),
+            api_secret: credentials.secret_id.trim(),
+          });
         }
       } else if (selectedBroker.id === 'dhan') {
         if (!credentials.api_key || !credentials.secret_key) {
@@ -214,18 +224,16 @@ export default function BrokerAuthComponent() {
             .update({
               api_key: credentials.api_key.trim(),
               api_secret: credentials.secret_key.trim(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .eq('id', existingCreds.id);
         } else {
           // Insert new credentials
-          saveResult = await supabase
-            .from('dhan_credentials')
-            .insert({
-              user_id: user.id,
-              api_key: credentials.api_key.trim(),
-              api_secret: credentials.secret_key.trim()
-            });
+          saveResult = await supabase.from('dhan_credentials').insert({
+            user_id: user.id,
+            api_key: credentials.api_key.trim(),
+            api_secret: credentials.secret_key.trim(),
+          });
         }
       }
 
@@ -245,7 +253,7 @@ export default function BrokerAuthComponent() {
   };
 
   // Handle removing saved broker credentials
-  const handleRemoveBrokerCredentials = async (savedBroker) => {
+  const handleRemoveBrokerCredentials = async savedBroker => {
     try {
       setRemovingBroker(savedBroker.id);
 
@@ -285,7 +293,7 @@ export default function BrokerAuthComponent() {
   };
 
   // Toggle broker active state
-  const toggleBrokerActive = async (savedBroker) => {
+  const toggleBrokerActive = async savedBroker => {
     try {
       if (!user) {
         throw new Error('Authentication required to update broker active state');
@@ -294,9 +302,7 @@ export default function BrokerAuthComponent() {
       // No database update for now, just update the UI
       setSavedBrokers(
         savedBrokers.map(broker =>
-          broker.id === savedBroker.id
-            ? { ...broker, connected: !broker.connected }
-            : broker
+          broker.id === savedBroker.id ? { ...broker, connected: !broker.connected } : broker
         )
       );
     } catch (err) {
@@ -314,7 +320,7 @@ export default function BrokerAuthComponent() {
   };
 
   // Helper function to check if a broker is already saved
-  const isBrokerSaved = (brokerId) => {
+  const isBrokerSaved = brokerId => {
     return savedBrokers.some(saved => saved.broker_id === brokerId);
   };
 
@@ -333,7 +339,7 @@ export default function BrokerAuthComponent() {
               type="text"
               className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800"
               value={credentials.app_id || ''}
-              onChange={(e) => setCredentials({ ...credentials, app_id: e.target.value })}
+              onChange={e => setCredentials({ ...credentials, app_id: e.target.value })}
               placeholder="Enter Fyers App ID"
             />
           </div>
@@ -345,7 +351,7 @@ export default function BrokerAuthComponent() {
               type="password"
               className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800"
               value={credentials.secret_id || ''}
-              onChange={(e) => setCredentials({ ...credentials, secret_id: e.target.value })}
+              onChange={e => setCredentials({ ...credentials, secret_id: e.target.value })}
               placeholder="Enter Fyers Secret ID"
             />
           </div>
@@ -362,7 +368,7 @@ export default function BrokerAuthComponent() {
               type="text"
               className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800"
               value={credentials.api_key || ''}
-              onChange={(e) => setCredentials({ ...credentials, api_key: e.target.value })}
+              onChange={e => setCredentials({ ...credentials, api_key: e.target.value })}
               placeholder="Enter Dhan API Key"
             />
           </div>
@@ -374,7 +380,7 @@ export default function BrokerAuthComponent() {
               type="password"
               className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800"
               value={credentials.secret_key || ''}
-              onChange={(e) => setCredentials({ ...credentials, secret_key: e.target.value })}
+              onChange={e => setCredentials({ ...credentials, secret_key: e.target.value })}
               placeholder="Enter Dhan Secret Key"
             />
           </div>
@@ -388,8 +394,17 @@ export default function BrokerAuthComponent() {
   return (
     <div className="p-4 max-w-6xl mx-auto bg-zinc-950 rounded-lg min-h-[500px]">
       <div className="mb-6 pl-4 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4 mr-2 text-indigo-400"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clipRule="evenodd"
+          />
         </svg>
         <span className="text-indigo-400 font-medium">Broker Authentication</span>
       </div>
@@ -397,10 +412,7 @@ export default function BrokerAuthComponent() {
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
           <p className="text-sm">{error}</p>
-          <button
-            className="text-xs underline mt-1"
-            onClick={() => setError(null)}
-          >
+          <button className="text-xs underline mt-1" onClick={() => setError(null)}>
             Dismiss
           </button>
         </div>
@@ -425,7 +437,7 @@ export default function BrokerAuthComponent() {
                   const brokerDetails = availableBrokers.find(b => b.id === broker.broker_id) || {
                     name: broker.broker_id,
                     logo: '🔌',
-                    description: 'Broker connection'
+                    description: 'Broker connection',
                   };
 
                   return (
@@ -440,7 +452,11 @@ export default function BrokerAuthComponent() {
                           <span className="text-2xl mr-2">{brokerDetails.logo}</span>
                           <div>
                             <h3 className="text-lg font-medium text-white">{brokerDetails.name}</h3>
-                            <p className="text-xs text-gray-400">{broker.credentials?.app_id || broker.credentials?.api_key || 'Connected'}</p>
+                            <p className="text-xs text-gray-400">
+                              {broker.credentials?.app_id ||
+                                broker.credentials?.api_key ||
+                                'Connected'}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center">
@@ -457,7 +473,9 @@ export default function BrokerAuthComponent() {
                         <button
                           onClick={() => {
                             // Find the original broker from available brokers
-                            const originalBroker = availableBrokers.find(b => b.id === broker.broker_id);
+                            const originalBroker = availableBrokers.find(
+                              b => b.id === broker.broker_id
+                            );
                             if (originalBroker) {
                               handleOpenModal(originalBroker);
                             }
@@ -486,7 +504,9 @@ export default function BrokerAuthComponent() {
               >
                 <div className="text-2xl mb-2">🔍</div>
                 <h3 className="text-white text-lg font-medium mb-1">No Brokers Connected</h3>
-                <p className="text-gray-400 text-sm mb-4">You haven't connected any brokers yet. Connect a broker to get started.</p>
+                <p className="text-gray-400 text-sm mb-4">
+                  You haven't connected any brokers yet. Connect a broker to get started.
+                </p>
               </motion.div>
             )}
           </section>
@@ -501,7 +521,7 @@ export default function BrokerAuthComponent() {
                   placeholder="Search brokers..."
                   className="py-1 px-3 pr-8 bg-zinc-800 border border-zinc-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                 />
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -510,7 +530,12 @@ export default function BrokerAuthComponent() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
             </div>
@@ -583,16 +608,23 @@ export default function BrokerAuthComponent() {
                   onClick={() => setIsModalOpen(false)}
                   className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
               </div>
             </div>
 
-            <div className="p-5">
-              {renderCredentialFields()}
-            </div>
+            <div className="p-5">{renderCredentialFields()}</div>
 
             <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex justify-end space-x-3">
               <button

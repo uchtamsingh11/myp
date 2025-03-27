@@ -15,7 +15,10 @@ const Header = () => {
     const getUser = async () => {
       try {
         setLoading(true);
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
         if (error) throw error;
         setUser(user);
       } catch (error) {
@@ -46,7 +49,7 @@ const Header = () => {
     { label: 'Features', href: '/#features' },
     { label: 'How it Works', href: '/#how-it-works' },
     { label: 'Pricing', href: '/#pricing' },
-    { label: 'FAQ', href: '/#faq' }
+    { label: 'FAQ', href: '/#faq' },
   ];
 
   // Get the destination based on auth status
@@ -57,8 +60,9 @@ const Header = () => {
 
   return (
     <motion.header
-      className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-black/90 backdrop-blur-md py-4 shadow-lg' : 'bg-transparent py-6'
-        }`}
+      className={`fixed w-full z-50 transition-all duration-300 ${
+        isScrolled ? 'bg-black/90 backdrop-blur-md py-4 shadow-lg' : 'bg-transparent py-6'
+      }`}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -99,9 +103,7 @@ const Header = () => {
           transition={{ delay: 0.4 }}
         >
           <Link href={getDestination()}>
-            <button className="btn-primary">
-              {user ? 'Dashboard' : 'Get Started'}
-            </button>
+            <button className="btn-primary">{user ? 'Dashboard' : 'Get Started'}</button>
           </Link>
         </motion.div>
 
@@ -113,12 +115,34 @@ const Header = () => {
             aria-label="Toggle mobile menu"
           >
             {mobileMenuOpen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             )}
           </button>
@@ -131,7 +155,7 @@ const Header = () => {
         initial={{ opacity: 0, height: 0 }}
         animate={{
           opacity: mobileMenuOpen ? 1 : 0,
-          height: mobileMenuOpen ? 'auto' : 0
+          height: mobileMenuOpen ? 'auto' : 0,
         }}
         transition={{ duration: 0.3 }}
       >
@@ -148,17 +172,11 @@ const Header = () => {
           ))}
 
           {/* User Email on Mobile */}
-          {user && (
-            <div className="py-2 text-white font-semibold truncate">
-              {user.email}
-            </div>
-          )}
+          {user && <div className="py-2 text-white font-semibold truncate">{user.email}</div>}
 
           <div className="flex flex-col space-y-3 pt-3 border-t border-zinc-800">
             <Link href={getDestination()} onClick={() => setMobileMenuOpen(false)}>
-              <button className="btn-primary w-full">
-                {user ? 'Dashboard' : 'Get Started'}
-              </button>
+              <button className="btn-primary w-full">{user ? 'Dashboard' : 'Get Started'}</button>
             </Link>
           </div>
         </div>

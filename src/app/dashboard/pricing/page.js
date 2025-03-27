@@ -14,7 +14,9 @@ export default function PricingPage() {
     // Fetch user's current subscription
     const fetchSubscription = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           const { data, error } = await supabase
             .from('subscriptions')
@@ -47,8 +49,12 @@ export default function PricingPage() {
           {currentPlan && (
             <div className="container-custom pt-8">
               <div className="bg-gradient-to-r from-indigo-900/40 to-indigo-600/40 border border-indigo-500/30 rounded-lg p-4 mb-8">
-                <h2 className="text-lg font-medium text-white mb-1">Current Plan: <span className="font-bold text-indigo-300">{currentPlan}</span></h2>
-                <p className="text-zinc-300 text-sm">You can upgrade or change your subscription at any time.</p>
+                <h2 className="text-lg font-medium text-white mb-1">
+                  Current Plan: <span className="font-bold text-indigo-300">{currentPlan}</span>
+                </h2>
+                <p className="text-zinc-300 text-sm">
+                  You can upgrade or change your subscription at any time.
+                </p>
               </div>
             </div>
           )}

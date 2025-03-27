@@ -47,7 +47,9 @@ export default function Dashboard() {
           <h2 className="text-xl font-semibold mb-3">Account Overview</h2>
           <div className="flex items-center mb-3">
             <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
-              <span className="text-white font-bold">{profile?.full_name?.charAt(0) || user?.email?.charAt(0) || '?'}</span>
+              <span className="text-white font-bold">
+                {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || '?'}
+              </span>
             </div>
             <div>
               <p className="text-lg font-medium">{profile?.full_name || 'User'}</p>
@@ -89,16 +91,30 @@ export default function Dashboard() {
       {/* Featured Tools */}
       <h2 className="text-xl font-bold mb-4">Featured Tools</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer" onClick={() => router.push('/dashboard/broker-auth')}>
+        <div
+          className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer"
+          onClick={() => router.push('/dashboard/broker-auth')}
+        >
           <div className="mb-4 p-3 rounded-full bg-indigo-500/20 w-fit">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-indigo-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
             </svg>
           </div>
           <h3 className="text-lg font-medium mb-2">Broker Authentication</h3>
           <p className="text-zinc-400 text-sm">Connect your trading accounts securely.</p>
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               router.push('/dashboard/broker-auth');
             }}
@@ -108,16 +124,30 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer" onClick={() => router.push('/dashboard/trading-view/webhook-url')}>
+        <div
+          className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer"
+          onClick={() => router.push('/dashboard/trading-view/webhook-url')}
+        >
           <div className="mb-4 p-3 rounded-full bg-purple-500/20 w-fit">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-purple-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
             </svg>
           </div>
           <h3 className="text-lg font-medium mb-2">Trading View Setup</h3>
           <p className="text-zinc-400 text-sm">Integrate with TradingView for automated signals.</p>
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               router.push('/dashboard/trading-view/webhook-url');
             }}
@@ -127,16 +157,30 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer" onClick={() => router.push('/dashboard/trading-view/json-generator')}>
+        <div
+          className="bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800/80 transition-all cursor-pointer"
+          onClick={() => router.push('/dashboard/trading-view/json-generator')}
+        >
           <div className="mb-4 p-3 rounded-full bg-blue-500/20 w-fit">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+              />
             </svg>
           </div>
           <h3 className="text-lg font-medium mb-2">JSON Generator</h3>
           <p className="text-zinc-400 text-sm">Generate JSON for TradingView signals.</p>
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               router.push('/dashboard/trading-view/json-generator');
             }}

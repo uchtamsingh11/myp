@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import AdminUserData from '../../../components/dashboard/AdminUserData';
+import AdminUserData from '../../../../components/dashboard/AdminUserData';
 
 export default function AdminUsersPage() {
   return (

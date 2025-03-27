@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }) {
   // Immediately redirect if no user
   useEffect(() => {
     if (!isLoading && !user) {
-      console.log("Dashboard layout: No user found, redirecting");
+      console.log('Dashboard layout: No user found, redirecting');
       window.location.replace('/auth');
     }
   }, [user, isLoading]);
@@ -71,9 +71,7 @@ export default function DashboardLayout({ children }) {
             />
           </aside>
           <main className="flex-1 ml-[240px] p-6 overflow-auto">
-            <Suspense fallback={<Loading />}>
-              {children}
-            </Suspense>
+            <Suspense fallback={<Loading />}>{children}</Suspense>
           </main>
         </div>
       </div>

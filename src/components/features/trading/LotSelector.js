@@ -18,7 +18,7 @@ const LotSelector = ({ onSelectLot }) => {
 
   const lotOptions = generateLotOptions();
 
-  const handleSelect = (lot) => {
+  const handleSelect = lot => {
     setSelectedLot(lot.value);
     if (onSelectLot) {
       onSelectLot(lot.value);
@@ -32,14 +32,16 @@ const LotSelector = ({ onSelectLot }) => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full px-3 py-2 border border-purple-800 bg-purple-900 rounded-lg text-white hover:bg-purple-800 transition-colors"
       >
-        <span className="truncate">{selectedLot ? `${selectedLot} Lot${selectedLot > 1 ? 's' : ''}` : 'Select Lots'}</span>
+        <span className="truncate">
+          {selectedLot ? `${selectedLot} Lot${selectedLot > 1 ? 's' : ''}` : 'Select Lots'}
+        </span>
         <ChevronDown className="h-4 w-4 ml-1 flex-shrink-0" />
       </button>
 
       {isOpen && (
         <div className="absolute z-20 mt-1 w-full bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           <ul className="py-1">
-            {lotOptions.map((lot) => (
+            {lotOptions.map(lot => (
               <li key={lot.id}>
                 <button
                   onClick={() => handleSelect(lot)}
@@ -58,4 +60,4 @@ const LotSelector = ({ onSelectLot }) => {
   );
 };
 
-export default LotSelector; 
+export default LotSelector;

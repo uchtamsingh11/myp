@@ -17,4 +17,4 @@ const TradingViewJSONComponent = () => {
   );
 };
 
-export default TradingViewJSONComponent; 
+export default TradingViewJSONComponent;

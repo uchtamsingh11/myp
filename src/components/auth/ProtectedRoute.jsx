@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children }) {
     // If authentication state is loaded and user is not authenticated
     if (!isLoading && !user) {
       console.log('No authenticated user found, redirecting to login');
-      
+
       // Force reload the page to auth to break any loops
       window.location.replace('/auth');
     }
@@ -37,7 +37,7 @@ export default function ProtectedRoute({ children }) {
   if (typeof window !== 'undefined') {
     window.location.replace('/auth');
   }
-  
+
   // Show a loading state while redirecting
   return (
     <div className="min-h-screen flex justify-center items-center">
@@ -47,4 +47,4 @@ export default function ProtectedRoute({ children }) {
       </div>
     </div>
   );
-} 
+}

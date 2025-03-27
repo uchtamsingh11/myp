@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import TradingViewManageComponent from '../../../components/dashboard/TradingViewManageComponent';
 import TradingViewSymbolComponent from '../../../components/dashboard/TradingViewSymbolComponent';
@@ -8,7 +8,8 @@ import TradingViewJSONComponent from '../../../components/dashboard/TradingViewJ
 import WebhookUrlComponent from '../../../components/dashboard/WebhookUrlComponent';
 import WebhookLogsComponent from '../../../components/dashboard/WebhookLogsComponent';
 
-export default function TradingViewPage() {
+// Client component that uses useSearchParams
+const TradingViewContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab') || 'manage';
@@ -19,7 +20,7 @@ export default function TradingViewPage() {
   }, []);
 
   // Function to switch tabs without full page reload
-  const switchTab = (newTab) => {
+  const switchTab = newTab => {
     // Update URL for bookmark-ability without refreshing the page
     const params = new URLSearchParams(searchParams);
     params.set('tab', newTab);
@@ -49,9 +50,25 @@ export default function TradingViewPage() {
       <h1 className="text-2xl font-bold mb-6">TradingView</h1>
 
       {/* Tab Content */}
-      <div className="mt-4">
-        {renderTabContent()}
-      </div>
+      <div className="mt-4">{renderTabContent()}</div>
     </div>
+  );
+};
+
+// Main component with Suspense boundary
+export default function TradingViewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-4">
+          <h1 className="text-2xl font-bold mb-6">TradingView</h1>
+          <div className="mt-4 flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          </div>
+        </div>
+      }
+    >
+      <TradingViewContent />
+    </Suspense>
   );
 }

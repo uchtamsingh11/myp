@@ -17,4 +17,4 @@ const StrategyPineScriptComponent = () => {
   );
 };
 
-export default StrategyPineScriptComponent; 
+export default StrategyPineScriptComponent;

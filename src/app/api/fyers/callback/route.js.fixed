@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken, saveAccessToken } from '../../../../src/utils/fyers';
-import { supabase } from '../../../../src/utils/supabase';
+import { getAccessToken, saveAccessToken } from '@/utils/fyers';
+import { supabase } from '@/utils/supabase';
 
 export async function GET(request) {
   try {

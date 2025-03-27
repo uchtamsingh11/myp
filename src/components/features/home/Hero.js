@@ -13,7 +13,10 @@ const Hero = () => {
     const getUser = async () => {
       try {
         setLoading(true);
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
         if (error) throw error;
         setUser(user);
       } catch (error) {
@@ -42,13 +45,13 @@ const Hero = () => {
           background: [
             'linear-gradient(to bottom, rgb(24, 24, 27), rgb(0, 0, 0))',
             'linear-gradient(to bottom, rgb(39, 39, 42), rgb(9, 9, 11))',
-            'linear-gradient(to bottom, rgb(24, 24, 27), rgb(0, 0, 0))'
-          ]
+            'linear-gradient(to bottom, rgb(24, 24, 27), rgb(0, 0, 0))',
+          ],
         }}
         transition={{
           duration: 8,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: 'easeInOut',
         }}
       ></motion.div>
 
@@ -63,7 +66,7 @@ const Hero = () => {
           transition={{
             duration: 15,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut',
           }}
         />
         <motion.div
@@ -75,7 +78,7 @@ const Hero = () => {
           transition={{
             duration: 18,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut',
           }}
         />
         <motion.div
@@ -87,7 +90,7 @@ const Hero = () => {
           transition={{
             duration: 20,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut',
           }}
         />
       </div>
@@ -99,7 +102,7 @@ const Hero = () => {
         transition={{
           duration: 5,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: 'easeInOut',
         }}
       ></motion.div>
 
@@ -115,12 +118,12 @@ const Hero = () => {
           animate={{
             y: ['20%', '25%', '20%'],
             rotate: [0, 10, 0],
-            opacity: [0.2, 0.3, 0.2]
+            opacity: [0.2, 0.3, 0.2],
           }}
           transition={{
             duration: 12,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut',
           }}
         />
 
@@ -131,12 +134,12 @@ const Hero = () => {
           animate={{
             y: ['30%', '35%', '30%'],
             rotate: [0, -15, 0],
-            opacity: [0.2, 0.3, 0.2]
+            opacity: [0.2, 0.3, 0.2],
           }}
           transition={{
             duration: 15,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut',
           }}
         />
 
@@ -147,12 +150,12 @@ const Hero = () => {
           animate={{
             y: ['70%', '65%', '70%'],
             scale: [1, 1.1, 1],
-            opacity: [0.2, 0.3, 0.2]
+            opacity: [0.2, 0.3, 0.2],
           }}
           transition={{
             duration: 10,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: 'easeInOut',
           }}
         />
       </div>
@@ -162,42 +165,43 @@ const Hero = () => {
         {[...Array(40)].map((_, i) => (
           <motion.div
             key={i}
-            className={`absolute rounded-full ${i % 3 === 0
-              ? "w-1 h-1 bg-blue-500/40"
-              : i % 3 === 1
-                ? "w-1.5 h-1.5 bg-purple-500/40"
-                : "w-0.5 h-0.5 bg-zinc-400/60"
-              }`}
+            className={`absolute rounded-full ${
+              i % 3 === 0
+                ? 'w-1 h-1 bg-blue-500/40'
+                : i % 3 === 1
+                  ? 'w-1.5 h-1.5 bg-purple-500/40'
+                  : 'w-0.5 h-0.5 bg-zinc-400/60'
+            }`}
             initial={{
-              x: Math.random() * 100 + "%",
-              y: Math.random() * 100 + "%",
+              x: Math.random() * 100 + '%',
+              y: Math.random() * 100 + '%',
               opacity: Math.random() * 0.5 + 0.3,
-              scale: Math.random() * 0.5 + 0.5
+              scale: Math.random() * 0.5 + 0.5,
             }}
             animate={{
               x: [
-                Math.random() * 100 + "%",
-                Math.random() * 100 + "%",
-                Math.random() * 100 + "%",
-                Math.random() * 100 + "%"
+                Math.random() * 100 + '%',
+                Math.random() * 100 + '%',
+                Math.random() * 100 + '%',
+                Math.random() * 100 + '%',
               ],
               y: [
-                Math.random() * 100 + "%",
-                Math.random() * 100 + "%",
-                Math.random() * 100 + "%",
-                Math.random() * 100 + "%"
+                Math.random() * 100 + '%',
+                Math.random() * 100 + '%',
+                Math.random() * 100 + '%',
+                Math.random() * 100 + '%',
               ],
               opacity: [0.3, 0.7, 0.5, 0.3],
               scale: [
                 Math.random() * 0.5 + 0.5,
                 Math.random() * 1 + 0.8,
-                Math.random() * 0.5 + 0.5
-              ]
+                Math.random() * 0.5 + 0.5,
+              ],
             }}
             transition={{
               duration: Math.random() * 20 + 15,
               repeat: Infinity,
-              ease: "linear"
+              ease: 'linear',
             }}
           />
         ))}
@@ -219,7 +223,7 @@ const Hero = () => {
               transition={{
                 duration: 8,
                 repeat: Infinity,
-                ease: "linear"
+                ease: 'linear',
               }}
             >
               AI-Powered Trading, Simplified
@@ -232,7 +236,7 @@ const Hero = () => {
               transition={{
                 duration: 8,
                 repeat: Infinity,
-                ease: "linear"
+                ease: 'linear',
               }}
             >
               -AlgoZ
@@ -245,7 +249,8 @@ const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Maximize gains and safeguard investments with next-generation algorithmic trading solutions
+            Maximize gains and safeguard investments with next-generation algorithmic trading
+            solutions
           </motion.p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -272,11 +277,23 @@ const Hero = () => {
         transition={{
           duration: 1.5,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: 'easeInOut',
         }}
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 5V19M12 19L5 12M12 19L19 12"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </motion.div>
     </section>

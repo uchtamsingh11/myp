@@ -15,7 +15,7 @@ export default function SupabaseListener() {
       while (retries < maxRetries) {
         try {
           const response = await fetch(url, options);
-          
+
           if (response.status === 429) {
             // Rate limit hit - wait and retry
             console.log(`API rate limit hit, retrying in ${(retries + 1) * 1000}ms`);
@@ -23,32 +23,34 @@ export default function SupabaseListener() {
             retries++;
             continue;
           }
-          
+
           return response;
         } catch (error) {
           lastError = error;
           console.error('API call error:', error);
-          
+
           // Only retry on network errors
           if (error.name === 'TypeError' && error.message.includes('fetch')) {
             await new Promise(r => setTimeout(r, (retries + 1) * 1000));
             retries++;
             continue;
           }
-          
+
           // For other errors, don't retry
           break;
         }
       }
-      
+
       // If we get here, all retries failed
       console.error(`Failed after ${maxRetries} retries:`, lastError);
       throw lastError;
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event);
-      
+
       try {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           // Update server session when signed in or token refreshed
@@ -60,21 +62,25 @@ export default function SupabaseListener() {
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out, clearing server session');
           // Clear server session when signed out
-          await callWithRetry('/api/auth/session', { 
+          await callWithRetry('/api/auth/session', {
             method: 'DELETE',
-            headers: { 'Cache-Control': 'no-cache' }
+            headers: { 'Cache-Control': 'no-cache' },
           });
-          
+
           console.log('Server session cleared successfully');
           // Clear any localStorage or sessionStorage items related to auth
           if (typeof window !== 'undefined') {
             localStorage.removeItem('supabase.auth.token');
             sessionStorage.removeItem('supabase.auth.token');
-            
+
             // Clear auth-related cookies
-            document.cookie.split(";").forEach((c) => {
+            document.cookie.split(';').forEach(c => {
               const cookie = c.trim();
-              if (cookie.startsWith('sb-') || cookie.includes('supabase') || cookie.includes('auth')) {
+              if (
+                cookie.startsWith('sb-') ||
+                cookie.includes('supabase') ||
+                cookie.includes('auth')
+              ) {
                 const name = cookie.split('=')[0];
                 document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
               }
@@ -90,4 +96,4 @@ export default function SupabaseListener() {
   }, []);
 
   return null;
-} 
+}

@@ -17,4 +17,4 @@ const StrategyAFLComponent = () => {
   );
 };
 
-export default StrategyAFLComponent; 
+export default StrategyAFLComponent;

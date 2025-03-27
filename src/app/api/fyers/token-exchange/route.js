@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../../src/utils/supabase';
+import { supabase } from '../../../../utils/supabase';
 
 // Explicitly mark this route as dynamic to suppress build warnings
 export const dynamic = 'force-dynamic';
@@ -15,25 +15,21 @@ export async function POST(request) {
 
     if (!authCode || !appId || !apiSecret) {
       console.error('Missing required parameters');
-      return NextResponse.json(
-        { error: 'Missing required parameters' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
     // Get the user's session if userId is not provided
     let userIdToUse = userId;
 
     if (!userIdToUse) {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       userIdToUse = session?.user?.id;
 
       if (!userIdToUse) {
         console.error('No user ID provided and no active session found');
-        return NextResponse.json(
-          { error: 'User identification required' },
-          { status: 401 }
-        );
+        return NextResponse.json({ error: 'User identification required' }, { status: 401 });
       }
     }
 
@@ -42,25 +38,27 @@ export async function POST(request) {
     try {
       // Direct API call to generate access token using fetch instead of fyers-api-v3
       console.log('Generating access token with direct API call');
-      
+
       const tokenResponse = await fetch('https://api-v3.fyers.in/api/v3/token', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           grant_type: 'authorization_code',
           appIdHash: appId,
           code: authCode,
-          secret_key: apiSecret
-        })
+          secret_key: apiSecret,
+        }),
       });
-      
+
       const tokenData = await tokenResponse.json();
       console.log('Token response:', JSON.stringify(tokenData));
 
       if (!tokenResponse.ok || !tokenData.access_token) {
-        throw new Error(tokenData.message || `Failed to generate access token: ${tokenResponse.status}`);
+        throw new Error(
+          tokenData.message || `Failed to generate access token: ${tokenResponse.status}`
+        );
       }
 
       const accessToken = tokenData.access_token;
@@ -70,18 +68,19 @@ export async function POST(request) {
       expiryDate.setDate(expiryDate.getDate() + 1);
 
       // Update the user's record with the new token
-      const { error: updateError } = await supabase
-        .from('fyers_credentials')
-        .upsert({
+      const { error: updateError } = await supabase.from('fyers_credentials').upsert(
+        {
           user_id: userIdToUse,
           app_id: appId,
           api_secret: apiSecret,
           access_token: accessToken,
           token_expiry: expiryDate.toISOString(),
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id',
+        }
+      );
 
       if (updateError) {
         console.error('Error saving token to database:', updateError);
@@ -96,11 +95,11 @@ export async function POST(request) {
         const profileResponse = await fetch('https://api-v3.fyers.in/api/v3/profile', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
         });
-        
+
         const profileData = await profileResponse.json();
         console.log('Profile response:', JSON.stringify(profileData));
 
@@ -117,21 +116,14 @@ export async function POST(request) {
 
       return NextResponse.json({
         success: true,
-        message: 'Access token generated and saved successfully'
+        message: 'Access token generated and saved successfully',
       });
-
     } catch (error) {
       console.error('Error in Fyers API operations:', error);
-      return NextResponse.json(
-        { error: `Fyers API error: ${error.message}` },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: `Fyers API error: ${error.message}` }, { status: 500 });
     }
   } catch (error) {
     console.error('Unexpected error in token exchange:', error);
-    return NextResponse.json(
-      { error: `Unexpected error: ${error.message}` },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: `Unexpected error: ${error.message}` }, { status: 500 });
   }
 }

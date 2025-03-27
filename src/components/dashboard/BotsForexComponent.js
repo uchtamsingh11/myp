@@ -17,4 +17,4 @@ const BotsForexComponent = () => {
   );
 };
 
-export default BotsForexComponent; 
+export default BotsForexComponent;

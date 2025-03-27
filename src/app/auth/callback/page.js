@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 
-export default function AuthCallback() {
+// Client component that uses useSearchParams
+const AuthCallbackContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -66,7 +67,7 @@ export default function AuthCallback() {
                 transition={{
                   duration: 1,
                   repeat: Infinity,
-                  ease: "linear"
+                  ease: 'linear',
                 }}
               />
             </div>
@@ -90,5 +91,20 @@ export default function AuthCallback() {
         )}
       </div>
     </div>
+  );
+};
+
+// Main component with Suspense boundary
+export default function AuthCallback() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-black">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

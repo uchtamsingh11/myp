@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import StrategyPineScriptComponent from '../../../components/dashboard/StrategyPineScriptComponent';
+import StrategyPineScriptComponent from '../../../../components/dashboard/StrategyPineScriptComponent';
 
 export default function StrategyPineScriptPage() {
   useEffect(() => {

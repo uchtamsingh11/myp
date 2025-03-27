@@ -5,15 +5,11 @@ import { supabase } from '../../utils/supabase';
  * @param {string} userId - The user ID to fetch the profile for
  * @returns {Promise<Object|null>} - The user profile or null if not found
  */
-export const fetchUserProfile = async (userId) => {
+export const fetchUserProfile = async userId => {
   try {
     if (!userId) return null;
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
 
     if (error) throw error;
     return data;
@@ -73,7 +69,9 @@ export const getCurrentUserProfile = async () => {
     }
 
     // If not in localStorage, fetch from the database
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) return null;
 
     const profile = await fetchUserProfile(session.user.id);
@@ -95,7 +93,7 @@ export const getCurrentUserProfile = async () => {
  * @param {string} referralCode - The referral code to check
  * @returns {Promise<boolean>} - True if the referral code exists, false otherwise
  */
-export const checkReferralCode = async (referralCode) => {
+export const checkReferralCode = async referralCode => {
   try {
     if (!referralCode) return false;
 

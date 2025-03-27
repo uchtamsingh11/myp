@@ -12,14 +12,14 @@ const Newsletter = () => {
     threshold: 0.1,
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     if (email) {
       // In a real application, you would send this to your API
       console.log('Subscribing email:', email);
       setIsSubmitted(true);
       setEmail('');
-      
+
       // Reset the submission state after 5 seconds
       setTimeout(() => {
         setIsSubmitted(false);
@@ -30,7 +30,7 @@ const Newsletter = () => {
   return (
     <section className="py-24 bg-black relative">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,_var(--tw-gradient-stops))] from-zinc-900/30 via-black to-zinc-900/30"></div>
-      
+
       <div className="container-custom relative z-10">
         <motion.div
           ref={ref}
@@ -42,16 +42,17 @@ const Newsletter = () => {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">Stay Ahead of the Market</h2>
             <p className="text-zinc-400">
-              Subscribe to our newsletter for trading insights, market analysis, and platform updates.
+              Subscribe to our newsletter for trading insights, market analysis, and platform
+              updates.
             </p>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="max-w-md mx-auto">
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 className="flex-grow px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-600 text-white"
                 required
@@ -63,9 +64,9 @@ const Newsletter = () => {
                 Subscribe
               </button>
             </div>
-            
+
             <AnimatedCheckmark isVisible={isSubmitted} />
-            
+
             <p className="text-zinc-500 text-sm text-center mt-4">
               We respect your privacy. Unsubscribe at any time.
             </p>

@@ -28,7 +28,7 @@ export const useAuth = () => {
 };
 
 // Helper function to generate a unique referral code
-const generateReferralCode = (name) => {
+const generateReferralCode = name => {
   const namePart = name.split(' ')[0].toLowerCase().substring(0, 4);
   const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `${namePart}-${randomPart}`;
@@ -42,13 +42,9 @@ export function AuthProvider({ children }) {
   const router = useRouter();
 
   // Fetch the user profile from Supabase
-  const fetchProfile = async (userId) => {
+  const fetchProfile = async userId => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
 
       if (error) throw error;
       return data;
@@ -64,7 +60,7 @@ export function AuthProvider({ children }) {
     const maxRetries = 2;
     const initialBackoff = 1000; // 1 second
 
-    const attemptSignIn = async (backoff) => {
+    const attemptSignIn = async backoff => {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -73,20 +69,21 @@ export function AuthProvider({ children }) {
 
         if (error) {
           // Check specifically for rate limiting errors
-          if (error.status === 429 || 
-              error.message?.includes('too many requests') || 
-              error.message?.includes('rate limit')) {
-            
+          if (
+            error.status === 429 ||
+            error.message?.includes('too many requests') ||
+            error.message?.includes('rate limit')
+          ) {
             if (retryCount < maxRetries) {
               retryCount++;
               // Exponential backoff with jitter
               const jitter = Math.random() * 500;
               const nextBackoff = backoff * 2 + jitter;
               console.log(`Rate limit hit, retrying in ${nextBackoff}ms (attempt ${retryCount})`);
-              
+
               // Wait for backoff period
               await new Promise(resolve => setTimeout(resolve, nextBackoff));
-              
+
               // Retry the request
               return attemptSignIn(nextBackoff);
             }
@@ -135,18 +132,16 @@ export function AuthProvider({ children }) {
       // Create a profile for the new user
       if (data.user) {
         const userReferralCode = generateReferralCode(name);
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              full_name: name,
-              phone_number: phoneNumber,
-              referral_code: userReferralCode,
-              referral_used: referral,
-              created_at: new Date(),
-            },
-          ]);
+        const { error: profileError } = await supabase.from('profiles').insert([
+          {
+            id: data.user.id,
+            full_name: name,
+            phone_number: phoneNumber,
+            referral_code: userReferralCode,
+            referral_used: referral,
+            created_at: new Date(),
+          },
+        ]);
 
         if (profileError) throw profileError;
       }
@@ -192,7 +187,7 @@ export function AuthProvider({ children }) {
   };
 
   // Reset password
-  const resetPassword = async (email) => {
+  const resetPassword = async email => {
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
@@ -211,23 +206,23 @@ export function AuthProvider({ children }) {
       // First clear local state
       setUser(null);
       setProfile(null);
-      
+
       // Clear local storage and session storage
       if (typeof window !== 'undefined') {
         localStorage.removeItem('supabase.auth.token');
         sessionStorage.removeItem('supabase.auth.token');
-        
+
         // Clear any auth cookies
-        document.cookie.split(";").forEach((c) => {
+        document.cookie.split(';').forEach(c => {
           document.cookie = c
-            .replace(/^ +/, "")
+            .replace(/^ +/, '')
             .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
         });
       }
-      
+
       // Sign out from Supabase
       await supabase.auth.signOut();
-      
+
       // Force a complete page reload to clear any state in memory
       window.location.href = '/auth';
       return { error: null };
@@ -242,7 +237,7 @@ export function AuthProvider({ children }) {
   };
 
   // Update user profile
-  const updateProfile = async (profileData) => {
+  const updateProfile = async profileData => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -266,11 +261,13 @@ export function AuthProvider({ children }) {
         setIsLoading(true);
 
         // Get initial session
-        const { data: { session } } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (session?.user) {
           setUser(session.user);
-          
+
           // Fetch user profile
           const profileData = await fetchProfile(session.user.id);
           if (profileData) {
@@ -279,22 +276,22 @@ export function AuthProvider({ children }) {
         }
 
         // Listen for authentication changes
-        const { data: { subscription } } = await supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            if (session?.user) {
-              setUser(session.user);
-              
-              // Fetch user profile when auth state changes
-              const profileData = await fetchProfile(session.user.id);
-              if (profileData) {
-                setProfile(profileData);
-              }
-            } else {
-              setUser(null);
-              setProfile(null);
+        const {
+          data: { subscription },
+        } = await supabase.auth.onAuthStateChange(async (event, session) => {
+          if (session?.user) {
+            setUser(session.user);
+
+            // Fetch user profile when auth state changes
+            const profileData = await fetchProfile(session.user.id);
+            if (profileData) {
+              setProfile(profileData);
             }
+          } else {
+            setUser(null);
+            setProfile(null);
           }
-        );
+        });
 
         return () => {
           subscription?.unsubscribe();
@@ -324,4 +321,4 @@ export function AuthProvider({ children }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-} 
+}

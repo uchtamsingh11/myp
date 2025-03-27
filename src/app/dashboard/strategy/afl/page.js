@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import StrategyAFLComponent from '../../../components/dashboard/StrategyAFLComponent';
+import StrategyAFLComponent from '../../../../components/dashboard/StrategyAFLComponent';
 
 export default function StrategyAFLPage() {
   useEffect(() => {

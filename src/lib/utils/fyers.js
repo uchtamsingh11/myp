@@ -7,15 +7,16 @@ let fyersModel = null;
 if (typeof window === 'undefined') {
   try {
     // Dynamic import to prevent build-time errors
-    fyersModel = require("fyers-api-v3").fyersModel;
+    fyersModel = require('fyers-api-v3').fyersModel;
   } catch (error) {
-    console.error("Failed to load fyers-api-v3. The module will be loaded at runtime.");
+    console.error('Failed to load fyers-api-v3. The module will be loaded at runtime.');
   }
 }
 
 // Only the redirect URI is needed as an environment variable
 // The frontend's callback URL for Fyers auth
-const REDIRECT_URI = process.env.NEXT_PUBLIC_FYERS_REDIRECT_URI || 'http://localhost:3000/api/fyers/callback';
+const REDIRECT_URI =
+  process.env.NEXT_PUBLIC_FYERS_REDIRECT_URI || 'http://localhost:3000/api/fyers/callback';
 
 // Initialize the Fyers API client with proper logging configuration
 const getFyersClient = (enableLogging = false) => {
@@ -24,13 +25,13 @@ const getFyersClient = (enableLogging = false) => {
   }
 
   return new fyersModel({
-    "path": process.env.NODE_ENV === 'production' ? "/tmp" : "./logs",
-    "enableLogging": enableLogging
+    path: process.env.NODE_ENV === 'production' ? '/tmp' : './logs',
+    enableLogging: enableLogging,
   });
 };
 
 // Get user's Fyers credentials from database
-export const getUserFyersCredentials = async (userId) => {
+export const getUserFyersCredentials = async userId => {
   try {
     const { data, error } = await supabase
       .from('fyers_credentials')
@@ -51,7 +52,7 @@ export const getUserFyersCredentials = async (userId) => {
 };
 
 // Generate authorization URL for a specific app ID
-export const generateAuthUrl = (appId) => {
+export const generateAuthUrl = appId => {
   if (!appId || !REDIRECT_URI) {
     throw new Error('Fyers App ID or redirect URI not provided');
   }
@@ -72,9 +73,9 @@ export const getAccessToken = async (authCode, appId, apiSecret) => {
   try {
     const fyers = getFyersClient(true);
     const tokenResponse = await fyers.generate_access_token({
-      "client_id": appId,
-      "secret_key": apiSecret,
-      "auth_code": authCode
+      client_id: appId,
+      secret_key: apiSecret,
+      auth_code: authCode,
     });
 
     if (tokenResponse.s !== 'ok') {
@@ -101,7 +102,7 @@ export const saveAccessToken = async (userId, accessToken) => {
       .update({
         access_token: accessToken,
         token_expiry: expiryDate.toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('user_id', userId);
 
@@ -118,7 +119,7 @@ export const saveAccessToken = async (userId, accessToken) => {
 };
 
 // Initialize a fyers client with user credentials
-export const getUserFyersClient = async (userId) => {
+export const getUserFyersClient = async userId => {
   try {
     // Get the user's credentials from the database
     const credentials = await getUserFyersCredentials(userId);
@@ -150,5 +151,5 @@ export default {
   getAccessToken,
   getUserFyersCredentials,
   saveAccessToken,
-  getUserFyersClient
-}; 
+  getUserFyersClient,
+};

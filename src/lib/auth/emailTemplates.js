@@ -1,13 +1,13 @@
 /**
  * This file contains email template configurations for Supabase Auth.
- * 
+ *
  * Note: These templates need to be configured in the Supabase dashboard.
  * This file serves as a reference for what to paste in the Supabase Email Templates section.
  */
 
 /**
  * Confirmation Email Template
- * 
+ *
  * This is the email sent to users when they sign up.
  * Copy this HTML into the Supabase Dashboard > Authentication > Email Templates > Confirmation
  */
@@ -27,7 +27,7 @@ export const confirmationEmailTemplate = `
 
 /**
  * Magic Link Email Template
- * 
+ *
  * This is the email sent to users when they request a magic link.
  * Copy this HTML into the Supabase Dashboard > Authentication > Email Templates > Magic Link
  */
@@ -47,7 +47,7 @@ export const magicLinkEmailTemplate = `
 
 /**
  * Reset Password Email Template
- * 
+ *
  * This is the email sent to users when they request a password reset.
  * Copy this HTML into the Supabase Dashboard > Authentication > Email Templates > Reset Password
  */
@@ -67,7 +67,7 @@ export const resetPasswordEmailTemplate = `
 
 /**
  * Change Email Address Template
- * 
+ *
  * This is the email sent to users when they request to change their email.
  * Copy this HTML into the Supabase Dashboard > Authentication > Email Templates > Change Email Address
  */

@@ -17,4 +17,4 @@ const TradingViewSymbolComponent = () => {
   );
 };
 
-export default TradingViewSymbolComponent; 
+export default TradingViewSymbolComponent;

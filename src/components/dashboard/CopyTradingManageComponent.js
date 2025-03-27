@@ -17,4 +17,4 @@ const CopyTradingManageComponent = () => {
   );
 };
 
-export default CopyTradingManageComponent; 
+export default CopyTradingManageComponent;

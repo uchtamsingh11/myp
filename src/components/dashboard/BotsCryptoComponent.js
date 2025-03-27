@@ -17,4 +17,4 @@ const BotsCryptoComponent = () => {
   );
 };
 
-export default BotsCryptoComponent; 
+export default BotsCryptoComponent;

@@ -17,4 +17,4 @@ const StrategyMQLComponent = () => {
   );
 };
 
-export default StrategyMQLComponent; 
+export default StrategyMQLComponent;

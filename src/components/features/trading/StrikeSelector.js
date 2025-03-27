@@ -11,18 +11,18 @@ const StrikeSelector = ({ type, onSelectStrike }) => {
   const generateStrikes = () => {
     const baseStrike = 21000;
     const strikes = [];
-    
+
     for (let i = -10; i <= 10; i++) {
-      const strikePrice = baseStrike + (i * 100);
+      const strikePrice = baseStrike + i * 100;
       strikes.push({ id: strikePrice.toString(), price: strikePrice });
     }
-    
+
     return strikes;
   };
 
   const strikes = generateStrikes();
 
-  const handleSelect = (strike) => {
+  const handleSelect = strike => {
     setSelectedStrike(strike.price);
     if (onSelectStrike) {
       onSelectStrike(strike.price);
@@ -49,7 +49,7 @@ const StrikeSelector = ({ type, onSelectStrike }) => {
       {isOpen && (
         <div className="absolute z-20 mt-1 w-full bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           <ul className="py-1">
-            {strikes.map((strike) => (
+            {strikes.map(strike => (
               <li key={strike.id}>
                 <button
                   onClick={() => handleSelect(strike)}
@@ -68,4 +68,4 @@ const StrikeSelector = ({ type, onSelectStrike }) => {
   );
 };
 
-export default StrikeSelector; 
+export default StrikeSelector;

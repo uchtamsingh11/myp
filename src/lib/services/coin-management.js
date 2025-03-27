@@ -5,7 +5,7 @@ import { supabase } from '../../utils/supabase';
  * @param {string} userId - The user ID to get the coin balance for
  * @returns {Promise<number>} - The current coin balance
  */
-export const getUserCoinBalance = async (userId) => {
+export const getUserCoinBalance = async userId => {
   try {
     if (!userId) throw new Error('User ID is required');
 
@@ -76,12 +76,14 @@ export const subtractCoins = async (userId, amount, allowNegative = false) => {
       return {
         success: false,
         newBalance: currentBalance,
-        error: 'Insufficient coin balance'
+        error: 'Insufficient coin balance',
       };
     }
 
     // Calculate new balance, don't go below 0 unless allowNegative is true
-    const newBalance = allowNegative ? currentBalance - amount : Math.max(0, currentBalance - amount);
+    const newBalance = allowNegative
+      ? currentBalance - amount
+      : Math.max(0, currentBalance - amount);
 
     // Update balance in database
     const { data, error } = await supabase
@@ -95,7 +97,7 @@ export const subtractCoins = async (userId, amount, allowNegative = false) => {
 
     return {
       success: true,
-      newBalance: data.coin_balance
+      newBalance: data.coin_balance,
     };
   } catch (error) {
     console.error('Error subtracting coins from user:', error);
@@ -146,4 +148,4 @@ export const hasEnoughCoins = async (userId, requiredAmount) => {
     console.error('Error checking if user has enough coins:', error);
     return false;
   }
-}; 
+};

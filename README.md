@@ -63,23 +63,28 @@ A professional trading platform built with Next.js, JavaScript, Tailwind CSS, an
 ### Installation
 
 1. Clone the repository
+
    ```
    git clone https://github.com/yourusername/algoz-app.git
    cd algoz-app
    ```
 
 2. Install dependencies
+
    ```
    npm install
    ```
 
 3. Set up environment variables
+
    ```
    cp .env.example .env.local
    ```
+
    Edit `.env.local` with your own values.
 
 4. Start the development server
+
    ```
    npm run dev
    ```

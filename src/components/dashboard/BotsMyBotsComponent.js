@@ -17,4 +17,4 @@ const BotsMyBotsComponent = () => {
   );
 };
 
-export default BotsMyBotsComponent; 
+export default BotsMyBotsComponent;

@@ -18,22 +18,80 @@ export default function ScalpingToolManageComponent() {
     { id: 'bse', name: 'BSE' },
     { id: 'mcx', name: 'MCX' },
     { id: 'forex', name: 'Forex' },
-    { id: 'crypto', name: 'Crypto' }
+    { id: 'crypto', name: 'Crypto' },
   ];
 
   // Sample scan results data
   const sampleResults = [
-    { id: 1, symbol: 'NIFTY', pattern: 'Double Top', reliability: 'High', signal: 'Sell', timeframe: '5m', timestamp: new Date().toISOString() },
-    { id: 2, symbol: 'RELIANCE', pattern: 'Bull Flag', reliability: 'Medium', signal: 'Buy', timeframe: '5m', timestamp: new Date().toISOString() },
-    { id: 3, symbol: 'HDFC', pattern: 'Support Bounce', reliability: 'High', signal: 'Buy', timeframe: '5m', timestamp: new Date().toISOString() },
-    { id: 4, symbol: 'INFY', pattern: 'Descending Triangle', reliability: 'Medium', signal: 'Sell', timeframe: '15m', timestamp: new Date().toISOString() },
-    { id: 5, symbol: 'TATASTEEL', pattern: 'MACD Crossover', reliability: 'Medium', signal: 'Buy', timeframe: '5m', timestamp: new Date().toISOString() }
+    {
+      id: 1,
+      symbol: 'NIFTY',
+      pattern: 'Double Top',
+      reliability: 'High',
+      signal: 'Sell',
+      timeframe: '5m',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      id: 2,
+      symbol: 'RELIANCE',
+      pattern: 'Bull Flag',
+      reliability: 'Medium',
+      signal: 'Buy',
+      timeframe: '5m',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      id: 3,
+      symbol: 'HDFC',
+      pattern: 'Support Bounce',
+      reliability: 'High',
+      signal: 'Buy',
+      timeframe: '5m',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      id: 4,
+      symbol: 'INFY',
+      pattern: 'Descending Triangle',
+      reliability: 'Medium',
+      signal: 'Sell',
+      timeframe: '15m',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      id: 5,
+      symbol: 'TATASTEEL',
+      pattern: 'MACD Crossover',
+      reliability: 'Medium',
+      signal: 'Buy',
+      timeframe: '5m',
+      timestamp: new Date().toISOString(),
+    },
   ];
 
   // Sample active signals
   const sampleActiveSignals = [
-    { id: 101, symbol: 'RELIANCE', entryPrice: '2450.75', targetPrice: '2480.00', stopLoss: '2435.00', signal: 'Buy', timestamp: new Date(Date.now() - 1200000).toISOString(), pnl: '+1.2%' },
-    { id: 102, symbol: 'HDFCBANK', entryPrice: '1620.30', targetPrice: '1645.00', stopLoss: '1610.00', signal: 'Buy', timestamp: new Date(Date.now() - 900000).toISOString(), pnl: '+0.8%' }
+    {
+      id: 101,
+      symbol: 'RELIANCE',
+      entryPrice: '2450.75',
+      targetPrice: '2480.00',
+      stopLoss: '2435.00',
+      signal: 'Buy',
+      timestamp: new Date(Date.now() - 1200000).toISOString(),
+      pnl: '+1.2%',
+    },
+    {
+      id: 102,
+      symbol: 'HDFCBANK',
+      entryPrice: '1620.30',
+      targetPrice: '1645.00',
+      stopLoss: '1610.00',
+      signal: 'Buy',
+      timestamp: new Date(Date.now() - 900000).toISOString(),
+      pnl: '+0.8%',
+    },
   ];
 
   // Load data when component mounts
@@ -66,7 +124,7 @@ export default function ScalpingToolManageComponent() {
     }, 1000);
   };
 
-  const addToSignals = (result) => {
+  const addToSignals = result => {
     const newSignal = {
       id: Date.now(),
       symbol: result.symbol,
@@ -75,7 +133,7 @@ export default function ScalpingToolManageComponent() {
       stopLoss: result.stopLoss || '0.00',
       signal: result.signal,
       timestamp: new Date().toISOString(),
-      pnl: '0%'
+      pnl: '0%',
     };
 
     setActiveSignals([newSignal, ...activeSignals]);
@@ -95,10 +153,9 @@ export default function ScalpingToolManageComponent() {
       <div className="border-b border-zinc-700">
         <div className="flex space-x-6">
           <button
-            className={`py-3 px-1 font-medium relative ${activeTab === 'scanner'
-              ? 'text-indigo-400'
-              : 'text-zinc-400 hover:text-zinc-300'
-              }`}
+            className={`py-3 px-1 font-medium relative ${
+              activeTab === 'scanner' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-300'
+            }`}
             onClick={() => setActiveTab('scanner')}
           >
             Market Scanner
@@ -111,10 +168,9 @@ export default function ScalpingToolManageComponent() {
             )}
           </button>
           <button
-            className={`py-3 px-1 font-medium relative ${activeTab === 'setup'
-              ? 'text-indigo-400'
-              : 'text-zinc-400 hover:text-zinc-300'
-              }`}
+            className={`py-3 px-1 font-medium relative ${
+              activeTab === 'setup' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-300'
+            }`}
             onClick={() => setActiveTab('setup')}
           >
             Trade Setup
@@ -127,10 +183,9 @@ export default function ScalpingToolManageComponent() {
             )}
           </button>
           <button
-            className={`py-3 px-1 font-medium relative ${activeTab === 'signals'
-              ? 'text-indigo-400'
-              : 'text-zinc-400 hover:text-zinc-300'
-              }`}
+            className={`py-3 px-1 font-medium relative ${
+              activeTab === 'signals' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-300'
+            }`}
             onClick={() => setActiveTab('signals')}
           >
             Active Signals
@@ -159,7 +214,9 @@ export default function ScalpingToolManageComponent() {
                     value="nse"
                   >
                     {marketOptions.map(market => (
-                      <option key={market.id} value={market.id}>{market.name}</option>
+                      <option key={market.id} value={market.id}>
+                        {market.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -207,28 +264,76 @@ export default function ScalpingToolManageComponent() {
                 <table className="min-w-full divide-y divide-zinc-700">
                   <thead className="bg-zinc-800">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Symbol</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Pattern</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Signal</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Reliability</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Timeframe</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Timestamp</th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-zinc-400 uppercase tracking-wider">Action</th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                      >
+                        Symbol
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                      >
+                        Pattern
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                      >
+                        Signal
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                      >
+                        Reliability
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                      >
+                        Timeframe
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                      >
+                        Timestamp
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-right text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                      >
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-zinc-800/30 divide-y divide-zinc-700">
-                    {scanResults.map((result) => (
+                    {scanResults.map(result => (
                       <tr key={result.id} className="hover:bg-zinc-700/30">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{result.symbol}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{result.pattern}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {result.symbol}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
+                          {result.pattern}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${result.signal === 'Buy' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'
-                            }`}>
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              result.signal === 'Buy'
+                                ? 'bg-green-900/50 text-green-400'
+                                : 'bg-red-900/50 text-red-400'
+                            }`}
+                          >
                             {result.signal}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{result.reliability}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">{result.timeframe}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
+                          {result.reliability}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
+                          {result.timeframe}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-400">
                           {new Date(result.timestamp).toLocaleTimeString()}
                         </td>
@@ -266,7 +371,13 @@ export default function ScalpingToolManageComponent() {
                   <label className="block text-sm text-zinc-400 mb-1">Trade Type</label>
                   <div className="flex space-x-4">
                     <label className="flex items-center">
-                      <input type="radio" name="tradeType" value="buy" className="mr-2" defaultChecked />
+                      <input
+                        type="radio"
+                        name="tradeType"
+                        value="buy"
+                        className="mr-2"
+                        defaultChecked
+                      />
                       <span>Buy</span>
                     </label>
                     <label className="flex items-center">
@@ -341,7 +452,10 @@ export default function ScalpingToolManageComponent() {
               </div>
 
               <div className="text-sm text-zinc-400">
-                <p>Enter all trade parameters to see a preview of your setup and calculate risk metrics automatically.</p>
+                <p>
+                  Enter all trade parameters to see a preview of your setup and calculate risk
+                  metrics automatically.
+                </p>
               </div>
             </div>
           </div>
@@ -357,27 +471,35 @@ export default function ScalpingToolManageComponent() {
                   <option>Buy Only</option>
                   <option>Sell Only</option>
                 </select>
-                <button className="bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-md text-sm">Refresh</button>
+                <button className="bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-md text-sm">
+                  Refresh
+                </button>
               </div>
             </div>
 
             {activeSignals.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
-                {activeSignals.map((signal) => (
+                {activeSignals.map(signal => (
                   <motion.div
                     key={signal.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
-                    className={`bg-zinc-800/50 border ${signal.signal === 'Buy' ? 'border-green-800/30' : 'border-red-800/30'
-                      } rounded-lg p-4`}
+                    className={`bg-zinc-800/50 border ${
+                      signal.signal === 'Buy' ? 'border-green-800/30' : 'border-red-800/30'
+                    } rounded-lg p-4`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="flex items-center space-x-2">
                           <h4 className="font-semibold text-lg">{signal.symbol}</h4>
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${signal.signal === 'Buy' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'
-                            }`}>
+                          <span
+                            className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              signal.signal === 'Buy'
+                                ? 'bg-green-900/50 text-green-400'
+                                : 'bg-red-900/50 text-red-400'
+                            }`}
+                          >
                             {signal.signal}
                           </span>
                         </div>
@@ -386,8 +508,11 @@ export default function ScalpingToolManageComponent() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`text-lg font-semibold ${signal.pnl.startsWith('+') ? 'text-green-400' : 'text-red-400'
-                          }`}>
+                        <div
+                          className={`text-lg font-semibold ${
+                            signal.pnl.startsWith('+') ? 'text-green-400' : 'text-red-400'
+                          }`}
+                        >
                           {signal.pnl}
                         </div>
                       </div>
@@ -428,13 +553,25 @@ export default function ScalpingToolManageComponent() {
               <div className="py-6 text-center">
                 <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-8">
                   <div className="w-16 h-16 mx-auto mb-4 bg-zinc-700 rounded-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-zinc-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-lg font-medium mb-2">No Active Signals</h3>
                   <p className="text-zinc-400 text-sm mb-6 max-w-md mx-auto">
-                    You don't have any active trade signals yet. Use the Market Scanner to find opportunities or create a new Trade Setup.
+                    You don't have any active trade signals yet. Use the Market Scanner to find
+                    opportunities or create a new Trade Setup.
                   </p>
                 </div>
               </div>
@@ -444,4 +581,4 @@ export default function ScalpingToolManageComponent() {
       </div>
     </div>
   );
-} 
+}

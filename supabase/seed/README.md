@@ -9,6 +9,7 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS webhook_url UUID DEFAULT gen_rando
 ```
 
 The `webhook_url` column:
+
 - Is a UUID type
 - Defaults to a randomly generated UUID when a new profile is created
 - Is unique for each user
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS webhook_logs (
 ```
 
 The `webhook_logs` table:
+
 - Stores an entry for each webhook call received
 - Links to the user via `user_id`
 - Stores the full payload received from TradingView
@@ -40,6 +42,7 @@ The `webhook_logs` table:
 ### Components:
 
 1. **WebhookUrlComponent**
+
    - Displays the user's unique webhook URL
    - Allows copying the URL with a single click
    - Provides instructions on how to use the webhook with TradingView
@@ -72,4 +75,4 @@ The `webhook_logs` table:
 - Each user has a unique, randomly generated webhook URL
 - The webhook URL is treated as a secret token
 - The URL cannot be changed for enhanced security
-- Processing only occurs if a valid webhook ID is provided 
+- Processing only occurs if a valid webhook ID is provided

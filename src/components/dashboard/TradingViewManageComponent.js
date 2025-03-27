@@ -11,10 +11,12 @@ const TradingViewManageComponent = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-2xl font-bold mb-4 text-left -ml-4">Trading View: Choose your broker</h2>
+        <h2 className="text-2xl font-bold mb-4 text-left -ml-4">
+          Trading View: Choose your broker
+        </h2>
       </motion.div>
     </div>
   );
 };
 
-export default TradingViewManageComponent; 
+export default TradingViewManageComponent;

@@ -53,14 +53,15 @@ export default function WebhookLogsComponent() {
 
       const subscription = supabase
         .channel('webhook-logs-changes')
-        .on('postgres_changes',
+        .on(
+          'postgres_changes',
           {
             event: 'INSERT',
             schema: 'public',
             table: 'webhook_logs',
-            filter: `user_id=eq.${profile.id}`
+            filter: `user_id=eq.${profile.id}`,
           },
-          (payload) => {
+          payload => {
             // Update logs when a new log is added
             setLogs(currentLogs => [payload.new, ...currentLogs].slice(0, 100));
           }
@@ -119,10 +120,7 @@ export default function WebhookLogsComponent() {
           }
 
           // Delete all logs for the user
-          const { error } = await supabase
-            .from('webhook_logs')
-            .delete()
-            .eq('user_id', profile.id);
+          const { error } = await supabase.from('webhook_logs').delete().eq('user_id', profile.id);
 
           if (error) throw error;
 
@@ -155,12 +153,12 @@ export default function WebhookLogsComponent() {
     };
   }, []);
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     const date = new Date(timestamp);
     return date.toLocaleString();
   };
 
-  const formatResponseTime = (log) => {
+  const formatResponseTime = log => {
     if (!log.started_at || !log.completed_at) return 'N/A';
     const startTime = new Date(log.started_at).getTime();
     const endTime = new Date(log.completed_at).getTime();
@@ -168,7 +166,7 @@ export default function WebhookLogsComponent() {
     return `${responseTimeMs}ms`;
   };
 
-  const toggleExpandLog = (logId) => {
+  const toggleExpandLog = logId => {
     if (expandedLog === logId) {
       setExpandedLog(null);
     } else {
@@ -188,12 +186,15 @@ export default function WebhookLogsComponent() {
         <div className="bg-zinc-900 rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
             <p className="text-zinc-400">
-              Recent webhook calls received from TradingView. These logs show the incoming data from your TradingView alerts.
+              Recent webhook calls received from TradingView. These logs show the incoming data from
+              your TradingView alerts.
             </p>
             {nextCleanupTime && (
               <div className="text-xs text-zinc-500">
                 <span>Next log cleanup: {formatTimestamp(nextCleanupTime)}</span>
-                <p className="mt-1">Logs are automatically cleared at midnight IST (Kolkata time)</p>
+                <p className="mt-1">
+                  Logs are automatically cleared at midnight IST (Kolkata time)
+                </p>
               </div>
             )}
           </div>
@@ -203,34 +204,53 @@ export default function WebhookLogsComponent() {
               <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
             </div>
           ) : error ? (
-            <div className="text-red-500 mb-4 p-3 bg-red-900/20 rounded-lg">
-              {error}
-            </div>
+            <div className="text-red-500 mb-4 p-3 bg-red-900/20 rounded-lg">{error}</div>
           ) : logs.length === 0 ? (
             <div className="text-center py-8 border border-dashed border-zinc-700 rounded-lg">
-              <p className="text-zinc-400">No webhook logs found. Logs will appear here when you receive alerts from TradingView.</p>
+              <p className="text-zinc-400">
+                No webhook logs found. Logs will appear here when you receive alerts from
+                TradingView.
+              </p>
             </div>
           ) : (
             <div className="overflow-auto rounded-lg border border-zinc-800">
               <table className="min-w-full divide-y divide-zinc-800">
                 <thead className="bg-zinc-800">
                   <tr>
-                    <th scope="col" className="px-2 py-3 text-center text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-2 py-3 text-center text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                    >
                       #
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                    >
                       Time
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                    >
                       JSON
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                    >
                       Response Time
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                    >
                       Status
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider"
+                    >
                       Output
                     </th>
                   </tr>
@@ -250,20 +270,26 @@ export default function WebhookLogsComponent() {
                         </td>
                         <td className="px-4 py-4 text-sm text-zinc-300">
                           <div className="max-w-xs truncate">
-                            {log.payload ? JSON.stringify(log.payload).substring(0, 50) + '...' : 'N/A'}
+                            {log.payload
+                              ? JSON.stringify(log.payload).substring(0, 50) + '...'
+                              : 'N/A'}
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-zinc-300">
                           {formatResponseTime(log)}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${log.processed ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${log.processed ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}
+                          >
                             {log.processed ? 'Processed' : 'Received'}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-zinc-300">
                           <div className="max-w-xs truncate">
-                            {log.process_result ? JSON.stringify(log.process_result).substring(0, 50) + '...' : 'N/A'}
+                            {log.process_result
+                              ? JSON.stringify(log.process_result).substring(0, 50) + '...'
+                              : 'N/A'}
                           </div>
                         </td>
                       </tr>
@@ -272,7 +298,9 @@ export default function WebhookLogsComponent() {
                           <td colSpan="6" className="px-6 py-4">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                               <div>
-                                <h4 className="text-sm font-medium text-zinc-300 mb-2">Webhook Payload:</h4>
+                                <h4 className="text-sm font-medium text-zinc-300 mb-2">
+                                  Webhook Payload:
+                                </h4>
                                 <div className="rounded-md bg-zinc-800 p-3 overflow-auto max-h-80">
                                   <pre className="text-xs text-zinc-300 whitespace-pre-wrap">
                                     {JSON.stringify(log.payload, null, 2)}
@@ -281,7 +309,9 @@ export default function WebhookLogsComponent() {
                               </div>
                               {log.processed && log.process_result && (
                                 <div>
-                                  <h4 className="text-sm font-medium text-zinc-300 mb-2">Processing Result:</h4>
+                                  <h4 className="text-sm font-medium text-zinc-300 mb-2">
+                                    Processing Result:
+                                  </h4>
                                   <div className="rounded-md bg-zinc-800 p-3 overflow-auto max-h-80">
                                     <pre className="text-xs text-zinc-300 whitespace-pre-wrap">
                                       {JSON.stringify(log.process_result, null, 2)}
@@ -293,8 +323,17 @@ export default function WebhookLogsComponent() {
                             <div className="mt-4 text-xs text-zinc-500">
                               <p>Log ID: {log.id}</p>
                               <p>Created: {new Date(log.created_at).toLocaleString()}</p>
-                              {log.started_at && <p>Processing Started: {new Date(log.started_at).toLocaleString()}</p>}
-                              {log.completed_at && <p>Processing Completed: {new Date(log.completed_at).toLocaleString()}</p>}
+                              {log.started_at && (
+                                <p>
+                                  Processing Started: {new Date(log.started_at).toLocaleString()}
+                                </p>
+                              )}
+                              {log.completed_at && (
+                                <p>
+                                  Processing Completed:{' '}
+                                  {new Date(log.completed_at).toLocaleString()}
+                                </p>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -309,4 +348,4 @@ export default function WebhookLogsComponent() {
       </motion.div>
     </div>
   );
-} 
+}
