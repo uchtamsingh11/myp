@@ -1,6 +1,37 @@
+const withBundleAnalyzer = process.env.ANALYZE === 'true'
+  ? require('@next/bundle-analyzer')({
+    enabled: true,
+  })
+  : (config) => config;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  swcMinify: true,
+  images: {
+    domains: ['avatars.githubusercontent.com', 'images.unsplash.com'],
+    formats: ['image/avif', 'image/webp'],
+  },
+  // Add your external domains here if needed
+  poweredByHeader: false, // Security: Removes the X-Powered-By header
+  compiler: {
+    // Remove console logs in production
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+  eslint: {
+    // Warning: This allows production builds to successfully complete even with ESLint errors
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    // !! WARN !!
+    // Enabling this will allow production builds to successfully complete even with TypeScript errors
+    // Recommended to keep this false in production to ensure type safety
+    ignoreBuildErrors: false,
+  },
+  // Server Actions are enabled by default in Next.js 14
+  // No need for experimental options for serverComponents or serverActions
   output: 'standalone',
   webpack: (config, { dev }) => {
     // Disable caching in development mode to prevent ENOENT errors
@@ -25,4 +56,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig; 
+module.exports = withBundleAnalyzer(nextConfig); 
