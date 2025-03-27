@@ -2,9 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+
+// SVG Icons for brokers - replacing emojis for a more modern look
+const BrokerIcons = {
+        alice_blue: <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>,
+        angel_broking: <svg className="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"></path><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>,
+        binance: <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16L6 10 7.4 8.6 12 13.2 16.6 8.6 18 10z"></path><path d="M12 8L6 14 7.4 15.4 12 10.8 16.6 15.4 18 14z"></path><path d="M13.5 5.5L12 4 10.5 5.5 12 7z"></path><path d="M13.5 18.5L12 20 10.5 18.5 12 17z"></path></svg>,
+        default: <svg className="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21 17h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2zm-9-7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h4a2 2 0 012 2v4zm6 0a2 2 0 01-2 2h-2a2 2 0 01-2-2V6a2 2 0 012-2h2a2 2 0 012 2v4zm-6 8a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2h4a2 2 0 012 2v4z"></path></svg>
+};
+
+// Get broker icon, fall back to default if not found
+const getBrokerIcon = (brokerId) => {
+        return BrokerIcons[brokerId] || BrokerIcons.default;
+};
 
 // Static broker data
 const AVAILABLE_BROKERS = [
@@ -306,10 +319,34 @@ export default function BrokerAuthPage() {
                                 throw new Error('Failed to save credentials. Please try again.');
                         }
 
+                        // If we're editing an existing broker, we need to update the state
+                        // If it's a new broker, we'll need to fetch to get the new ID from the server
+                        const isEditing = savedBrokers.some(broker =>
+                                broker.broker_id === selectedBroker.id && broker.account_label === accountLabel
+                        );
+
+                        if (isEditing) {
+                                // Update existing broker in local state
+                                setSavedBrokers(prevBrokers =>
+                                        prevBrokers.map(broker => {
+                                                if (broker.broker_id === selectedBroker.id && broker.account_label === accountLabel) {
+                                                        return {
+                                                                ...broker,
+                                                                credentials,
+                                                                account_label: accountLabel
+                                                        };
+                                                }
+                                                return broker;
+                                        })
+                                );
+                        } else {
+                                // New broker - need to fetch to get the assigned ID
+                                await fetchSavedBrokers();
+                        }
+
                         // Success
                         toast.success(`${selectedBroker.name} credentials saved successfully!`);
                         setIsModalOpen(false);
-                        fetchSavedBrokers();
                 } catch (err) {
                         toast.error(err.message);
                         setError(err.message);
@@ -327,6 +364,11 @@ export default function BrokerAuthPage() {
                                 throw new Error('Authentication required to remove broker credentials');
                         }
 
+                        // Optimistically update local state
+                        setSavedBrokers(prevBrokers =>
+                                prevBrokers.filter(broker => broker.id !== savedBroker.id)
+                        );
+
                         // Call the Supabase function to delete the credentials
                         const { data, error } = await supabase.rpc('delete_broker_credentials_v2', {
                                 p_broker_id: savedBroker.broker_id,
@@ -334,16 +376,20 @@ export default function BrokerAuthPage() {
                         });
 
                         if (error) {
+                                // Restore the removed broker in case of error
+                                setSavedBrokers(prevBrokers => [...prevBrokers, savedBroker]);
                                 throw new Error('Failed to remove credentials: ' + error.message);
                         }
 
                         if (!data) {
+                                // Restore the removed broker in case of error
+                                setSavedBrokers(prevBrokers => [...prevBrokers, savedBroker]);
                                 throw new Error('Failed to remove credentials. Please try again.');
                         }
 
                         // Success
                         toast.success(`${savedBroker.broker_name} credentials removed successfully!`);
-                        fetchSavedBrokers();
+                        // No need to fetch all brokers again as we've already updated the state
                 } catch (err) {
                         toast.error(err.message);
                         setError(err.message);
@@ -359,6 +405,16 @@ export default function BrokerAuthPage() {
                                 throw new Error('Authentication required to update broker active state');
                         }
 
+                        // Update the state locally first for immediate UI feedback
+                        setSavedBrokers(prevBrokers =>
+                                prevBrokers.map(broker => {
+                                        if (broker.id === savedBroker.id) {
+                                                return { ...broker, is_active: !broker.is_active };
+                                        }
+                                        return broker;
+                                })
+                        );
+
                         // Call the Supabase function to toggle the broker active state
                         const { data, error } = await supabase.rpc('toggle_broker_active_v2', {
                                 p_broker_id: savedBroker.broker_id,
@@ -366,16 +422,35 @@ export default function BrokerAuthPage() {
                         });
 
                         if (error) {
+                                // Revert the local state change if server update fails
+                                setSavedBrokers(prevBrokers =>
+                                        prevBrokers.map(broker => {
+                                                if (broker.id === savedBroker.id) {
+                                                        return { ...broker, is_active: savedBroker.is_active };
+                                                }
+                                                return broker;
+                                        })
+                                );
                                 throw new Error('Failed to update broker status: ' + error.message);
                         }
 
                         if (!data) {
+                                // Revert the local state change if server update returns no data
+                                setSavedBrokers(prevBrokers =>
+                                        prevBrokers.map(broker => {
+                                                if (broker.id === savedBroker.id) {
+                                                        return { ...broker, is_active: savedBroker.is_active };
+                                                }
+                                                return broker;
+                                        })
+                                );
                                 throw new Error('Failed to update broker status. Please try again.');
                         }
 
-                        // Success - refresh the list of saved brokers
+                        // Success toast notification
                         toast.success(`${savedBroker.broker_name} status updated!`);
-                        fetchSavedBrokers();
+
+                        // No need to fetch all brokers again, we've already updated the state
                 } catch (err) {
                         toast.error(err.message);
                         setError(err.message);
@@ -439,11 +514,11 @@ export default function BrokerAuthPage() {
         };
 
         return (
-                <div className="mx-auto bg-zinc-950 rounded-lg min-h-[500px]">
-                        <div className="mb-6 pl-4 flex items-center">
+                <div className="mx-auto bg-gradient-to-b from-zinc-950 to-zinc-900 rounded-xl min-h-[500px] shadow-xl">
+                        <div className="mb-8 pl-6 pt-6 flex items-center">
                                 <svg
                                         xmlns="http://www.w3.org/2000/svg"
-                                        className="h-4 w-4 mr-2 text-indigo-400"
+                                        className="h-5 w-5 mr-2 text-indigo-400"
                                         viewBox="0 0 20 20"
                                         fill="currentColor"
                                 >
@@ -453,13 +528,18 @@ export default function BrokerAuthPage() {
                                                 clipRule="evenodd"
                                         />
                                 </svg>
-                                <span className="text-indigo-400 font-medium">Broker Authentication</span>
+                                <span className="text-indigo-400 font-medium text-lg">Broker Authentication</span>
                         </div>
 
                         {error && (
-                                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-                                        <p className="text-sm">{error}</p>
-                                        <button className="text-xs underline mt-1" onClick={() => setError(null)}>
+                                <div className="mx-6 mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg flex items-center">
+                                        <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div className="flex-1">
+                                                <p className="text-sm font-medium">{error}</p>
+                                        </div>
+                                        <button className="text-xs underline ml-2" onClick={() => setError(null)}>
                                                 Dismiss
                                         </button>
                                 </div>
@@ -467,21 +547,30 @@ export default function BrokerAuthPage() {
 
                         {loading ? (
                                 <div className="h-96 flex justify-center items-center">
-                                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                                        <div className="relative">
+                                                <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-gray-200"></div>
+                                                <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+                                        </div>
                                 </div>
                         ) : (
-                                <div className="space-y-8">
+                                <div className="space-y-10 px-6 pb-10">
                                         {/* Saved Brokers Section */}
                                         <section>
-                                                <div className="flex items-center justify-between mb-4">
-                                                        <h2 className="text-xl font-semibold text-white">Connected Brokers</h2>
-                                                        <div className="px-3 py-1 rounded-full text-sm font-medium text-indigo-200 bg-indigo-900/30 border border-indigo-800">
+                                                <div className="flex items-center justify-between mb-6">
+                                                        <h2 className="text-xl font-semibold text-white flex items-center">
+                                                                <svg className="w-5 h-5 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                                                                </svg>
+                                                                Connected Brokers
+                                                        </h2>
+                                                        <div className="px-3 py-1.5 rounded-full text-sm font-medium text-indigo-200 bg-indigo-900/40 border border-indigo-800/50 flex items-center">
+                                                                <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2 animate-pulse"></span>
                                                                 {savedBrokers.length} {savedBrokers.length === 1 ? 'broker' : 'brokers'} connected
                                                         </div>
                                                 </div>
 
                                                 {savedBrokers.length > 0 ? (
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                                                 {savedBrokers.map(broker => {
                                                                         // Find broker details from available brokers
                                                                         const brokerDetails = availableBrokers.find(b => b.id === broker.broker_id) || {
@@ -495,32 +584,39 @@ export default function BrokerAuthPage() {
                                                                                         key={broker.id}
                                                                                         initial={{ opacity: 0, y: 20 }}
                                                                                         animate={{ opacity: 1, y: 0 }}
-                                                                                        className="bg-zinc-900 p-5 rounded-lg border border-zinc-800 hover:border-indigo-500 transition-all"
+                                                                                        whileHover={{ scale: 1.02 }}
+                                                                                        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative"
                                                                                 >
-                                                                                        <div className="flex justify-between items-start mb-3">
-                                                                                                <div className="flex items-center">
-                                                                                                        <span className="text-2xl mr-2">{brokerDetails.logo}</span>
-                                                                                                        <div>
-                                                                                                                <h3 className="text-lg font-medium text-white">{brokerDetails.name}</h3>
-                                                                                                                <p className="text-xs text-gray-400">
-                                                                                                                        {broker.account_label || 'Primary Account'}
-                                                                                                                </p>
-                                                                                                                <p className="text-xs text-gray-500">
-                                                                                                                        {Object.keys(broker.credentials)[0] && broker.credentials[Object.keys(broker.credentials)[0]]}
-                                                                                                                </p>
-                                                                                                        </div>
+                                                                                        {/* Toggle switch in top-right */}
+                                                                                        <div className="absolute top-3 right-4">
+                                                                                                <button
+                                                                                                        onClick={() => toggleBrokerActive(broker)}
+                                                                                                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${broker.is_active ? 'bg-indigo-500' : 'bg-gray-700'}`}
+                                                                                                        role="switch"
+                                                                                                >
+                                                                                                        <span
+                                                                                                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${broker.is_active ? 'translate-x-5' : 'translate-x-0'}`}
+                                                                                                        ></span>
+                                                                                                </button>
+                                                                                        </div>
+
+                                                                                        <div className="flex items-start mb-4">
+                                                                                                <div className="mr-3 p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                                                                                                        {getBrokerIcon(broker.broker_id)}
                                                                                                 </div>
-                                                                                                <div className="flex items-center">
-                                                                                                        <div
-                                                                                                                className={`w-10 h-5 rounded-full mr-2 transition-colors duration-200 ease-in-out flex items-center ${broker.is_active ? 'bg-green-500 justify-end' : 'bg-gray-600 justify-start'}`}
-                                                                                                                onClick={() => toggleBrokerActive(broker)}
-                                                                                                        >
-                                                                                                                <span className="block w-4 h-4 bg-white rounded-full mx-0.5"></span>
-                                                                                                        </div>
+                                                                                                <div>
+                                                                                                        <h3 className="text-lg font-medium text-white">{brokerDetails.name}</h3>
+                                                                                                        <p className="text-xs text-indigo-300 font-medium mt-0.5">
+                                                                                                                {broker.account_label || 'Primary Account'}
+                                                                                                        </p>
+                                                                                                        <p className="text-xs text-gray-500 mt-1">
+                                                                                                                {Object.keys(broker.credentials)[0] && broker.credentials[Object.keys(broker.credentials)[0]]}
+                                                                                                        </p>
                                                                                                 </div>
                                                                                         </div>
 
-                                                                                        <div className="flex space-x-2 mt-3">
+                                                                                        <div className="flex space-x-3 mt-5">
                                                                                                 <button
                                                                                                         onClick={() => {
                                                                                                                 // Find the original broker from available brokers
@@ -531,16 +627,31 @@ export default function BrokerAuthPage() {
                                                                                                                         handleOpenModal(originalBroker, broker);
                                                                                                                 }
                                                                                                         }}
-                                                                                                        className="flex-1 py-1 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-md transition-all shadow-md hover:shadow-lg"
+                                                                                                        className="flex-1 py-2 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center"
                                                                                                 >
+                                                                                                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                                                        </svg>
                                                                                                         Edit
                                                                                                 </button>
                                                                                                 <button
                                                                                                         onClick={() => handleRemoveBrokerCredentials(broker)}
                                                                                                         disabled={removingBroker === broker.id}
-                                                                                                        className="flex-1 py-1 px-3 bg-red-600 hover:bg-red-700 text-white text-sm rounded-md transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                                                                                                        className="flex-1 py-2 px-4 bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-red-600 hover:to-red-700 text-white text-sm rounded-lg transition-all flex items-center justify-center disabled:opacity-50"
                                                                                                 >
-                                                                                                        {removingBroker === broker.id ? 'Removing...' : 'Remove'}
+                                                                                                        {removingBroker === broker.id ? (
+                                                                                                                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                                                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                                                </svg>
+                                                                                                        ) : (
+                                                                                                                <>
+                                                                                                                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                                                                        </svg>
+                                                                                                                        Remove
+                                                                                                                </>
+                                                                                                        )}
                                                                                                 </button>
                                                                                         </div>
                                                                                 </motion.div>
@@ -551,32 +662,49 @@ export default function BrokerAuthPage() {
                                                         <motion.div
                                                                 initial={{ opacity: 0 }}
                                                                 animate={{ opacity: 1 }}
-                                                                className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 text-center"
+                                                                className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-8 rounded-xl border border-zinc-800/50 text-center"
                                                         >
-                                                                <div className="text-2xl mb-2">🔍</div>
-                                                                <h3 className="text-white text-lg font-medium mb-1">No Brokers Connected</h3>
-                                                                <p className="text-gray-400 text-sm mb-4">
-                                                                        You haven't connected any brokers yet. Connect a broker to get started.
+                                                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-4">
+                                                                        <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                                        </svg>
+                                                                </div>
+                                                                <h3 className="text-white text-xl font-medium mb-2">No Brokers Connected</h3>
+                                                                <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+                                                                        You haven't connected any brokers yet. Connect a broker below to start trading or managing your investments.
                                                                 </p>
+                                                                <div className="flex justify-center">
+                                                                        <a href="#available-brokers" className="py-2.5 px-5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm rounded-lg transition-all shadow-md hover:shadow-lg inline-flex items-center font-medium">
+                                                                                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                                                </svg>
+                                                                                Connect a Broker
+                                                                        </a>
+                                                                </div>
                                                         </motion.div>
                                                 )}
                                         </section>
 
                                         {/* Available Brokers Section */}
-                                        <section>
-                                                <div className="flex items-center justify-between mb-4">
-                                                        <h2 className="text-xl font-semibold text-white">Available Brokers</h2>
+                                        <section id="available-brokers">
+                                                <div className="flex items-center justify-between mb-6">
+                                                        <h2 className="text-xl font-semibold text-white flex items-center">
+                                                                <svg className="w-5 h-5 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                                </svg>
+                                                                Available Brokers
+                                                        </h2>
                                                         <div className="relative">
                                                                 <input
                                                                         type="text"
                                                                         placeholder="Search brokers..."
-                                                                        className="py-1 px-3 pr-8 bg-zinc-800 border border-zinc-700 rounded-md text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                        className="py-2 px-4 pr-10 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent shadow-inner transition-all"
                                                                         value={searchTerm}
                                                                         onChange={e => setSearchTerm(e.target.value)}
                                                                 />
                                                                 <svg
                                                                         xmlns="http://www.w3.org/2000/svg"
-                                                                        className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                                                        className="h-4 w-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                                                                         fill="none"
                                                                         viewBox="0 0 24 24"
                                                                         stroke="currentColor"
@@ -591,63 +719,69 @@ export default function BrokerAuthPage() {
                                                         </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                                         {getFilteredBrokers().map(broker => (
                                                                 <motion.div
                                                                         key={broker.id}
                                                                         initial={{ opacity: 0, y: 20 }}
                                                                         animate={{ opacity: 1, y: 0 }}
-                                                                        className="bg-zinc-900 p-5 rounded-lg border border-zinc-800 hover:border-indigo-500 transition-all"
+                                                                        whileHover={{ scale: 1.02 }}
+                                                                        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative"
                                                                 >
-                                                                        <div className="flex items-start mb-3">
-                                                                                <span className="text-2xl mr-2">{broker.logo}</span>
+                                                                        {/* Display accounts connected badge if applicable */}
+                                                                        {isBrokerSaved(broker.id) && (
+                                                                                <div className="absolute top-3 right-4 px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-xs text-indigo-300 flex items-center">
+                                                                                        <svg className="w-3 h-3 mr-1 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                        </svg>
+                                                                                        <span className="font-medium">{getBrokerAccountCount(broker.id)} account{getBrokerAccountCount(broker.id) !== 1 ? 's' : ''}</span>
+                                                                                </div>
+                                                                        )}
+
+                                                                        <div className="flex items-start mb-4">
+                                                                                <div className="mr-3 p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                                                                                        {getBrokerIcon(broker.id)}
+                                                                                </div>
                                                                                 <div>
                                                                                         <h3 className="text-lg font-medium text-white">{broker.name}</h3>
-                                                                                        <p className="text-xs text-gray-400">{broker.description}</p>
+                                                                                        <p className="text-xs text-gray-400 mt-1">{broker.description}</p>
                                                                                 </div>
                                                                         </div>
 
                                                                         {broker.status === 'available' ? (
-                                                                                <div className="mt-3">
+                                                                                <div className="mt-4">
                                                                                         {isBrokerSaved(broker.id) ? (
-                                                                                                <div className="flex flex-col space-y-2">
-                                                                                                        <div className="text-xs text-gray-400 mb-1">
-                                                                                                                {getBrokerAccountCount(broker.id)} account{getBrokerAccountCount(broker.id) !== 1 ? 's' : ''} connected
-                                                                                                        </div>
-                                                                                                        <button
-                                                                                                                onClick={() => handleOpenModal(broker)}
-                                                                                                                className="w-full py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-md transition-all shadow-md hover:shadow-lg"
-                                                                                                        >
-                                                                                                                Add Another Account
-                                                                                                        </button>
-                                                                                                        <button
-                                                                                                                onClick={() => {
-                                                                                                                        const accounts = savedBrokers.filter(saved => saved.broker_id === broker.id);
-                                                                                                                        if (accounts.length > 0) {
-                                                                                                                                // Show broker accounts in a dropdown or menu
-                                                                                                                                toast.success(`View accounts in the Connected Brokers section`);
-                                                                                                                        }
-                                                                                                                }}
-                                                                                                                className="w-full py-1.5 px-3 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-md transition-all"
-                                                                                                        >
-                                                                                                                Manage Accounts
-                                                                                                        </button>
-                                                                                                </div>
+                                                                                                <button
+                                                                                                        onClick={() => handleOpenModal(broker)}
+                                                                                                        className="w-full py-2 px-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+                                                                                                >
+                                                                                                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                                                                        </svg>
+                                                                                                        Add Another Account
+                                                                                                </button>
                                                                                         ) : (
                                                                                                 <button
                                                                                                         onClick={() => handleOpenModal(broker)}
-                                                                                                        className="w-full py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-md transition-all shadow-md hover:shadow-lg"
+                                                                                                        className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center font-medium"
                                                                                                 >
+                                                                                                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                                                                        </svg>
                                                                                                         Connect Broker
                                                                                                 </button>
                                                                                         )}
                                                                                 </div>
                                                                         ) : (
-                                                                                <div className="mt-3">
+                                                                                <div className="mt-4">
                                                                                         <button
-                                                                                                className="w-full py-1.5 px-3 bg-gray-600 text-white text-sm rounded-md opacity-70 cursor-not-allowed"
+                                                                                                className="w-full py-2.5 px-4 bg-zinc-700/50 text-zinc-400 text-sm rounded-lg cursor-not-allowed border border-zinc-600/30 flex items-center justify-center"
                                                                                                 disabled
                                                                                         >
+                                                                                                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                                </svg>
                                                                                                 Coming Soon
                                                                                         </button>
                                                                                 </div>
@@ -660,58 +794,128 @@ export default function BrokerAuthPage() {
                         )}
 
                         {/* Credentials Modal */}
-                        {isModalOpen && (
-                                <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+                        <AnimatePresence>
+                                {isModalOpen && (
                                         <motion.div
-                                                initial={{ opacity: 0, scale: 0.9 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl max-w-md w-full"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4"
                                         >
-                                                <div className="p-5 border-b border-gray-200 dark:border-gray-800">
-                                                        <div className="flex justify-between items-center">
-                                                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                                                                        {selectedBroker?.name} Credentials
-                                                                </h3>
+                                                <motion.div
+                                                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                                        transition={{ type: "spring", duration: 0.5 }}
+                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl shadow-2xl max-w-md w-full border border-zinc-700/50"
+                                                >
+                                                        <div className="p-6 border-b border-zinc-700/50">
+                                                                <div className="flex justify-between items-center">
+                                                                        <div className="flex items-center">
+                                                                                {selectedBroker && (
+                                                                                        <div className="mr-3 p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                                                                                                {getBrokerIcon(selectedBroker.id)}
+                                                                                        </div>
+                                                                                )}
+                                                                                <h3 className="text-xl font-medium text-white">
+                                                                                        {selectedBroker?.name} Credentials
+                                                                                </h3>
+                                                                        </div>
+                                                                        <button
+                                                                                onClick={() => setIsModalOpen(false)}
+                                                                                className="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rounded-lg p-1"
+                                                                        >
+                                                                                <svg
+                                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                                        className="h-5 w-5"
+                                                                                        viewBox="0 0 20 20"
+                                                                                        fill="currentColor"
+                                                                                >
+                                                                                        <path
+                                                                                                fillRule="evenodd"
+                                                                                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                                                                clipRule="evenodd"
+                                                                                        />
+                                                                                </svg>
+                                                                        </button>
+                                                                </div>
+                                                        </div>
+
+                                                        <div className="p-6">
+                                                                <div className="space-y-5">
+                                                                        <div className="mb-4">
+                                                                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                                                        Account Label
+                                                                                </label>
+                                                                                <input
+                                                                                        type="text"
+                                                                                        className="w-full p-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent"
+                                                                                        value={accountLabel}
+                                                                                        onChange={e => setAccountLabel(e.target.value)}
+                                                                                        placeholder="Enter a name for this account"
+                                                                                />
+                                                                        </div>
+                                                                        {selectedBroker && selectedBroker.fields.map(field => (
+                                                                                <div key={field.name} className="mb-4">
+                                                                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                                                                {field.label}
+                                                                                        </label>
+                                                                                        <div className="relative">
+                                                                                                <input
+                                                                                                        type={field.type}
+                                                                                                        className="w-full p-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent pr-10"
+                                                                                                        value={credentials[field.name] || ''}
+                                                                                                        onChange={e => setCredentials({ ...credentials, [field.name]: e.target.value })}
+                                                                                                        placeholder={`Enter ${field.label}`}
+                                                                                                />
+                                                                                                {field.type === 'password' && (
+                                                                                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                                                                                                <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                                                                </svg>
+                                                                                                        </div>
+                                                                                                )}
+                                                                                        </div>
+                                                                                </div>
+                                                                        ))}
+                                                                </div>
+                                                        </div>
+
+                                                        <div className="p-6 border-t border-zinc-700/50 flex justify-end space-x-4">
                                                                 <button
                                                                         onClick={() => setIsModalOpen(false)}
-                                                                        className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                                                                        className="px-5 py-2.5 text-sm font-medium text-white bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
                                                                 >
-                                                                        <svg
-                                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                                className="h-5 w-5"
-                                                                                viewBox="0 0 20 20"
-                                                                                fill="currentColor"
-                                                                        >
-                                                                                <path
-                                                                                        fillRule="evenodd"
-                                                                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                                                                        clipRule="evenodd"
-                                                                                />
-                                                                        </svg>
+                                                                        Cancel
+                                                                </button>
+                                                                <button
+                                                                        onClick={handleSaveBrokerCredentials}
+                                                                        disabled={savingCredentials}
+                                                                        className="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center"
+                                                                >
+                                                                        {savingCredentials ? (
+                                                                                <>
+                                                                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                        </svg>
+                                                                                        Saving...
+                                                                                </>
+                                                                        ) : (
+                                                                                <>
+                                                                                        <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                                        </svg>
+                                                                                        Save Credentials
+                                                                                </>
+                                                                        )}
                                                                 </button>
                                                         </div>
-                                                </div>
-
-                                                <div className="p-5">{renderCredentialFields()}</div>
-
-                                                <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex justify-end space-x-3">
-                                                        <button
-                                                                onClick={() => setIsModalOpen(false)}
-                                                                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
-                                                        >
-                                                                Cancel
-                                                        </button>
-                                                        <button
-                                                                onClick={handleSaveBrokerCredentials}
-                                                                disabled={savingCredentials}
-                                                                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-sm disabled:opacity-50"
-                                                        >
-                                                                {savingCredentials ? 'Saving...' : 'Save Credentials'}
-                                                        </button>
-                                                </div>
+                                                </motion.div>
                                         </motion.div>
-                                </div>
-                        )}
+                                )}
+                        </AnimatePresence>
                 </div>
         );
 } 

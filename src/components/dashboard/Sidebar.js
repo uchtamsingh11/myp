@@ -126,7 +126,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
           <li>
             <a
               href="#"
-              className={`flex items-center p-2 rounded-lg transition-colors ${isActive('Dashboard') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+              className={`flex items-center p-2 rounded-lg transition-colors ${isActive('Dashboard')
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                  : 'hover:bg-zinc-800 text-zinc-300'
+                }`}
               onClick={e => {
                 e.preventDefault();
                 handleMenuItemClick('Dashboard', '/dashboard');
@@ -140,7 +143,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
           <li>
             <a
               href="#"
-              className={`flex items-center p-2 rounded-lg transition-colors ${isActive('Broker Auth') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+              className={`flex items-center p-2 rounded-lg transition-colors ${isActive('Broker Auth')
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                  : 'hover:bg-zinc-800 text-zinc-300'
+                }`}
               onClick={e => {
                 e.preventDefault();
                 handleMenuItemClick('Broker Auth', '/dashboard/broker-auth');
@@ -157,7 +163,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
               <div className="relative">
                 <button
                   onClick={() => toggleMenu('Admin')}
-                  className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Admin') || isActive('Admin Users') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                  className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Admin') || isActive('Admin Users')
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                      : 'hover:bg-zinc-800 text-zinc-300'
+                    }`}
                 >
                   <div
                     className="flex items-center"
@@ -182,7 +191,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <li>
                       <a
                         href="/dashboard/admin/users"
-                        className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Admin Users') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                        className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Admin Users')
+                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                            : 'hover:bg-zinc-800 text-zinc-300'
+                          }`}
                         onClick={e => {
                           e.preventDefault();
                           handleMenuItemClick('Admin Users', '/dashboard/admin/users');
@@ -201,7 +213,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative">
               <button
                 onClick={() => toggleMenu('Trading View')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Trading View') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Trading View')
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
+                  }`}
               >
                 <div
                   className="flex items-center"
@@ -305,7 +320,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative">
               <button
                 onClick={() => toggleMenu('Scalping Tool')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Scalping Tool') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Scalping Tool')
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
+                  }`}
               >
                 <div
                   className="flex items-center"
@@ -330,7 +348,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/scalping-tool"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Scalping Tool Manage') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Scalping Tool Manage')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() =>
                         handleMenuItemClick('Scalping Tool Manage', '/dashboard/scalping-tool')
                       }
@@ -341,7 +362,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/scalping-tool/scalp-tool"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Scalping Tool Scalp Tool') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Scalping Tool Scalp Tool')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() =>
                         handleMenuItemClick(
                           'Scalping Tool Scalp Tool',
@@ -360,7 +384,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative">
               <button
                 onClick={() => toggleMenu('Copy Trading')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Copy Trading') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Copy Trading')
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
+                  }`}
               >
                 <div
                   className="flex items-center"
@@ -385,7 +412,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/copy-trading"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Copy Trading Manage') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Copy Trading Manage')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() =>
                         handleMenuItemClick('Copy Trading Manage', '/dashboard/copy-trading')
                       }
@@ -396,7 +426,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/copy-trading/strategy"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Copy Trading Strategy') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Copy Trading Strategy')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() =>
                         handleMenuItemClick(
                           'Copy Trading Strategy',
@@ -415,7 +448,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative">
               <button
                 onClick={() => toggleMenu('Strategy')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Strategy') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Strategy')
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
+                  }`}
               >
                 <div
                   className="flex items-center"
@@ -440,7 +476,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/strategy/pine-script"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy Pine Script') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy Pine Script')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() =>
                         handleMenuItemClick(
                           'Strategy Pine Script',
@@ -454,7 +493,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/strategy/mql"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy MQL') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy MQL')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('Strategy MQL', '/dashboard/strategy/mql')}
                     >
                       <span>MQL</span>
@@ -463,7 +505,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/strategy/afl"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy AFL') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy AFL')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('Strategy AFL', '/dashboard/strategy/afl')}
                     >
                       <span>AFL</span>
@@ -477,7 +522,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative">
               <button
                 onClick={() => toggleMenu('Bots')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Bots') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Bots')
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
+                  }`}
               >
                 <div
                   className="flex items-center"
@@ -502,7 +550,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/bots"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots My Bots') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots My Bots')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('Bots My Bots', '/dashboard/bots')}
                     >
                       <span>My Bots</span>
@@ -511,7 +562,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/bots/nse-bse"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots NSE/BSE') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots NSE/BSE')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('Bots NSE/BSE', '/dashboard/bots/nse-bse')}
                     >
                       <span>NSE/BSE</span>
@@ -520,7 +574,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/bots/forex"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots Forex') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots Forex')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('Bots Forex', '/dashboard/bots/forex')}
                     >
                       <span>Forex</span>
@@ -529,7 +586,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/bots/crypto"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots Crypto') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots Crypto')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('Bots Crypto', '/dashboard/bots/crypto')}
                     >
                       <span>Crypto</span>
@@ -546,7 +606,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   e.preventDefault();
                   handleMenuItemClick('Pricing', '/dashboard/pricing');
                 }}
-                className={`flex items-center w-full p-2 rounded-lg transition-colors ${isActive('Pricing') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                className={`flex items-center w-full p-2 rounded-lg transition-colors ${isActive('Pricing')
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
+                  }`}
               >
                 <div className="flex items-center">
                   <img src="/file.svg" alt="Pricing" className="w-5 h-5 mr-3" />
@@ -560,7 +623,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative">
               <button
                 onClick={() => toggleMenu('FAQ')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('FAQ') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('FAQ')
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
+                  }`}
               >
                 <div
                   className="flex items-center"
@@ -585,7 +651,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/faq/general"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ General') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ General')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('FAQ General', '/dashboard/faq/general')}
                     >
                       <span>General</span>
@@ -594,7 +663,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/faq/trading"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ Trading') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ Trading')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('FAQ Trading', '/dashboard/faq/trading')}
                     >
                       <span>Trading</span>
@@ -603,7 +675,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/faq/billing"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ Billing') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ Billing')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() => handleMenuItemClick('FAQ Billing', '/dashboard/faq/billing')}
                     >
                       <span>Billing</span>
@@ -617,7 +692,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative">
               <button
                 onClick={() => toggleMenu('Support')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Support') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Support')
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
+                  }`}
               >
                 <div
                   className="flex items-center"
@@ -642,7 +720,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/support/contact-us"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Contact Us') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Contact Us')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() =>
                         handleMenuItemClick('Support Contact Us', '/dashboard/support/contact-us')
                       }
@@ -653,7 +734,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/support/submit-ticket"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Submit Ticket') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Submit Ticket')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() =>
                         handleMenuItemClick(
                           'Support Submit Ticket',
@@ -667,7 +751,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li>
                     <a
                       href="/dashboard/support/live-chat"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Live Chat') ? 'bg-blue-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Live Chat')
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={() =>
                         handleMenuItemClick('Support Live Chat', '/dashboard/support/live-chat')
                       }
@@ -683,7 +770,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
           <li>
             <a
               href="#"
-              className="flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors"
+              className={`flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors ${isActive('Logout')
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                  : ''
+                }`}
               onClick={e => {
                 e.preventDefault();
                 signOut();

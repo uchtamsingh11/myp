@@ -31,7 +31,7 @@ const DashboardHeader = ({ userEmail }) => {
       <div className="flex items-center">
         <Link href="/dashboard" className="text-xl font-bold text-white flex items-center">
           <svg
-            className="w-6 h-6 mr-2 text-blue-500"
+            className="w-6 h-6 mr-2 text-indigo-500"
             fill="currentColor"
             viewBox="0 0 20 20"
             xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +63,7 @@ const DashboardHeader = ({ userEmail }) => {
             <span className="text-xs text-zinc-400">Online</span>
           </div>
 
-          <div className="bg-blue-600 hover:bg-blue-700 transition-colors w-8 h-8 rounded-full flex items-center justify-center">
+          <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 transition-colors w-8 h-8 rounded-full flex items-center justify-center">
             <span className="text-sm font-semibold">
               {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
             </span>
