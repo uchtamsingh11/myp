@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
 import Link from 'next/link';
+import { BorderBeam } from '../magicui/border-beam.jsx';
+import { RainbowButton } from '../magicui/rainbow-button.jsx';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -102,9 +104,20 @@ const Header = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <Link href={getDestination()}>
-            <button className="btn-primary">{user ? 'Dashboard' : 'Get Started'}</button>
-          </Link>
+          {!user && (
+            <div className="flex items-center">
+              <Link href="/auth">
+                <RainbowButton>
+                  Get Started
+                </RainbowButton>
+              </Link>
+            </div>
+          )}
+          {user && (
+            <Link href={getDestination()}>
+              <button className="btn-primary">{user ? 'Dashboard' : 'Get Started'}</button>
+            </Link>
+          )}
         </motion.div>
 
         {/* Mobile Menu Button */}
@@ -175,9 +188,20 @@ const Header = () => {
           {user && <div className="py-2 text-white font-semibold truncate">{user.email}</div>}
 
           <div className="flex flex-col space-y-3 pt-3 border-t border-zinc-800">
-            <Link href={getDestination()} onClick={() => setMobileMenuOpen(false)}>
-              <button className="btn-primary w-full">{user ? 'Dashboard' : 'Get Started'}</button>
-            </Link>
+            {!user && (
+              <div className="flex items-center">
+                <Link href="/auth" className="w-full">
+                  <RainbowButton className="w-full">
+                    Get Started
+                  </RainbowButton>
+                </Link>
+              </div>
+            )}
+            {user && (
+              <Link href={getDestination()} onClick={() => setMobileMenuOpen(false)}>
+                <button className="btn-primary w-full">{user ? 'Dashboard' : 'Get Started'}</button>
+              </Link>
+            )}
           </div>
         </div>
       </motion.div>

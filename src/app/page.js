@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Header from '../components/layout/Header';
 import Hero from '../components/features/home/Hero';
+import BrokerLogos from '../components/features/home/BrokerLogos';
 import Features from '../components/features/home/Features';
 import HowItWorks from '../components/features/home/HowItWorks';
 import Testimonials from '../components/features/home/Testimonials';
@@ -15,6 +16,7 @@ export default function Home() {
     <main className="bg-black text-white min-h-screen">
       <Header />
       <Hero />
+      <BrokerLogos />
       <Features />
       <HowItWorks />
       <Testimonials />

@@ -347,13 +347,13 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 <ul className="pl-8 mt-1 space-y-1">
                   <li>
                     <a
-                      href="/dashboard/scalping-tool"
+                      href="/dashboard/scalpingtool/manage"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Scalping Tool Manage')
                           ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
                           : 'hover:bg-zinc-800 text-zinc-300'
                         }`}
                       onClick={() =>
-                        handleMenuItemClick('Scalping Tool Manage', '/dashboard/scalping-tool')
+                        handleMenuItemClick('Scalping Tool Manage', '/dashboard/scalpingtool/manage')
                       }
                     >
                       <span>Manage</span>

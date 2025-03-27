@@ -41,12 +41,27 @@ const AuthCallbackContent = () => {
 
       // Use setTimeout to ensure smooth transition
       setTimeout(() => {
-        if (redirectTo) {
-          router.push(redirectTo);
-        } else {
-          router.push('/dashboard');
+        try {
+          console.log('Redirecting after authentication...');
+          if (redirectTo) {
+            router.push(redirectTo);
+            // Fallback to direct navigation if router fails
+            setTimeout(() => {
+              window.location.href = redirectTo;
+            }, 1000);
+          } else {
+            router.push('/dashboard');
+            // Fallback to direct navigation if router fails
+            setTimeout(() => {
+              window.location.href = '/dashboard';
+            }, 1000);
+          }
+          setLoading(false);
+        } catch (navError) {
+          console.error('Navigation error:', navError);
+          // Direct navigation as fallback
+          window.location.href = redirectTo || '/dashboard';
         }
-        setLoading(false);
       }, 500);
     }
 

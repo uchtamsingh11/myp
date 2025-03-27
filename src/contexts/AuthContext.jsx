@@ -254,56 +254,75 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Initialize authentication state on mount
+  // Implement useEffect to get the initial session
   useEffect(() => {
+    // Function to initialize auth state
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
 
-        // Get initial session
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        // Get the session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
 
-        if (session?.user) {
-          setUser(session.user);
+        // Set user state if session is found
+        if (sessionData?.session?.user) {
+          console.log("Found existing session, setting user state");
+          setUser(sessionData.session.user);
 
-          // Fetch user profile
-          const profileData = await fetchProfile(session.user.id);
+          // Fetch profile data after setting the user
+          const profileData = await fetchProfile(sessionData.session.user.id);
           if (profileData) {
             setProfile(profileData);
           }
+        } else {
+          console.log("No active session found");
+          setUser(null);
+          setProfile(null);
         }
-
-        // Listen for authentication changes
-        const {
-          data: { subscription },
-        } = await supabase.auth.onAuthStateChange(async (event, session) => {
-          if (session?.user) {
-            setUser(session.user);
-
-            // Fetch user profile when auth state changes
-            const profileData = await fetchProfile(session.user.id);
-            if (profileData) {
-              setProfile(profileData);
-            }
-          } else {
-            setUser(null);
-            setProfile(null);
-          }
-        });
-
-        return () => {
-          subscription?.unsubscribe();
-        };
       } catch (error) {
         console.error('Error initializing auth:', error);
+        setUser(null);
+        setProfile(null);
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Call the initialization function
     initializeAuth();
+
+    // Subscribe to auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('User signed in:', session.user.email);
+        setUser(session.user);
+        
+        // Fetch and set the user profile
+        const profileData = await fetchProfile(session.user.id);
+        if (profileData) {
+          setProfile(profileData);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+        setUser(null);
+        setProfile(null);
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed for session');
+        if (session?.user) {
+          setUser(session.user);
+        }
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
   }, []);
 
   // Export context values

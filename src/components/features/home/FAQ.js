@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { RainbowButton } from '../../magicui/rainbow-button.jsx';
 
 const faqs = [
   {
@@ -24,27 +25,7 @@ const faqs = [
     question: 'Which markets can I trade with AlgoZ?',
     answer:
       'AlgoZ supports trading across multiple markets including stocks, options, futures, forex, and cryptocurrencies. The specific markets available depend on your subscription plan and broker integration.',
-  },
-  {
-    question: 'How do I connect my brokerage account?',
-    answer:
-      "AlgoZ integrates with most major brokerages through secure API connections. After signing up, you'll be guided through the process of connecting your existing brokerage account or opening a new one with one of our partner brokers.",
-  },
-  {
-    question: 'What kind of returns can I expect?',
-    answer:
-      "While past performance doesn't guarantee future results, our top-performing algorithms have historically generated annual returns between 15-30%. Individual results may vary based on market conditions, the algorithms you select, and your risk settings.",
-  },
-  {
-    question: 'Is my data secure?',
-    answer:
-      'Absolutely. We employ bank-level encryption and security protocols to protect your personal and financial information. We never store your brokerage credentials, and all API connections are secured with OAuth or similar authentication methods.',
-  },
-  {
-    question: 'Can I cancel my subscription anytime?',
-    answer:
-      "Yes, you can cancel your subscription at any time. If you cancel, you'll continue to have access until the end of your current billing period. We don't lock you into long-term contracts.",
-  },
+  }
 ];
 
 const FAQItem = ({ faq, index, isOpen, toggleOpen }) => {
@@ -147,17 +128,20 @@ const FAQ = () => {
               href="https://t.me/AlgoZsupport1"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-              </svg>
-              Contact Support
+              <RainbowButton>
+                <span className="flex items-center">
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                  </svg>
+                  Contact Support
+                </span>
+              </RainbowButton>
             </a>
           </div>
         </div>

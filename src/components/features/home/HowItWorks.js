@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { RainbowButton } from '../../magicui/rainbow-button.jsx';
 
 const steps = [
   {
@@ -188,11 +189,11 @@ const HowItWorks = () => {
           className="mt-16 md:mt-24 text-center"
         >
           <a href="/auth" className="inline-block">
-            <button className="relative overflow-hidden px-8 py-4 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-medium shadow-lg shadow-indigo-900/30 hover:shadow-indigo-900/50 transition-all duration-300 hover:translate-y-[-3px] group">
-              <span className="relative z-10 flex items-center">
+            <RainbowButton>
+              <span className="flex items-center">
                 Start Your Trading Journey
                 <svg
-                  className="w-5 h-5 ml-2 transform transition-transform group-hover:translate-x-1"
+                  className="w-5 h-5 ml-2 transform transition-transform hover:translate-x-1"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -205,8 +206,7 @@ const HowItWorks = () => {
                   />
                 </svg>
               </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 to-indigo-800 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </button>
+            </RainbowButton>
           </a>
           <p className="mt-4 text-zinc-500 text-sm">No credit card required to get started</p>
         </motion.div>

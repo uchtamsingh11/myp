@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '../../../utils/supabase';
+import { BorderBeam } from '../../magicui/border-beam.jsx';
+import { Meteors } from '../../magicui/meteors.jsx';
+import { RainbowButton } from '../../magicui/rainbow-button.jsx';
 
 const Hero = () => {
   const [user, setUser] = useState(null);
@@ -54,6 +57,16 @@ const Hero = () => {
           ease: 'easeInOut',
         }}
       ></motion.div>
+
+      {/* Meteors Effect - repositioned */}
+      <div className="absolute inset-0 overflow-hidden z-[20]">
+        <Meteors 
+          number={80} 
+          minDuration={2}
+          maxDuration={4}
+          angle={215}
+        />
+      </div>
 
       {/* Animated gradient blobs */}
       <div className="absolute inset-0 overflow-hidden opacity-30">
@@ -253,11 +266,11 @@ const Hero = () => {
             solutions
           </motion.p>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Link href={getDestination()} className="w-full sm:w-auto">
-              <button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-colors">
-                {user ? 'Go to Dashboard' : 'Get Started Now'}
-              </button>
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
+            <Link href={user ? '/dashboard' : '/auth'}>
+              <RainbowButton>
+                {user ? 'Go to Dashboard' : 'Get Started Free'}
+              </RainbowButton>
             </Link>
             <a href="#features" className="w-full sm:w-auto">
               <button className="w-full sm:w-auto bg-transparent border border-zinc-700 hover:border-zinc-500 text-white font-medium py-3 px-6 rounded-lg transition-colors">

@@ -13,11 +13,22 @@ export default function Dashboard() {
   // Verify authentication on component mount
   useEffect(() => {
     document.title = 'Dashboard | AlgoZ';
+    console.log('Dashboard auth check - User:', !!user, 'isLoading:', isLoading);
 
     // Since we're using the useAuth hook, we can simplify this
     if (!isLoading && !user) {
+      console.log('No authenticated user found, redirecting to auth page');
       router.replace('/auth');
+      
+      // Add a fail-safe redirection after a delay
+      // This ensures we don't get stuck if the router.replace() fails
+      setTimeout(() => {
+        if (!user) {
+          window.location.href = '/auth';
+        }
+      }, 1000);
     } else if (!isLoading && user) {
+      console.log('User authenticated, loading dashboard for:', user.email);
       setLoading(false);
     }
   }, [user, isLoading, router]);

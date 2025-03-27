@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { BorderBeam } from '../../magicui/border-beam.jsx';
+import { RainbowButton } from '../../magicui/rainbow-button.jsx';
 
 const pricingPlans = [
   {
@@ -97,6 +99,14 @@ const Pricing = () => {
                 animate={planInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
+                <BorderBeam 
+                  colorFrom={plan.popular ? "#8B5CF6" : "#6B7280"} 
+                  colorTo={plan.popular ? "#6366F1" : "#4B5563"}
+                  size={70} 
+                  duration={6}
+                  delay={0}
+                />
+
                 {plan.popular && (
                   <div className="absolute -top-4 left-0 right-0 flex justify-center">
                     <span className="bg-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
@@ -141,36 +151,13 @@ const Pricing = () => {
                     ))}
                   </ul>
 
-                  <button
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
-                      plan.popular
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-700/20 hover:shadow-indigo-700/40'
-                        : 'bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600'
-                    }`}
-                  >
+                  <RainbowButton className="w-full">
                     {plan.cta}
-                  </button>
+                  </RainbowButton>
                 </div>
               </motion.div>
             );
           })}
-        </div>
-
-        <div className="mt-12 text-center">
-          <a
-            href="#faq"
-            className="text-indigo-400 hover:text-indigo-300 text-sm inline-flex items-center"
-          >
-            Have questions? Check our FAQ
-            <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M14 5l7 7m0 0l-7 7m7-7H3"
-              />
-            </svg>
-          </a>
         </div>
       </div>
     </section>
