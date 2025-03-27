@@ -175,13 +175,13 @@ export default function WebhookLogsComponent() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-2xl font-bold mb-6">TradingView Webhook Logs</h2>
+        <h2 className="text-2xl font-bold mb-6">Webhook Logs</h2>
 
         <div className="bg-zinc-900 rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">

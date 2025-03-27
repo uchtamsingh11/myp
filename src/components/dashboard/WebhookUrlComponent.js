@@ -88,13 +88,13 @@ export default function WebhookUrlComponent() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-2xl font-bold mb-6">TradingView Webhook URL</h2>
+        <h2 className="text-2xl font-bold mb-6">Webhook URL</h2>
 
         <div className="bg-zinc-900 rounded-xl p-6 mb-8">
           <p className="text-zinc-400 mb-4">
