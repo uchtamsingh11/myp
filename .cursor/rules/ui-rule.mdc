@@ -1,0 +1,25 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to
+- Reusable Components → Break UI into small, independent components.
+
+- State Management → Use React Context or Zustand instead of prop drilling.
+
+- Lazy Loading → Use Next.js dynamic imports to improve performance.
+
+- Server-Side Rendering (SSR) or Static Generation (SSG) → Optimize page loads for trading data.
+
+- Error Boundaries → Wrap components in error boundaries for fail-safe UI.
+
+- Accessibility (a11y) → Ensure proper ARIA attributes and keyboard navigation.
+
+- UI Skeletons & Loaders → Improve UX with skeletons while fetching trading data.
+
+- Responsive Design → Ensure all components work on multiple screen sizes.

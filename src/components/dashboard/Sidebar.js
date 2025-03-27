@@ -25,8 +25,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   // State for tracking which menu item is active
   const [activeItem, setActiveItem] = useState(
     activeMenuItem ||
-      (typeof window !== 'undefined' && sessionStorage.getItem('dashboardActiveMenuItem')) ||
-      'Dashboard'
+    (typeof window !== 'undefined' && sessionStorage.getItem('dashboardActiveMenuItem')) ||
+    'Dashboard'
   );
 
   // Sync activeItem with the prop when it changes
