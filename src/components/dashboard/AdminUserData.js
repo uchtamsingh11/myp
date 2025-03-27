@@ -298,7 +298,10 @@ export default function AdminUserData() {
   if (loading) {
     return (
       <div className="flex justify-center my-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+        <div className="relative">
+          <div className="w-8 h-8 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+          <div className="w-8 h-8 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+        </div>
       </div>
     );
   }
@@ -336,7 +339,10 @@ export default function AdminUserData() {
           >
             {refreshing ? (
               <>
-                <div className="animate-spin h-4 w-4 mr-2 border-t-2 border-b-2 border-white rounded-full"></div>
+                <div className="relative h-4 w-4 mr-2">
+                  <div className="w-4 h-4 rounded-full absolute border-2 border-solid border-zinc-800"></div>
+                  <div className="w-4 h-4 rounded-full animate-spin absolute border-2 border-solid border-indigo-500 border-t-transparent"></div>
+                </div>
                 Refreshing...
               </>
             ) : (
@@ -460,7 +466,10 @@ export default function AdminUserData() {
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex justify-center items-center disabled:opacity-50"
                 >
                   {updateLoading ? (
-                    <div className="animate-spin h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></div>
+                    <div className="relative h-4 w-4 mr-2">
+                      <div className="w-4 h-4 rounded-full absolute border-2 border-solid border-zinc-800"></div>
+                      <div className="w-4 h-4 rounded-full animate-spin absolute border-2 border-solid border-indigo-500 border-t-transparent"></div>
+                    </div>
                   ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -483,7 +492,10 @@ export default function AdminUserData() {
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded flex justify-center items-center disabled:opacity-50"
                 >
                   {updateLoading ? (
-                    <div className="animate-spin h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></div>
+                    <div className="relative h-4 w-4 mr-2">
+                      <div className="w-4 h-4 rounded-full absolute border-2 border-solid border-zinc-800"></div>
+                      <div className="w-4 h-4 rounded-full animate-spin absolute border-2 border-solid border-indigo-500 border-t-transparent"></div>
+                    </div>
                   ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -508,7 +520,10 @@ export default function AdminUserData() {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded flex justify-center items-center disabled:opacity-50"
               >
                 {updateLoading ? (
-                  <div className="animate-spin h-4 w-4 border-t-2 border-b-2 border-white rounded-full mr-2"></div>
+                  <div className="relative h-4 w-4 mr-2">
+                    <div className="w-4 h-4 rounded-full absolute border-2 border-solid border-zinc-800"></div>
+                    <div className="w-4 h-4 rounded-full animate-spin absolute border-2 border-solid border-indigo-500 border-t-transparent"></div>
+                  </div>
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

@@ -201,7 +201,10 @@ export default function WebhookLogsComponent() {
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+              <div className="relative">
+                <div className="w-6 h-6 rounded-full absolute border-2 border-solid border-zinc-800"></div>
+                <div className="w-6 h-6 rounded-full animate-spin absolute border-2 border-solid border-indigo-500 border-t-transparent"></div>
+              </div>
             </div>
           ) : error ? (
             <div className="text-red-500 mb-4 p-3 bg-red-900/20 rounded-lg">{error}</div>

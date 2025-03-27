@@ -308,7 +308,10 @@ export default function ChooseBrokerPage() {
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold mb-6">Connect Your Broker</h1>
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+              <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+            </div>
           </div>
         </div>
       }

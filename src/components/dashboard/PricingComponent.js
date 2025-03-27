@@ -68,7 +68,10 @@ function PricingComponent({ onPurchase }) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-48">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        <div className="relative">
+          <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+          <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+        </div>
       </div>
     );
   }
@@ -81,9 +84,8 @@ function PricingComponent({ onPurchase }) {
         {plans.map(plan => (
           <motion.div
             key={plan.id}
-            className={`relative rounded-xl overflow-hidden border ${
-              plan.popular ? 'border-indigo-500' : 'border-zinc-700'
-            } bg-zinc-800 hover:bg-zinc-700 transition-colors`}
+            className={`relative rounded-xl overflow-hidden border ${plan.popular ? 'border-indigo-500' : 'border-zinc-700'
+              } bg-zinc-800 hover:bg-zinc-700 transition-colors`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: plan.id * 0.1 }}
@@ -142,11 +144,10 @@ function PricingComponent({ onPurchase }) {
 
               <button
                 onClick={() => handlePurchase(plan)}
-                className={`w-full py-3 rounded-lg font-semibold ${
-                  plan.popular
+                className={`w-full py-3 rounded-lg font-semibold ${plan.popular
                     ? 'bg-indigo-600 hover:bg-indigo-700'
                     : 'bg-zinc-700 hover:bg-zinc-600'
-                } transition-colors`}
+                  } transition-colors`}
               >
                 Purchase Now
               </button>

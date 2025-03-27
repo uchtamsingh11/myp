@@ -546,10 +546,10 @@ export default function BrokerAuthPage() {
                         )}
 
                         {loading ? (
-                                <div className="h-96 flex justify-center items-center">
+                                <div className="h-96 flex justify-center items-center bg-zinc-950 rounded-xl">
                                         <div className="relative">
-                                                <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-gray-200"></div>
-                                                <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+                                                <div className="w-14 h-14 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+                                                <div className="w-14 h-14 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent shadow-lg"></div>
                                         </div>
                                 </div>
                         ) : (

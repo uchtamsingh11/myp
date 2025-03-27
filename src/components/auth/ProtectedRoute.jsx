@@ -22,8 +22,11 @@ export default function ProtectedRoute({ children }) {
   // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <div className="w-12 h-12 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-zinc-950 flex justify-center items-center">
+        <div className="relative">
+          <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+          <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+        </div>
       </div>
     );
   }
@@ -40,10 +43,13 @@ export default function ProtectedRoute({ children }) {
 
   // Show a loading state while redirecting
   return (
-    <div className="min-h-screen flex justify-center items-center">
+    <div className="min-h-screen flex justify-center items-center bg-zinc-950">
       <div className="text-center">
-        <div className="w-12 h-12 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-zinc-400">Redirecting to login...</p>
+        <div className="relative mx-auto mb-4">
+          <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+          <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+        </div>
+        <p className="text-zinc-400">Authentication required. Redirecting to login...</p>
       </div>
     </div>
   );

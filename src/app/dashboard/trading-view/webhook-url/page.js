@@ -14,7 +14,10 @@ export default function WebhookUrlPage() {
   // This component will only show briefly before redirecting
   return (
     <div className="flex items-center justify-center h-48">
-      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="relative">
+        <div className="w-8 h-8 rounded-full absolute border-2 border-solid border-zinc-800"></div>
+        <div className="w-8 h-8 rounded-full animate-spin absolute border-2 border-solid border-indigo-500 border-t-transparent"></div>
+      </div>
     </div>
   );
 }

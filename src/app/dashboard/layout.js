@@ -12,8 +12,11 @@ const ADMIN_EMAIL = 'uchtamsingh@gmail.com';
 
 // Loading component
 const Loading = () => (
-  <div className="flex items-center justify-center h-screen w-full">
-    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+  <div className="flex items-center justify-center h-screen w-full bg-zinc-950">
+    <div className="relative">
+      <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+      <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+    </div>
   </div>
 );
 
@@ -49,9 +52,12 @@ export default function DashboardLayout({ children }) {
   if (!user) {
     // If we somehow got here without a user, show loading and redirect
     return (
-      <div className="min-h-screen flex justify-center items-center">
+      <div className="min-h-screen flex justify-center items-center bg-zinc-950">
         <div className="text-center">
-          <div className="w-12 h-12 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="relative mx-auto mb-4">
+            <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+            <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
+          </div>
           <p className="text-zinc-400">Access denied. Redirecting to login...</p>
         </div>
       </div>

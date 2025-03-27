@@ -25,8 +25,11 @@ export default function Dashboard() {
   // Show loading state
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      <div className="flex items-center justify-center h-[60vh] bg-zinc-950 rounded-xl">
+        <div className="relative">
+          <div className="w-14 h-14 rounded-full absolute border-4 border-solid border-zinc-800"></div>
+          <div className="w-14 h-14 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent shadow-lg"></div>
+        </div>
       </div>
     );
   }
