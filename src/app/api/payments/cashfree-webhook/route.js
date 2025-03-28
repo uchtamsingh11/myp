@@ -10,61 +10,77 @@ const supabase = createClient(
         process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+/**
+ * Cashfree Webhook Handler
+ * This endpoint receives webhook events from Cashfree payment gateway
+ * 
+ * @see https://www.cashfree.com/docs/payments/online/webhooks/overview
+ */
 export async function POST(request) {
         try {
-                // Clone the request for logging
+                // Clone the request to handle both text and JSON access (needed for signature verification)
                 const clonedRequest = request.clone();
 
                 // Get client IP address for security logging
                 const ipAddress = request.headers.get('x-forwarded-for') || 'unknown';
 
                 // Log all headers for debugging
+                console.log('>>> Cashfree webhook received from IP:', ipAddress);
+
+                // Get headers for signature verification
                 const headers = {};
                 for (const [key, value] of request.headers.entries()) {
                         headers[key] = value;
                 }
+
+                // Extract webhook data
+                const webhookBody = await clonedRequest.text(); // Raw body for signature verification
+                const webhookData = await request.json(); // Parsed JSON for processing
+
                 console.log('Cashfree webhook headers:', JSON.stringify(headers));
+                console.log('Cashfree webhook received:', JSON.stringify(webhookData).substring(0, 200) + '...');
 
-                // Get webhook data
-                const webhookData = await request.json();
-                const webhookText = await clonedRequest.text();
-
-                // Extract signature from headers - Cashfree uses different header names
+                // Extract signature from headers - Cashfree uses different header names depending on API version
                 const signature = request.headers.get('x-webhook-signature') ||
                         request.headers.get('x-cashfree-signature') ||
                         request.headers.get('x-signature');
 
-                console.log('Cashfree webhook received:', JSON.stringify(webhookData).substring(0, 200) + '...');
-
-                // Validate webhook signature if available - skip in development for testing
+                // Validate webhook signature - skip in development only if configured
                 let signatureValid = false;
-                if (process.env.NODE_ENV === 'development' || process.env.SKIP_SIGNATURE_CHECK === 'true') {
+
+                if (process.env.NODE_ENV === 'development' && process.env.SKIP_SIGNATURE_CHECK === 'true') {
                         signatureValid = true;
                         console.log('Skipping signature validation in development mode');
                 } else if (signature) {
-                        signatureValid = validateWebhookSignature(webhookText, signature);
+                        signatureValid = validateWebhookSignature(webhookBody, signature);
                         console.log(`Signature validation result: ${signatureValid ? 'Valid' : 'Invalid'}`);
                 }
 
-                if (signature && !signatureValid && process.env.NODE_ENV === 'production') {
+                // In production, always validate signature if present
+                if (!signatureValid && signature && process.env.NODE_ENV === 'production') {
                         console.error('Invalid webhook signature');
                         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
                 }
 
                 // Extract data from webhook with fallbacks for different formats
+                // Cashfree webhook structure has changed across versions, so we handle multiple formats
                 const data = webhookData.data || webhookData;
+                const eventType = webhookData.type || webhookData.event_type || 'payment_update';
+
+                // Extract order ID from different possible places in the payload
                 const orderId = data?.order?.order_id || data?.order_id || webhookData?.order_id;
+                if (!orderId) {
+                        console.error('Missing order ID in webhook payload');
+                        return NextResponse.json({ success: false, error: 'Missing order ID' }, { status: 400 });
+                }
+
+                // Extract other payment details
                 const orderStatus = data?.order?.order_status || data?.order_status || webhookData?.order_status;
                 const paymentId = data?.payment?.cf_payment_id || data?.cf_payment_id || webhookData?.cf_payment_id;
 
-                if (!orderId) {
-                        console.error('Missing order ID in webhook payload');
-                        return NextResponse.json({ success: false, error: 'Missing order ID' });
-                }
+                console.log(`Cashfree webhook processing for order ${orderId}, status: ${orderStatus}, payment ID: ${paymentId}`);
 
-                console.log(`Cashfree webhook received for order ${orderId}, status: ${orderStatus}, payment ID: ${paymentId}`);
-
-                // Check if this webhook has already been processed by looking up the order_id and status
+                // Check if we've already processed this webhook to avoid duplicates
                 const { data: existingWebhooks, error: lookupError } = await supabase
                         .from('cashfree_webhooks')
                         .select('id, processed')
@@ -72,14 +88,18 @@ export async function POST(request) {
                         .eq('status', orderStatus)
                         .eq('processed', true);
 
-                // If we already have a processed webhook with the same order_id and status, skip processing
+                // If already processed, just return success to avoid duplication
                 if (!lookupError && existingWebhooks && existingWebhooks.length > 0) {
                         console.log(`Webhook for order ${orderId} with status ${orderStatus} already processed. Skipping.`);
                         return NextResponse.json({ success: true, message: 'Webhook already processed' });
                 }
 
                 // Log webhook event to dedicated Cashfree webhooks table
-                const webhookId = await logCashfreeWebhook(webhookData, signature, ipAddress);
+                const webhookId = await logCashfreeWebhook(webhookData, signature, ipAddress, eventType, orderId, orderStatus, paymentId);
+                if (!webhookId) {
+                        console.error('Failed to log webhook to database');
+                        return NextResponse.json({ success: false, error: 'Failed to log webhook' }, { status: 500 });
+                }
 
                 // Get order details from database
                 const { data: orderData, error: orderGetError } = await supabase
@@ -90,10 +110,25 @@ export async function POST(request) {
 
                 if (orderGetError) {
                         console.error(`Order not found in database: ${orderId}`, orderGetError);
-                        // Still continue to update the webhook status
-                } else {
-                        console.log(`Found order in database: ${orderId}, current status: ${orderData.status}`);
+
+                        // Update webhook record with error
+                        await supabase.from('cashfree_webhooks')
+                                .update({
+                                        process_error: `Order not found in database: ${orderGetError.message}`,
+                                        updated_at: new Date().toISOString(),
+                                        processed: true
+                                })
+                                .eq('id', webhookId);
+
+                        // Still return 200 to prevent Cashfree from retrying
+                        return NextResponse.json({
+                                success: false,
+                                error: 'Order not found in database',
+                                message: 'Webhook received and logged, but order not found'
+                        });
                 }
+
+                console.log(`Found order in database: ${orderId}, current status: ${orderData.status}`);
 
                 // Update order status in database
                 const { error: updateError } = await supabase
@@ -101,7 +136,8 @@ export async function POST(request) {
                         .update({
                                 status: orderStatus,
                                 updated_at: new Date().toISOString(),
-                                webhook_data: webhookData
+                                webhook_data: webhookData,
+                                payment_id: paymentId || orderData.payment_id
                         })
                         .eq('order_id', orderId);
 
@@ -113,20 +149,22 @@ export async function POST(request) {
                                 .from('cashfree_webhooks')
                                 .update({
                                         process_error: `Failed to update payment order: ${updateError.message}`,
-                                        updated_at: new Date().toISOString()
+                                        updated_at: new Date().toISOString(),
+                                        processed: true
                                 })
                                 .eq('id', webhookId);
 
                         // Still return 200 to prevent webhook retries
-                        return NextResponse.json({ success: false, error: 'Order update failed, but webhook recorded' });
+                        return NextResponse.json({
+                                success: false,
+                                error: 'Order update failed, but webhook recorded'
+                        });
                 }
 
-                // Process successful payment
+                // Process successful payment if applicable
                 // Check various success status formats from Cashfree
-                if (orderStatus === 'PAID' ||
-                        orderStatus === 'SUCCESS' ||
-                        orderStatus === 'OK' ||
-                        orderStatus === 'PAYMENT_SUCCESS') {
+                const successStatuses = ['PAID', 'SUCCESS', 'OK', 'PAYMENT_SUCCESS'];
+                if (successStatuses.includes(orderStatus)) {
                         await processSuccessfulPayment(orderId, webhookId);
                 } else {
                         // Mark webhook as processed without additional actions for non-success states
@@ -137,6 +175,8 @@ export async function POST(request) {
                                         updated_at: new Date().toISOString()
                                 })
                                 .eq('id', webhookId);
+
+                        console.log(`Webhook processed for order ${orderId} with non-success status: ${orderStatus}`);
                 }
 
                 // Return success response to acknowledge webhook
@@ -144,29 +184,34 @@ export async function POST(request) {
         } catch (error) {
                 console.error('Error processing webhook:', error);
                 // Return 200 status even on error to prevent Cashfree from retrying
-                return NextResponse.json({ success: false, error: error.message });
+                // but include the error details
+                return NextResponse.json({
+                        success: false,
+                        error: error.message || 'Unknown error',
+                        message: 'Webhook received but failed to process'
+                });
         }
 }
 
-// Validate webhook signature
+/**
+ * Validate webhook signature from Cashfree
+ * 
+ * @param {string} payload - The raw request body
+ * @param {string} signature - The signature from the header
+ * @returns {boolean} Whether the signature is valid
+ */
 function validateWebhookSignature(payload, signature) {
         try {
-                // If no signature in test environment, skip validation
-                if (process.env.NODE_ENV !== 'production' && !signature) {
-                        return true;
-                }
-
                 if (!signature) {
                         return false;
                 }
 
                 const webhookSecret = process.env.CASHFREE_WEBHOOK_SECRET || process.env.CASHFREE_SECRET_KEY;
                 if (!webhookSecret) {
-                        console.error('Webhook secret not configured');
+                        console.error('Webhook secret not configured - set CASHFREE_WEBHOOK_SECRET or CASHFREE_SECRET_KEY env var');
                         return false;
                 }
 
-                // Try both JSON string and raw text for different Cashfree webhook formats
                 // Create HMAC using webhook secret
                 const hmac = crypto.createHmac('sha256', webhookSecret);
                 hmac.update(payload);
@@ -183,14 +228,21 @@ function validateWebhookSignature(payload, signature) {
         }
 }
 
-// Log webhook event to dedicated Cashfree webhooks table
-async function logCashfreeWebhook(webhookData, signature, ipAddress) {
+/**
+ * Log webhook event to dedicated Cashfree webhooks table
+ * 
+ * @param {object} webhookData - The webhook data
+ * @param {string} signature - The signature from the header
+ * @param {string} ipAddress - The client IP address
+ * @param {string} eventType - The event type
+ * @param {string} orderId - The order ID
+ * @param {string} orderStatus - The order status
+ * @param {string} paymentId - The payment ID
+ * @returns {string|null} The webhook ID or null if failed
+ */
+async function logCashfreeWebhook(webhookData, signature, ipAddress, eventType, orderId, orderStatus, paymentId) {
         try {
                 const data = webhookData.data || webhookData;
-                const eventType = webhookData.type || webhookData.event_type || 'payment_update';
-                const orderId = data?.order?.order_id || data?.order_id || webhookData?.order_id;
-                const orderStatus = data?.order?.order_status || data?.order_status || webhookData?.order_status;
-                const paymentId = data?.payment?.cf_payment_id || data?.cf_payment_id || webhookData?.cf_payment_id;
                 const amount = data?.order?.order_amount || data?.order_amount || webhookData?.order_amount;
                 const currency = data?.order?.order_currency || data?.order_currency || webhookData?.order_currency || 'INR';
 
@@ -202,7 +254,7 @@ async function logCashfreeWebhook(webhookData, signature, ipAddress) {
                         order_id: orderId,
                         payment_id: paymentId,
                         status: orderStatus,
-                        amount: amount,
+                        amount: amount || 0,
                         currency: currency,
                         payload: webhookData,
                         signature: signature,
@@ -223,7 +275,12 @@ async function logCashfreeWebhook(webhookData, signature, ipAddress) {
         }
 }
 
-// Process successful payment
+/**
+ * Process successful payment and update user coins
+ * 
+ * @param {string} orderId - The order ID
+ * @param {string} webhookId - The webhook ID
+ */
 async function processSuccessfulPayment(orderId, webhookId) {
         try {
                 console.log(`Processing successful payment for order ${orderId}, webhook ID: ${webhookId}`);
@@ -244,7 +301,8 @@ async function processSuccessfulPayment(orderId, webhookId) {
                                         .from('cashfree_webhooks')
                                         .update({
                                                 process_error: `Failed to fetch order data: ${orderError?.message || 'Order not found'}`,
-                                                updated_at: new Date().toISOString()
+                                                updated_at: new Date().toISOString(),
+                                                processed: true
                                         })
                                         .eq('id', webhookId);
                         }
@@ -273,85 +331,56 @@ async function processSuccessfulPayment(orderId, webhookId) {
                         return;
                 }
 
-                // Update user account with new credits
+                // Update user coins in profiles table
+                // Convert amount to integer coins (1 rupee = 1 coin)
+                const coinsToAdd = Math.floor(parseFloat(orderData.amount) || 0);
+                console.log(`Adding ${coinsToAdd} coins to user ${orderData.user_id}`);
+
+                // Update user profile with coins
                 let updateSuccess = false;
                 let updateErrorMessage = '';
 
-                // First, check if profiles table exists and has the user
-                const { data: profileCheck, error: profileCheckError } = await supabase
+                // Update coins in profiles table
+                const { data: updateResult, error: updateError } = await supabase
                         .from('profiles')
-                        .select('id, coins')
+                        .update({
+                                coins: supabase.sql`COALESCE(coins, 0) + ${coinsToAdd}`,
+                                updated_at: new Date().toISOString()
+                        })
                         .eq('id', orderData.user_id)
-                        .single();
+                        .select('coins');
 
-                console.log(`Profile check for user ${orderData.user_id}:`,
-                        profileCheckError ? `Error: ${profileCheckError.message}` :
-                                `Found with current coins: ${profileCheck?.coins || 0}`);
+                if (updateError) {
+                        console.error(`Profile update failed for user ${orderData.user_id}:`, updateError);
+                        updateErrorMessage = `Profile update failed: ${updateError.message}`;
 
-                // Determine which table to update
-                const targetTable = profileCheck ? 'profiles' : 'user_accounts';
-                const coinField = 'coins'; // Use 'coins' instead of 'credits' based on your schema
-                console.log(`Will update ${coinField} in ${targetTable} table`);
+                        // Try creating the profile if it doesn't exist
+                        const { data: userCheck } = await supabase.auth.admin.getUserById(orderData.user_id);
 
-                if (targetTable === 'profiles') {
-                        // Update profiles table
-                        const { data: updateResult, error: profilesError } = await supabase
-                                .from('profiles')
-                                .update({
-                                        [coinField]: supabase.sql`COALESCE(${coinField}, 0) + ${orderData.amount}`,
-                                        updated_at: new Date().toISOString()
-                                })
-                                .eq('id', orderData.user_id)
-                                .select(coinField);
+                        if (userCheck?.user) {
+                                console.log('User exists but profile might not. Attempting to create profile.');
 
-                        if (profilesError) {
-                                console.error(`Profile update failed for user ${orderData.user_id}:`, profilesError);
-                                updateErrorMessage = `Profile update failed: ${profilesError.message}`;
-                        } else {
-                                updateSuccess = true;
-                                console.log(`Successfully updated user ${orderData.user_id} ${coinField} in profiles table. New balance: ${updateResult?.[0]?.[coinField] || 'unknown'}`);
+                                const { error: createError } = await supabase
+                                        .from('profiles')
+                                        .insert({
+                                                id: orderData.user_id,
+                                                coins: coinsToAdd,
+                                                role: 'user',
+                                                created_at: new Date().toISOString(),
+                                                updated_at: new Date().toISOString()
+                                        });
+
+                                if (createError) {
+                                        console.error('Failed to create profile:', createError);
+                                        updateErrorMessage += ` Create profile failed: ${createError.message}`;
+                                } else {
+                                        updateSuccess = true;
+                                        console.log(`Created new profile with ${coinsToAdd} coins`);
+                                }
                         }
                 } else {
-                        // Try updating user_accounts as fallback
-                        console.log(`Falling back to user_accounts table for user ${orderData.user_id}`);
-
-                        const { data: updateResult, error: accountsError } = await supabase
-                                .from('user_accounts')
-                                .update({
-                                        [coinField]: supabase.sql`COALESCE(${coinField}, 0) + ${orderData.amount}`,
-                                        updated_at: new Date().toISOString()
-                                })
-                                .eq('user_id', orderData.user_id)
-                                .select(coinField);
-
-                        if (accountsError) {
-                                console.error(`User account update failed for user ${orderData.user_id}:`, accountsError);
-                                updateErrorMessage = `User account update failed: ${accountsError.message}`;
-
-                                // If we can't find the user account, try to create one
-                                if (accountsError.code === 'PGRST116') {
-                                        console.log(`Attempting to create user_account for ${orderData.user_id}`);
-                                        const { error: createError } = await supabase
-                                                .from('user_accounts')
-                                                .insert({
-                                                        user_id: orderData.user_id,
-                                                        [coinField]: orderData.amount,
-                                                        created_at: new Date().toISOString(),
-                                                        updated_at: new Date().toISOString()
-                                                });
-
-                                        if (createError) {
-                                                console.error(`Failed to create user_account:`, createError);
-                                                updateErrorMessage += ` Create account failed: ${createError.message}`;
-                                        } else {
-                                                updateSuccess = true;
-                                                console.log(`Created new user_account with ${orderData.amount} ${coinField}`);
-                                        }
-                                }
-                        } else {
-                                updateSuccess = true;
-                                console.log(`Successfully updated user ${orderData.user_id} ${coinField} in user_accounts table. New balance: ${updateResult?.[0]?.[coinField] || 'unknown'}`);
-                        }
+                        updateSuccess = true;
+                        console.log(`Successfully updated user ${orderData.user_id} coins. New balance: ${updateResult?.[0]?.coins || 'unknown'}`);
                 }
 
                 // Mark webhook as processed with success or error status
@@ -367,7 +396,7 @@ async function processSuccessfulPayment(orderId, webhookId) {
                                 .eq('id', webhookId);
                 }
 
-                // Update payment order status to COMPLETED if credits were successfully added
+                // Update payment order status to COMPLETED if coins were successfully added
                 if (updateSuccess) {
                         console.log(`Marking order ${orderId} as COMPLETED`);
                         await supabase

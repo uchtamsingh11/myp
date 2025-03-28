@@ -1,133 +1,99 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
+// Create Supabase clients - regular for auth and admin for database operations
+const adminSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+/**
+ * Create a payment order with Cashfree payment gateway
+ * 
+ * @see https://docs.cashfree.com/docs/create-order-with-seamless-checkout
+ */
 export async function POST(request) {
         try {
-                // Get the user session
+                // Get the authenticated user
                 const supabase = createRouteHandlerClient({ cookies });
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-                if (!session) {
-                        console.error('No active session found');
-                        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+                if (sessionError || !session) {
+                        console.error('Authentication error:', sessionError);
+                        return NextResponse.json({
+                                success: false,
+                                error: 'Authentication required',
+                                message: 'Please sign in to create a payment order'
+                        }, { status: 401 });
                 }
 
+                // Extract user ID from session
                 const userId = session.user.id;
-                console.log(`Processing payment for user: ${userId}`);
+                console.log(`Creating payment order for user: ${userId}`);
 
-                // Get request body data
-                const { amount, orderId, orderCurrency = 'INR', customerPhone } = await request.json();
-                console.log(`Payment request: amount=${amount}, orderId=${orderId}, currency=${orderCurrency}`);
+                // Get request data
+                const { amount, orderId, description, customerName, customerEmail, customerPhone } = await request.json();
 
-                if (!amount) {
-                        return NextResponse.json({ error: 'Amount is required' }, { status: 400 });
+                // Basic validation
+                if (!amount || amount <= 0) {
+                        return NextResponse.json({
+                                success: false,
+                                error: 'Invalid amount',
+                                message: 'Amount must be greater than 0'
+                        }, { status: 400 });
                 }
 
-                // Get user details from database
-                const { data: userData, error: userError } = await supabase
-                        .from('users')
-                        .select('email, phone, full_name')
-                        .eq('id', userId)
-                        .single();
+                if (!orderId) {
+                        return NextResponse.json({
+                                success: false,
+                                error: 'Missing order ID',
+                                message: 'Order ID is required'
+                        }, { status: 400 });
+                }
 
-                // If we can't find user in 'users' table, try the 'profiles' table
-                let finalUserData = {
-                        email: session.user.email || '',
-                        phone: '',
-                        full_name: 'User'
+                // Configure API endpoint based on environment
+                const apiUrl = process.env.CASHFREE_ENVIRONMENT === 'production'
+                        ? 'https://api.cashfree.com/pg/orders'
+                        : 'https://sandbox.cashfree.com/pg/orders';
+
+                console.log(`Using Cashfree ${process.env.CASHFREE_ENVIRONMENT} environment: ${apiUrl}`);
+
+                // Prepare customer details - mask sensitive info for logs
+                const customer = {
+                        customer_id: userId,
+                        customer_name: customerName || 'User',
+                        customer_email: customerEmail || '',
+                        customer_phone: customerPhone || ''
                 };
 
-                if (userError) {
-                        console.log(`User not found in users table, trying profiles. Error: ${userError.message}`);
-                        const { data: profileData, error: profileError } = await supabase
-                                .from('profiles')
-                                .select('email, phone, full_name')
-                                .eq('id', userId)
-                                .single();
+                console.log(`Creating order with ID: ${orderId} for amount: ${amount}`);
+                // Don't log full customer details - just create a masked version for logs
+                const maskedCustomer = {
+                        ...customer,
+                        customer_email: customer.customer_email ? `${customer.customer_email.substring(0, 3)}***` : '',
+                        customer_phone: customer.customer_phone ? `***${customer.customer_phone.slice(-4)}` : ''
+                };
+                console.log('Customer details:', maskedCustomer);
 
-                        if (!profileError && profileData) {
-                                finalUserData = {
-                                        email: profileData.email || session.user.email || '',
-                                        phone: profileData.phone || '',
-                                        full_name: profileData.full_name || 'User'
-                                };
-                        } else {
-                                if (profileError) {
-                                        console.log(`Profile lookup error: ${profileError.message}`);
-                                }
-                                // Fall back to session data if available
-                                finalUserData.email = session.user.email || '';
-                        }
-                } else if (userData) {
-                        finalUserData = userData;
-                }
-
-                // Generate unique order ID if not provided
-                const uniqueOrderId = orderId || `order_${Date.now()}_${userId.substring(0, 8)}`;
-                console.log(`Generated order ID: ${uniqueOrderId}`);
-
-                // Use phone number from request if provided, otherwise default to "9999999999"
-                const phone = customerPhone || finalUserData.phone || "9999999999";
-
-                // Get the app URL from environment with proper validation and fallback
-                const envAppUrl = process.env.NEXT_PUBLIC_APP_URL;
-                console.log(`Raw NEXT_PUBLIC_APP_URL: "${envAppUrl}"`);
-
-                // Always use the production domain as the return URL
-                // This ensures we don't use localhost even in development
-                const productionDomain = "https://www.algoz.tech";
-
-                // Generate return URL with proper validation
-                let returnUrl;
-
-                if (envAppUrl && envAppUrl !== 'undefined' && !envAppUrl.includes('localhost')) {
-                        // Remove trailing slash if present
-                        const baseUrl = envAppUrl.replace(/\/$/, '');
-
-                        // Ensure it starts with https://
-                        if (baseUrl.startsWith('http://')) {
-                                returnUrl = baseUrl.replace('http://', 'https://');
-                        } else if (!baseUrl.startsWith('https://')) {
-                                returnUrl = `https://${baseUrl}`;
-                        } else {
-                                returnUrl = baseUrl;
-                        }
-                } else {
-                        // Fallback to hardcoded production domain
-                        returnUrl = productionDomain;
-                }
-
-                // Add the path and order ID to the return URL
-                returnUrl = `${returnUrl}/dashboard/payment-status?order_id=${uniqueOrderId}`;
-
-                console.log(`Final Return URL: ${returnUrl}`);
-
-                // Log environment variables - redacted for security
-                console.log(`APP_ID: ${process.env.CASHFREE_APP_ID?.substring(0, 5)}... ENV: ${process.env.CASHFREE_ENVIRONMENT}`);
-
-                // Prepare request for Cashfree API
+                // Prepare order data for Cashfree API
                 const orderData = {
-                        order_id: uniqueOrderId,
-                        order_amount: parseFloat(amount),
-                        order_currency: orderCurrency,
-                        customer_details: {
-                                customer_id: userId,
-                                customer_name: finalUserData.full_name || 'User',
-                                customer_email: finalUserData.email || 'customer@example.com',
-                                customer_phone: phone
-                        },
+                        order_id: orderId,
+                        order_amount: amount,
+                        order_currency: 'INR',
+                        customer_details: customer,
                         order_meta: {
-                                return_url: returnUrl
-                        }
+                                return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payment-status?order_id={order_id}&status={status}`,
+                                notify_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/cashfree-webhook`
+                        },
+                        order_note: description || 'Purchase coins'
                 };
 
-                console.log(`Sending request to Cashfree API with order data:`, JSON.stringify(orderData));
-
-                // Call Cashfree Production API
-                const response = await fetch('https://api.cashfree.com/pg/orders', {
+                // Create order in Cashfree
+                const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                                 'Content-Type': 'application/json',
@@ -139,47 +105,58 @@ export async function POST(request) {
                 });
 
                 const responseData = await response.json();
-                console.log(`Cashfree API Response Status: ${response.status}`);
-                console.log(`Cashfree API Response: ${JSON.stringify(responseData)}`);
 
                 if (!response.ok) {
                         console.error('Cashfree API error:', responseData);
                         return NextResponse.json({
-                                error: responseData.message || 'Failed to create payment order',
+                                success: false,
+                                error: 'Failed to create payment order',
                                 details: responseData
                         }, { status: response.status });
                 }
 
-                if (!responseData.payment_session_id) {
-                        console.error('Payment session ID missing in Cashfree response:', responseData);
+                console.log('Cashfree order created successfully');
+
+                // Store order in database
+                const { error: dbError } = await adminSupabase
+                        .from('payment_orders')
+                        .insert({
+                                order_id: orderId,
+                                user_id: userId,
+                                amount: amount,
+                                description: description || 'Purchase coins',
+                                status: 'CREATED',
+                                payment_session_id: responseData.payment_session_id,
+                                created_at: new Date().toISOString(),
+                                metadata: {
+                                        customer_name: customerName,
+                                        customer_email: customerEmail,
+                                        customer_phone: customerPhone
+                                }
+                        });
+
+                if (dbError) {
+                        console.error('Database error:', dbError);
                         return NextResponse.json({
-                                error: 'Payment session ID missing in response',
-                                details: responseData
+                                success: false,
+                                error: 'Database error',
+                                message: 'Failed to record payment order in database'
                         }, { status: 500 });
                 }
 
-                // Store order in database
-                const { error: insertError } = await supabase.from('payment_orders').insert({
-                        order_id: uniqueOrderId,
-                        user_id: userId,
-                        amount: parseFloat(amount),
-                        currency: orderCurrency,
-                        payment_session_id: responseData.payment_session_id,
-                        status: 'CREATED',
-                        created_at: new Date().toISOString()
-                });
-
-                if (insertError) {
-                        console.error('Error storing order in database:', insertError);
-                }
-
+                // Return payment session ID for frontend
                 return NextResponse.json({
                         success: true,
-                        orderId: uniqueOrderId,
-                        paymentSessionId: responseData.payment_session_id
+                        orderId: orderId,
+                        paymentSessionId: responseData.payment_session_id,
+                        cfOrderId: responseData.cf_order_id
                 });
         } catch (error) {
                 console.error('Error creating payment order:', error);
-                return NextResponse.json({ error: error.message || 'Failed to create payment order' }, { status: 500 });
+                return NextResponse.json({
+                        success: false,
+                        error: error.message || 'Unknown error',
+                        message: 'Failed to create payment order'
+                }, { status: 500 });
         }
 } 
