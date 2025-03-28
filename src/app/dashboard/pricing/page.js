@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import Pricing from '../../../components/dashboard/PricingComponent';
+import PaymentTestComponent from '../../../components/dashboard/PaymentTestComponent';
 
 export default function PricingPage() {
   const [currentPlan, setCurrentPlan] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showTestPayment, setShowTestPayment] = useState(false);
 
   useEffect(() => {
     document.title = 'Subscription | AlgoZ';
@@ -36,7 +38,28 @@ export default function PricingPage() {
     };
 
     fetchSubscription();
+
+    // Check for test=true query parameter to show test payment component
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('test') === 'true') {
+        setShowTestPayment(true);
+      }
+    }
   }, []);
+
+  const handlePurchase = (plan) => {
+    // When a user selects a plan, show the test payment section
+    setShowTestPayment(true);
+
+    // Scroll to the payment test section
+    setTimeout(() => {
+      document.getElementById('payment-test-section')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
+  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -58,7 +81,37 @@ export default function PricingPage() {
               </div>
             </div>
           )}
-          <Pricing />
+
+          <Pricing onPurchase={handlePurchase} />
+
+          <div className="container mx-auto mt-8 flex justify-center">
+            <button
+              onClick={() => setShowTestPayment(!showTestPayment)}
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-md text-sm font-medium transition-colors flex items-center"
+            >
+              {showTestPayment ? (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Hide Test Payment
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  </svg>
+                  Show Test Payment
+                </>
+              )}
+            </button>
+          </div>
+
+          {showTestPayment && (
+            <div id="payment-test-section" className="container mx-auto">
+              <PaymentTestComponent />
+            </div>
+          )}
         </>
       )}
     </div>
