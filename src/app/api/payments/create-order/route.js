@@ -72,12 +72,38 @@ export async function POST(request) {
                 // Use phone number from request if provided, otherwise default to "9999999999"
                 const phone = customerPhone || finalUserData.phone || "9999999999";
 
-                // Ensure the return URL is using HTTPS
-                let returnUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payment-status?order_id=${uniqueOrderId}`;
-                if (!returnUrl.startsWith('https://')) {
-                        returnUrl = returnUrl.replace('http://', 'https://');
+                // Get the app URL from environment with proper validation and fallback
+                const envAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+                console.log(`Raw NEXT_PUBLIC_APP_URL: "${envAppUrl}"`);
+
+                // Always use the production domain as the return URL
+                // This ensures we don't use localhost even in development
+                const productionDomain = "https://www.algoz.tech";
+
+                // Generate return URL with proper validation
+                let returnUrl;
+
+                if (envAppUrl && envAppUrl !== 'undefined' && !envAppUrl.includes('localhost')) {
+                        // Remove trailing slash if present
+                        const baseUrl = envAppUrl.replace(/\/$/, '');
+
+                        // Ensure it starts with https://
+                        if (baseUrl.startsWith('http://')) {
+                                returnUrl = baseUrl.replace('http://', 'https://');
+                        } else if (!baseUrl.startsWith('https://')) {
+                                returnUrl = `https://${baseUrl}`;
+                        } else {
+                                returnUrl = baseUrl;
+                        }
+                } else {
+                        // Fallback to hardcoded production domain
+                        returnUrl = productionDomain;
                 }
-                console.log(`Return URL: ${returnUrl}`);
+
+                // Add the path and order ID to the return URL
+                returnUrl = `${returnUrl}/dashboard/payment-status?order_id=${uniqueOrderId}`;
+
+                console.log(`Final Return URL: ${returnUrl}`);
 
                 // Log environment variables - redacted for security
                 console.log(`APP_ID: ${process.env.CASHFREE_APP_ID?.substring(0, 5)}... ENV: ${process.env.CASHFREE_ENVIRONMENT}`);
