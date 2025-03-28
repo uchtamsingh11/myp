@@ -15,11 +15,6 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   const [tradingViewOpen, setTradingViewOpen] = useState(false);
   const [scalpingToolOpen, setScalpingToolOpen] = useState(false);
   const [copyTradingOpen, setCopyTradingOpen] = useState(false);
-  const [strategyOpen, setStrategyOpen] = useState(false);
-  const [botsOpen, setBotsOpen] = useState(false);
-  const [pricingOpen, setPricingOpen] = useState(false);
-  const [faqOpen, setFaqOpen] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
 
   // State for tracking which menu item is active
@@ -41,10 +36,6 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
         setScalpingToolOpen(true);
       } else if (activeMenuItem.includes('Copy Trading')) {
         setCopyTradingOpen(true);
-      } else if (activeMenuItem.includes('Strategy')) {
-        setStrategyOpen(true);
-      } else if (activeMenuItem.includes('Bots')) {
-        setBotsOpen(true);
       } else if (activeMenuItem.includes('Admin')) {
         setAdminOpen(true);
       }
@@ -96,21 +87,6 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
         break;
       case 'Copy Trading':
         setCopyTradingOpen(!copyTradingOpen);
-        break;
-      case 'Strategy':
-        setStrategyOpen(!strategyOpen);
-        break;
-      case 'Bots':
-        setBotsOpen(!botsOpen);
-        break;
-      case 'Pricing':
-        setPricingOpen(!pricingOpen);
-        break;
-      case 'FAQ':
-        setFaqOpen(!faqOpen);
-        break;
-      case 'Support':
-        setSupportOpen(!supportOpen);
         break;
       case 'Admin':
         setAdminOpen(!adminOpen);
@@ -446,157 +422,20 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
           </li>
           <li>
             <div className="relative">
-              <button
-                onClick={() => toggleMenu('Strategy')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Strategy')
+              <a
+                href="/dashboard/marketplace"
+                className={`flex items-center p-2 rounded-lg transition-colors ${isActive('Marketplace')
                     ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
+                onClick={e => {
+                  e.preventDefault();
+                  handleMenuItemClick('Marketplace', '/dashboard/marketplace');
+                }}
               >
-                <div
-                  className="flex items-center"
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleMenuItemClick('Strategy');
-                    toggleMenu('Strategy');
-                  }}
-                >
-                  <img src="/strategy.svg" alt="Strategy" className="w-5 h-5 mr-3" />
-                  <span>Strategy</span>
-                </div>
-                {strategyOpen ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-              </button>
-
-              {strategyOpen && (
-                <ul className="pl-8 mt-1 space-y-1">
-                  <li>
-                    <a
-                      href="/dashboard/strategy/pine-script"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy Pine Script')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() =>
-                        handleMenuItemClick(
-                          'Strategy Pine Script',
-                          '/dashboard/strategy/pine-script'
-                        )
-                      }
-                    >
-                      <span>Pine Script</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/strategy/mql"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy MQL')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('Strategy MQL', '/dashboard/strategy/mql')}
-                    >
-                      <span>MQL</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/strategy/afl"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Strategy AFL')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('Strategy AFL', '/dashboard/strategy/afl')}
-                    >
-                      <span>AFL</span>
-                    </a>
-                  </li>
-                </ul>
-              )}
-            </div>
-          </li>
-          <li>
-            <div className="relative">
-              <button
-                onClick={() => toggleMenu('Bots')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Bots')
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                    : 'hover:bg-zinc-800 text-zinc-300'
-                  }`}
-              >
-                <div
-                  className="flex items-center"
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleMenuItemClick('Bots');
-                    toggleMenu('Bots');
-                  }}
-                >
-                  <img src="/bot.svg" alt="Bots" className="w-5 h-5 mr-3" />
-                  <span>Bots</span>
-                </div>
-                {botsOpen ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-              </button>
-
-              {botsOpen && (
-                <ul className="pl-8 mt-1 space-y-1">
-                  <li>
-                    <a
-                      href="/dashboard/bots"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots My Bots')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('Bots My Bots', '/dashboard/bots')}
-                    >
-                      <span>My Bots</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/bots/nse-bse"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots NSE/BSE')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('Bots NSE/BSE', '/dashboard/bots/nse-bse')}
-                    >
-                      <span>NSE/BSE</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/bots/forex"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots Forex')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('Bots Forex', '/dashboard/bots/forex')}
-                    >
-                      <span>Forex</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/bots/crypto"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Bots Crypto')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('Bots Crypto', '/dashboard/bots/crypto')}
-                    >
-                      <span>Crypto</span>
-                    </a>
-                  </li>
-                </ul>
-              )}
+                <img src="/marketplace.svg" alt="Marketplace" className="w-5 h-5 mr-3" />
+                <span>Marketplace</span>
+              </a>
             </div>
           </li>
           <li>
@@ -621,149 +460,38 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
           <hr className="my-2 border-zinc-800" />
           <li>
             <div className="relative">
-              <button
-                onClick={() => toggleMenu('FAQ')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('FAQ')
+              <a
+                href="/dashboard/faq"
+                className={`flex items-center p-2 rounded-lg transition-colors ${isActive('FAQ')
                     ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
+                onClick={e => {
+                  e.preventDefault();
+                  handleMenuItemClick('FAQ', '/dashboard/faq');
+                }}
               >
-                <div
-                  className="flex items-center"
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleMenuItemClick('FAQ');
-                    toggleMenu('FAQ');
-                  }}
-                >
-                  <img src="/faq.svg" alt="FAQ" className="w-5 h-5 mr-3" />
-                  <span>FAQ</span>
-                </div>
-                {faqOpen ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-              </button>
-
-              {faqOpen && (
-                <ul className="pl-8 mt-1 space-y-1">
-                  <li>
-                    <a
-                      href="/dashboard/faq/general"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ General')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('FAQ General', '/dashboard/faq/general')}
-                    >
-                      <span>General</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/faq/trading"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ Trading')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('FAQ Trading', '/dashboard/faq/trading')}
-                    >
-                      <span>Trading</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/faq/billing"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('FAQ Billing')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() => handleMenuItemClick('FAQ Billing', '/dashboard/faq/billing')}
-                    >
-                      <span>Billing</span>
-                    </a>
-                  </li>
-                </ul>
-              )}
+                <img src="/faq.svg" alt="FAQ" className="w-5 h-5 mr-3" />
+                <span>FAQ</span>
+              </a>
             </div>
           </li>
           <li>
             <div className="relative">
-              <button
-                onClick={() => toggleMenu('Support')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors ${isActive('Support')
+              <a
+                href="/dashboard/support"
+                className={`flex items-center p-2 rounded-lg transition-colors ${isActive('Support')
                     ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
+                onClick={e => {
+                  e.preventDefault();
+                  handleMenuItemClick('Support', '/dashboard/support');
+                }}
               >
-                <div
-                  className="flex items-center"
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleMenuItemClick('Support');
-                    toggleMenu('Support');
-                  }}
-                >
-                  <img src="/support.svg" alt="Support" className="w-5 h-5 mr-3" />
-                  <span>Support</span>
-                </div>
-                {supportOpen ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-              </button>
-
-              {supportOpen && (
-                <ul className="pl-8 mt-1 space-y-1">
-                  <li>
-                    <a
-                      href="/dashboard/support/contact-us"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Contact Us')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() =>
-                        handleMenuItemClick('Support Contact Us', '/dashboard/support/contact-us')
-                      }
-                    >
-                      <span>Contact Us</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/support/submit-ticket"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Submit Ticket')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() =>
-                        handleMenuItemClick(
-                          'Support Submit Ticket',
-                          '/dashboard/support/submit-ticket'
-                        )
-                      }
-                    >
-                      <span>Submit Ticket</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/dashboard/support/live-chat"
-                      className={`flex items-center p-2 text-sm rounded-lg transition-colors ${isActive('Support Live Chat')
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                        }`}
-                      onClick={() =>
-                        handleMenuItemClick('Support Live Chat', '/dashboard/support/live-chat')
-                      }
-                    >
-                      <span>Live Chat</span>
-                    </a>
-                  </li>
-                </ul>
-              )}
+                <img src="/support.svg" alt="Support" className="w-5 h-5 mr-3" />
+                <span>Support</span>
+              </a>
             </div>
           </li>
           <hr className="my-2 border-zinc-800" />
