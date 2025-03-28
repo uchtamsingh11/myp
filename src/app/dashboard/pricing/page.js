@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import Pricing from '../../../components/dashboard/PricingComponent';
-import PaymentTestComponent from '../../../components/dashboard/PaymentTestComponent';
+import PaymentButton from '../../../components/PaymentButton';
 
 export default function PricingPage() {
   const [currentPlan, setCurrentPlan] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showTestPayment, setShowTestPayment] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     document.title = 'Subscription | AlgoZ';
@@ -38,27 +39,32 @@ export default function PricingPage() {
     };
 
     fetchSubscription();
-
-    // Check for test=true query parameter to show test payment component
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      if (searchParams.get('test') === 'true') {
-        setShowTestPayment(true);
-      }
-    }
   }, []);
 
   const handlePurchase = (plan) => {
-    // When a user selects a plan, show the test payment section
-    setShowTestPayment(true);
+    // When a user selects a plan, show the payment section
+    setSelectedPlan(plan);
+    setShowPayment(true);
 
-    // Scroll to the payment test section
+    // Scroll to the payment section
     setTimeout(() => {
-      document.getElementById('payment-test-section')?.scrollIntoView({
+      document.getElementById('payment-section')?.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
     }, 100);
+  };
+
+  const getAmountFromPlan = (plan) => {
+    // Map plan names to actual amounts (in INR)
+    const planPrices = {
+      'Basic': 500,
+      'Pro': 1000,
+      'Enterprise': 2000,
+      // Add other plans as needed
+    };
+
+    return planPrices[plan] || 999; // Default fallback price
   };
 
   return (
@@ -84,32 +90,33 @@ export default function PricingPage() {
 
           <Pricing onPurchase={handlePurchase} />
 
-          <div className="container mx-auto mt-8 flex justify-center">
-            <button
-              onClick={() => setShowTestPayment(!showTestPayment)}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-md text-sm font-medium transition-colors flex items-center"
-            >
-              {showTestPayment ? (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Hide Test Payment
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                  </svg>
-                  Show Test Payment
-                </>
-              )}
-            </button>
-          </div>
+          {showPayment && selectedPlan && (
+            <div id="payment-section" className="container mx-auto max-w-xl mt-12 mb-8 bg-zinc-800/50 border border-zinc-700 rounded-xl p-6">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-white mb-2">Complete Your Purchase</h3>
+                <p className="text-zinc-400">You've selected the {selectedPlan} plan. Complete your payment to activate your subscription.</p>
+              </div>
 
-          {showTestPayment && (
-            <div id="payment-test-section" className="container mx-auto">
-              <PaymentTestComponent />
+              <div className="bg-zinc-700/40 p-4 rounded-lg mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-zinc-300">Plan:</span>
+                  <span className="text-white font-medium">{selectedPlan}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-300">Amount:</span>
+                  <span className="text-white font-medium">₹{getAmountFromPlan(selectedPlan)}</span>
+                </div>
+              </div>
+
+              <PaymentButton
+                amount={getAmountFromPlan(selectedPlan)}
+                buttonText={`Pay ₹${getAmountFromPlan(selectedPlan)}`}
+                orderId={`sub_${Date.now()}_${selectedPlan.toLowerCase()}`}
+                onSuccess={(data) => {
+                  // Handle successful payment - e.g., update subscription status
+                  console.log('Payment successful:', data);
+                }}
+              />
             </div>
           )}
         </>
