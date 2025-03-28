@@ -97,6 +97,7 @@ function getActiveMenuItem(pathname) {
   if (pathname === '/dashboard/bots/forex') return 'Bots Forex';
   if (pathname === '/dashboard/bots/crypto') return 'Bots Crypto';
   if (pathname === '/dashboard/pricing') return 'Pricing';
+  if (pathname === '/dashboard/faq') return 'FAQ';
   if (pathname === '/dashboard/support') return 'Support';
   if (pathname === '/dashboard/support/contact-us') return 'Support Contact Us';
   if (pathname === '/dashboard/support/submit-ticket') return 'Support Submit Ticket';
