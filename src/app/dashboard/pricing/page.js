@@ -58,7 +58,7 @@ export default function PricingPage() {
               </div>
             </div>
           )}
-          <Pricing />
+          <Pricing onPurchase={(plan) => console.log('Purchasing plan:', plan)} />
         </>
       )}
     </div>

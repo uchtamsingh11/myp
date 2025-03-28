@@ -11,46 +11,39 @@ const pricingPlans = [
     coins: 1000,
     price: 999,
     description: 'You can use this coin to purchase our services',
-    features: [
-      '1000 Z Coins',
-      'Access to basic algorithms',
-      '1 market integration',
-      'Email support',
-    ],
+    features: [],
     cta: 'Buy Now',
     popular: false,
+    beamColors: {
+      from: '#6B7280',
+      to: '#4B5563'
+    }
   },
   {
     name: 'Pro',
     coins: 2500,
     price: 2249,
     description: 'You can use this coin to purchase our services',
-    features: [
-      '2500 Z Coins',
-      'Access to advanced algorithms',
-      '3 market integrations',
-      'Priority email & chat support',
-      'Strategy backtesting',
-    ],
+    features: [],
     cta: 'Buy Now',
     popular: true,
-    tag: 'Best Value',
+    beamColors: {
+      from: '#8B5CF6',
+      to: '#6D28D9'
+    }
   },
   {
     name: 'Premium',
     coins: 5000,
     price: 4499,
     description: 'You can use this coin to purchase our services',
-    features: [
-      '5000 Z Coins',
-      'Access to all algorithms',
-      'Unlimited market integrations',
-      'Priority 24/7 support',
-      'Advanced strategy backtesting',
-      'Custom algorithm development',
-    ],
+    features: [],
     cta: 'Buy Now',
     popular: false,
+    beamColors: {
+      from: '#EC4899',
+      to: '#BE185D'
+    }
   },
 ];
 
@@ -72,8 +65,8 @@ const Pricing = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-16"
         >
-          <h2 className="section-title">Pricing Plans</h2>
-          <p className="section-subtitle max-w-2xl mx-auto">
+          <h2 className="section-title text-white">Pricing Plans</h2>
+          <p className="section-subtitle max-w-2xl mx-auto text-white">
             Choose the plan that fits your trading needs. All plans include access to our platform
             with different levels of features.
           </p>
@@ -90,66 +83,41 @@ const Pricing = () => {
               <motion.div
                 key={index}
                 ref={planRef}
-                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${
-                  plan.popular
-                    ? 'bg-gradient-to-b from-zinc-800/70 to-zinc-900/70 border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
-                    : 'bg-gradient-to-b from-zinc-800/40 to-zinc-900/40 border border-zinc-700/30'
-                }`}
+                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${plan.popular ? 'bg-gradient-to-b from-zinc-800/60 to-zinc-900/60 border border-purple-500/40 shadow-lg shadow-purple-500/10 scale-105' : 'bg-gradient-to-b from-zinc-800/40 to-zinc-900/40 border border-zinc-700/30'}`}
                 initial={{ opacity: 0, y: 30 }}
                 animate={planInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
                 <BorderBeam 
-                  colorFrom={plan.popular ? "#8B5CF6" : "#6B7280"} 
-                  colorTo={plan.popular ? "#6366F1" : "#4B5563"}
-                  size={70} 
-                  duration={6}
-                  delay={0}
+                  colorFrom={plan.beamColors.from} 
+                  colorTo={plan.beamColors.to}
+                  size={plan.popular ? 80 : 70} 
+                  duration={plan.popular ? 5 : 6}
+                  delay={index * 0.2}
                 />
 
-                {plan.popular && (
-                  <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                    <span className="bg-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
-                      {plan.tag || 'Most Popular'}
-                    </span>
-                  </div>
-                )}
-
                 <div className="p-5 sm:p-6 md:p-8">
-                  <h3 className="text-xl md:text-2xl font-bold mb-2 text-center">{plan.name}</h3>
+                  {plan.popular && (
+                    <div className="absolute top-4 right-4 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      Popular
+                    </div>
+                  )}
+                  <h3 className="text-xl md:text-2xl font-bold mb-2 text-center text-white">{plan.name}</h3>
 
                   <div className="mb-6 text-center">
                     <div className="flex items-center justify-center">
-                      <span className="text-4xl font-bold">{plan.coins}</span>
+                      <span className="text-4xl font-bold text-white">{plan.coins}</span>
                       <span className="text-xl text-zinc-400 ml-2">Z Coins</span>
                     </div>
                     <div className="mt-2">
-                      <span className="text-3xl font-bold">₹{plan.price}</span>
+                      <span className="text-3xl font-bold text-white">₹{plan.price}</span>
                     </div>
                   </div>
 
                   <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent my-6"></div>
 
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start">
-                        <svg
-                          className={`w-5 h-5 mr-2 mt-0.5 ${plan.popular ? 'text-indigo-400' : 'text-zinc-400'}`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span className="text-zinc-300 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Features section removed */}
+                  <div className="mb-8"></div>
 
                   <RainbowButton className="w-full">
                     {plan.cta}
@@ -159,6 +127,18 @@ const Pricing = () => {
             );
           })}
         </div>
+        
+        {/* Message below pricing cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center mt-10 px-4 sm:px-0"
+        >
+          <p className="text-lg text-zinc-300 font-medium">
+            <span className="text-indigo-400">You can use these coins</span> for any of our <span className="text-indigo-400">20+ products and services</span>
+          </p>
+        </motion.div>
       </div>
     </section>
   );

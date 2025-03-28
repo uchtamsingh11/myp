@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../contexts/AuthContext';
+import NotificationPanel from './notifications/NotificationPanel';
 
 const DashboardHeader = ({ userEmail }) => {
   const [coinBalance, setCoinBalance] = useState(0);
@@ -56,6 +57,9 @@ const DashboardHeader = ({ userEmail }) => {
             <span className="text-xs font-medium">{coinBalance}</span>
           </div>
         </div>
+
+        {/* Notification Panel */}
+        <NotificationPanel />
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">

@@ -1,14 +1,57 @@
 'use client';
 
-import { useState, useMemo, memo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+import { BorderBeam } from '../../magicui/border-beam.jsx';
+import { RainbowButton } from '../../magicui/rainbow-button.jsx';
+import '../../styles/rainbow.css';
 
-// Define the component as a regular function
+const pricingPlans = [
+  {
+    name: 'Basic',
+    coins: 1000,
+    price: 999,
+    description: 'You can use this coin to purchase our services',
+    features: [],
+    cta: 'Buy Now',
+    popular: false,
+    beamColors: {
+      from: '#6B7280',
+      to: '#4B5563'
+    }
+  },
+  {
+    name: 'Pro',
+    coins: 2500,
+    price: 2249,
+    description: 'You can use this coin to purchase our services',
+    features: [],
+    cta: 'Buy Now',
+    popular: true,
+    beamColors: {
+      from: '#8B5CF6',
+      to: '#6D28D9'
+    }
+  },
+  {
+    name: 'Premium',
+    coins: 5000,
+    price: 4499,
+    description: 'You can use this coin to purchase our services',
+    features: [],
+    cta: 'Buy Now',
+    popular: false,
+    beamColors: {
+      from: '#EC4899',
+      to: '#BE185D'
+    }
+  },
+];
+
 function PricingComponent({ onPurchase }) {
-  const [selectedPlan, setSelectedPlan] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Add an effect to handle the initial loading state
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -17,48 +60,18 @@ function PricingComponent({ onPurchase }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Use useMemo to prevent recreating the plans array on each render
-  const plans = useMemo(
-    () => [
-      {
-        id: 1,
-        name: 'Basic',
-        coins: 100,
-        price: 9.99,
-        features: ['Access to Basic Features', 'Up to 5 Trades per Day', 'Basic Support'],
-      },
-      {
-        id: 2,
-        name: 'Standard',
-        coins: 300,
-        price: 24.99,
-        popular: true,
-        features: [
-          'Access to All Basic Features',
-          'Up to 20 Trades per Day',
-          'Priority Support',
-          'Strategy Analysis',
-        ],
-      },
-      {
-        id: 3,
-        name: 'Premium',
-        coins: 800,
-        price: 49.99,
-        features: [
-          'Access to All Features',
-          'Unlimited Trades',
-          '24/7 Premium Support',
-          'Advanced Strategy Tools',
-          'Bot Trading Features',
-        ],
-      },
-    ],
-    []
-  );
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+  
+  // Pre-create refs for each pricing plan to avoid hooks in loops
+  const planRefs = pricingPlans.map(() => useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  }));
 
   const handlePurchase = plan => {
-    setSelectedPlan(plan);
     if (onPurchase) {
       onPurchase(plan);
     }
@@ -74,91 +87,95 @@ function PricingComponent({ onPurchase }) {
   }
 
   return (
-    <div className="py-8">
-      <h2 className="text-2xl font-bold mb-8 text-center">Choose Your Coin Package</h2>
+    <section className="py-16 sm:py-24 bg-black relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-zinc-800/10 to-transparent"></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map(plan => (
-          <motion.div
-            key={plan.id}
-            className={`relative rounded-xl overflow-hidden border ${
-              plan.popular ? 'border-indigo-500' : 'border-zinc-700'
-            } bg-zinc-800 hover:bg-zinc-700 transition-colors`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: plan.id * 0.1 }}
-          >
-            {plan.popular && (
-              <div className="absolute top-0 right-0 bg-indigo-500 text-white px-4 py-1 text-sm font-semibold">
-                Most Popular
-              </div>
-            )}
+      <div className="container-custom relative z-10">
+        <motion.div
+          ref={ref}
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-10 md:mb-16"
+        >
+          <h2 className="section-title text-white">Choose Your Coin Package</h2>
+          <p className="section-subtitle max-w-2xl mx-auto text-white">
+            Choose the plan that fits your trading needs. All plans include access to our platform
+            with different levels of features.
+          </p>
+        </motion.div>
 
-            <div className="p-6">
-              <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8 px-4 sm:px-0">
+          {pricingPlans.map((plan, index) => {
+            // Get the pre-created ref and inView state for this plan
+            const [planRef, planInView] = planRefs[index];
 
-              <div className="flex items-center mb-4">
-                <div className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-yellow-400 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span className="text-2xl font-bold">{plan.coins}</span>
-                  <span className="ml-1 text-zinc-400">coins</span>
-                </div>
-              </div>
-
-              <div className="text-2xl font-bold mb-6">${plan.price}</div>
-
-              <ul className="space-y-3 mb-6">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <svg
-                      className="h-5 w-5 text-green-400 mr-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span className="text-zinc-300">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => handlePurchase(plan)}
-                className={`w-full py-3 rounded-lg font-semibold ${
-                  plan.popular
-                    ? 'bg-indigo-600 hover:bg-indigo-700'
-                    : 'bg-zinc-700 hover:bg-zinc-600'
-                } transition-colors`}
+            return (
+              <motion.div
+                key={index}
+                ref={planRef}
+                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${plan.popular ? 'bg-gradient-to-b from-zinc-800/60 to-zinc-900/60 border border-purple-500/40 shadow-lg shadow-purple-500/10 scale-105' : 'bg-gradient-to-b from-zinc-800/40 to-zinc-900/40 border border-zinc-700/30'}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={planInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                Purchase Now
-              </button>
-            </div>
-          </motion.div>
-        ))}
+                <BorderBeam 
+                  colorFrom={plan.beamColors.from} 
+                  colorTo={plan.beamColors.to}
+                  size={plan.popular ? 80 : 70} 
+                  duration={plan.popular ? 5 : 6}
+                  delay={index * 0.2}
+                />
+
+                <div className="p-5 sm:p-6 md:p-8">
+                  {plan.popular && (
+                    <div className="absolute top-4 right-4 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      Popular
+                    </div>
+                  )}
+                  <h3 className="text-xl md:text-2xl font-bold mb-2 text-center text-white">{plan.name}</h3>
+
+                  <div className="mb-6 text-center">
+                    <div className="flex items-center justify-center">
+                      <span className="text-4xl font-bold text-white">{plan.coins}</span>
+                      <span className="text-xl text-zinc-400 ml-2">Z Coins</span>
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-3xl font-bold text-white">₹{plan.price}</span>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent my-6"></div>
+
+                  {/* Features section removed */}
+                  <div className="mb-8"></div>
+
+                  <RainbowButton 
+                    className="w-full"
+                    onClick={() => handlePurchase(plan)}
+                  >
+                    {plan.cta}
+                  </RainbowButton>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+        
+        {/* Message below pricing cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center mt-10 px-4 sm:px-0"
+        >
+          <p className="text-lg text-zinc-300 font-medium">
+            <span className="text-indigo-400">You can use these coins</span> for any of our <span className="text-indigo-400">20+ products and services</span>
+          </p>
+        </motion.div>
       </div>
-    </div>
+    </section>
   );
 }
 
-// Memoize the component
-const MemoizedPricingComponent = memo(PricingComponent);
-
-export default MemoizedPricingComponent;
+export default PricingComponent;
