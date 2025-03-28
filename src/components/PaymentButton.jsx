@@ -13,6 +13,8 @@ export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now',
       setIsLoading(true);
       setError(null);
       
+      console.log("Creating order with:", { amount, orderId });
+      
       // Create an order on the server
       const createOrderResponse = await fetch('/api/payments/create-order', {
         method: 'POST',
@@ -26,36 +28,45 @@ export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now',
       });
       
       const orderData = await createOrderResponse.json();
+      console.log("Order created response:", orderData);
       
       if (!createOrderResponse.ok) {
         throw new Error(orderData.error || 'Failed to create payment order');
       }
       
+      if (!orderData.paymentSessionId) {
+        throw new Error('Payment session ID is missing from the response');
+      }
+      
       // Load Cashfree SDK dynamically
-      const cashfreeScript = document.createElement('script');
-      cashfreeScript.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
-      cashfreeScript.async = true;
+      if (!window.Cashfree) {
+        console.log("Loading Cashfree SDK");
+        const cashfreeScript = document.createElement('script');
+        cashfreeScript.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+        cashfreeScript.async = true;
+        
+        await new Promise((resolve, reject) => {
+          cashfreeScript.onload = resolve;
+          cashfreeScript.onerror = () => reject(new Error('Failed to load Cashfree SDK'));
+          document.head.appendChild(cashfreeScript);
+        });
+      }
       
-      // Wait for the script to load
-      await new Promise((resolve, reject) => {
-        cashfreeScript.onload = resolve;
-        cashfreeScript.onerror = () => reject(new Error('Failed to load Cashfree SDK'));
-        document.head.appendChild(cashfreeScript);
-      });
-      
-      // Initialize Cashfree SDK
-      const environment = process.env.NODE_ENV === 'development' ? 'sandbox' : 'production';
-      const cashfree = Cashfree({
-        mode: environment,
+      // Initialize Cashfree SDK - Always use production mode
+      console.log("Initializing Cashfree in production mode");
+      const cashfree = window.Cashfree({
+        mode: 'production',
       });
       
       // Open Cashfree checkout as popup
       const checkoutOptions = {
         paymentSessionId: orderData.paymentSessionId,
-        redirectTarget: '_modal', // This makes it a popup
+        redirectTarget: '_self', // Changed from '_modal' to prevent popup issues
       };
       
-      // Launch the popup and handle the result
+      console.log("Starting checkout with session ID:", orderData.paymentSessionId);
+      
+      // Launch the checkout
       await cashfree.checkout(checkoutOptions);
       
       // Verify payment status

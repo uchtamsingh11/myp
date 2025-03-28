@@ -11,13 +11,16 @@ export async function POST(request) {
                 const { data: { session } } = await supabase.auth.getSession();
 
                 if (!session) {
+                        console.error('No active session found');
                         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
                 }
 
                 const userId = session.user.id;
+                console.log(`Processing payment for user: ${userId}`);
 
                 // Get request body data
                 const { amount, orderId, orderCurrency = 'INR', customerPhone } = await request.json();
+                console.log(`Payment request: amount=${amount}, orderId=${orderId}, currency=${orderCurrency}`);
 
                 if (!amount) {
                         return NextResponse.json({ error: 'Amount is required' }, { status: 400 });
@@ -38,6 +41,7 @@ export async function POST(request) {
                 };
 
                 if (userError) {
+                        console.log(`User not found in users table, trying profiles. Error: ${userError.message}`);
                         const { data: profileData, error: profileError } = await supabase
                                 .from('profiles')
                                 .select('email, phone, full_name')
@@ -51,6 +55,9 @@ export async function POST(request) {
                                         full_name: profileData.full_name || 'User'
                                 };
                         } else {
+                                if (profileError) {
+                                        console.log(`Profile lookup error: ${profileError.message}`);
+                                }
                                 // Fall back to session data if available
                                 finalUserData.email = session.user.email || '';
                         }
@@ -60,6 +67,7 @@ export async function POST(request) {
 
                 // Generate unique order ID if not provided
                 const uniqueOrderId = orderId || `order_${Date.now()}_${userId.substring(0, 8)}`;
+                console.log(`Generated order ID: ${uniqueOrderId}`);
 
                 // Use phone number from request if provided, otherwise default to "9999999999"
                 const phone = customerPhone || finalUserData.phone || "9999999999";
@@ -69,6 +77,10 @@ export async function POST(request) {
                 if (!returnUrl.startsWith('https://')) {
                         returnUrl = returnUrl.replace('http://', 'https://');
                 }
+                console.log(`Return URL: ${returnUrl}`);
+
+                // Log environment variables - redacted for security
+                console.log(`APP_ID: ${process.env.CASHFREE_APP_ID?.substring(0, 5)}... ENV: ${process.env.CASHFREE_ENVIRONMENT}`);
 
                 // Prepare request for Cashfree API
                 const orderData = {
@@ -86,6 +98,8 @@ export async function POST(request) {
                         }
                 };
 
+                console.log(`Sending request to Cashfree API with order data:`, JSON.stringify(orderData));
+
                 // Call Cashfree Production API
                 const response = await fetch('https://api.cashfree.com/pg/orders', {
                         method: 'POST',
@@ -99,16 +113,27 @@ export async function POST(request) {
                 });
 
                 const responseData = await response.json();
+                console.log(`Cashfree API Response Status: ${response.status}`);
+                console.log(`Cashfree API Response: ${JSON.stringify(responseData)}`);
 
                 if (!response.ok) {
                         console.error('Cashfree API error:', responseData);
                         return NextResponse.json({
-                                error: responseData.message || 'Failed to create payment order'
+                                error: responseData.message || 'Failed to create payment order',
+                                details: responseData
                         }, { status: response.status });
                 }
 
+                if (!responseData.payment_session_id) {
+                        console.error('Payment session ID missing in Cashfree response:', responseData);
+                        return NextResponse.json({
+                                error: 'Payment session ID missing in response',
+                                details: responseData
+                        }, { status: 500 });
+                }
+
                 // Store order in database
-                await supabase.from('payment_orders').insert({
+                const { error: insertError } = await supabase.from('payment_orders').insert({
                         order_id: uniqueOrderId,
                         user_id: userId,
                         amount: parseFloat(amount),
@@ -117,6 +142,10 @@ export async function POST(request) {
                         status: 'CREATED',
                         created_at: new Date().toISOString()
                 });
+
+                if (insertError) {
+                        console.error('Error storing order in database:', insertError);
+                }
 
                 return NextResponse.json({
                         success: true,
