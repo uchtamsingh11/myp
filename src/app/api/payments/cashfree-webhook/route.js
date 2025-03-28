@@ -177,15 +177,17 @@ async function logCashfreeWebhook(webhookData, signature, ipAddress) {
 // Process successful payment
 async function processSuccessfulPayment(orderId, webhookId) {
         try {
+                console.log(`Processing successful payment for order ${orderId}, webhook ID: ${webhookId}`);
+
                 // Get order details
                 const { data: orderData, error: orderError } = await supabase
                         .from('payment_orders')
-                        .select('user_id, amount, currency')
+                        .select('user_id, amount, currency, status')
                         .eq('order_id', orderId)
                         .single();
 
                 if (orderError || !orderData) {
-                        console.error('Error fetching order data:', orderError);
+                        console.error(`Error fetching order data for ${orderId}:`, orderError);
 
                         // Update webhook record with error
                         if (webhookId) {
@@ -201,44 +203,110 @@ async function processSuccessfulPayment(orderId, webhookId) {
                         return;
                 }
 
+                console.log(`Found order for user ${orderData.user_id}, amount: ${orderData.amount} ${orderData.currency}, current status: ${orderData.status}`);
+
+                // Check if we've already processed this order to avoid double-crediting
+                if (orderData.status === 'PAID' || orderData.status === 'COMPLETED') {
+                        console.log(`Order ${orderId} already marked as paid/completed. Skipping credit update.`);
+
+                        // Still mark webhook as processed
+                        if (webhookId) {
+                                await supabase
+                                        .from('cashfree_webhooks')
+                                        .update({
+                                                processed: true,
+                                                process_error: 'Order already processed',
+                                                updated_at: new Date().toISOString()
+                                        })
+                                        .eq('id', webhookId);
+                        }
+
+                        return;
+                }
+
                 // Update user account with new credits
-                // Check if profiles table exists, otherwise fall back to user_accounts
                 let updateSuccess = false;
                 let updateErrorMessage = '';
 
-                // Try updating profiles table first
-                const { error: profilesError } = await supabase
+                // First, check if profiles table exists and has the user
+                const { data: profileCheck, error: profileCheckError } = await supabase
                         .from('profiles')
-                        .update({
-                                credits: supabase.sql`COALESCE(credits, 0) + ${orderData.amount}`,
-                                updated_at: new Date().toISOString()
-                        })
-                        .eq('id', orderData.user_id);
+                        .select('id, credits')
+                        .eq('id', orderData.user_id)
+                        .single();
 
-                // If profiles table update fails, try user_accounts
-                if (profilesError) {
-                        console.log('Falling back to user_accounts table');
-                        updateErrorMessage = `Profile update failed: ${profilesError.message}. `;
+                console.log(`Profile check for user ${orderData.user_id}:`,
+                        profileCheckError ? `Error: ${profileCheckError.message}` :
+                                `Found with current credits: ${profileCheck?.credits || 0}`);
 
-                        const { error: accountsError } = await supabase
+                // Determine which table to update
+                const targetTable = profileCheck ? 'profiles' : 'user_accounts';
+                console.log(`Will update credits in ${targetTable} table`);
+
+                if (targetTable === 'profiles') {
+                        // Update profiles table
+                        const { data: updateResult, error: profilesError } = await supabase
+                                .from('profiles')
+                                .update({
+                                        credits: supabase.sql`COALESCE(credits, 0) + ${orderData.amount}`,
+                                        updated_at: new Date().toISOString()
+                                })
+                                .eq('id', orderData.user_id)
+                                .select('credits');
+
+                        if (profilesError) {
+                                console.error(`Profile update failed for user ${orderData.user_id}:`, profilesError);
+                                updateErrorMessage = `Profile update failed: ${profilesError.message}`;
+                        } else {
+                                updateSuccess = true;
+                                console.log(`Successfully updated user ${orderData.user_id} credits in profiles table. New balance: ${updateResult?.[0]?.credits || 'unknown'}`);
+                        }
+                } else {
+                        // Try updating user_accounts as fallback
+                        console.log(`Falling back to user_accounts table for user ${orderData.user_id}`);
+
+                        const { data: updateResult, error: accountsError } = await supabase
                                 .from('user_accounts')
                                 .update({
                                         credits: supabase.sql`COALESCE(credits, 0) + ${orderData.amount}`,
                                         updated_at: new Date().toISOString()
                                 })
-                                .eq('user_id', orderData.user_id);
+                                .eq('user_id', orderData.user_id)
+                                .select('credits');
 
                         if (accountsError) {
-                                updateErrorMessage += `User account update failed: ${accountsError.message}`;
+                                console.error(`User account update failed for user ${orderData.user_id}:`, accountsError);
+                                updateErrorMessage = `User account update failed: ${accountsError.message}`;
+
+                                // If we can't find the user account, try to create one
+                                if (accountsError.code === 'PGRST116') {
+                                        console.log(`Attempting to create user_account for ${orderData.user_id}`);
+                                        const { error: createError } = await supabase
+                                                .from('user_accounts')
+                                                .insert({
+                                                        user_id: orderData.user_id,
+                                                        credits: orderData.amount,
+                                                        created_at: new Date().toISOString(),
+                                                        updated_at: new Date().toISOString()
+                                                });
+
+                                        if (createError) {
+                                                console.error(`Failed to create user_account:`, createError);
+                                                updateErrorMessage += ` Create account failed: ${createError.message}`;
+                                        } else {
+                                                updateSuccess = true;
+                                                console.log(`Created new user_account with ${orderData.amount} credits`);
+                                        }
+                                }
                         } else {
                                 updateSuccess = true;
+                                console.log(`Successfully updated user ${orderData.user_id} credits in user_accounts table. New balance: ${updateResult?.[0]?.credits || 'unknown'}`);
                         }
-                } else {
-                        updateSuccess = true;
                 }
 
                 // Mark webhook as processed with success or error status
                 if (webhookId) {
+                        console.log(`Updating webhook ${webhookId} processed status to ${updateSuccess}`);
                         await supabase
                                 .from('cashfree_webhooks')
                                 .update({
@@ -249,16 +317,21 @@ async function processSuccessfulPayment(orderId, webhookId) {
                                 .eq('id', webhookId);
                 }
 
-                if (!updateSuccess) {
-                        console.error('Error updating user credits:', updateErrorMessage);
-                } else {
-                        console.log(`Successfully credited ${orderData.amount} ${orderData.currency} to user ${orderData.user_id}`);
-
-                        // Send confirmation email (implement your email logic here)
-                        // await sendPaymentConfirmationEmail(orderData.user_id, orderId, orderData.amount);
+                // Update payment order status to COMPLETED if credits were successfully added
+                if (updateSuccess) {
+                        console.log(`Marking order ${orderId} as COMPLETED`);
+                        await supabase
+                                .from('payment_orders')
+                                .update({
+                                        status: 'COMPLETED',
+                                        updated_at: new Date().toISOString()
+                                })
+                                .eq('order_id', orderId);
                 }
+
+                console.log(`Finished processing payment for order ${orderId} with ${updateSuccess ? 'success' : 'errors'}`);
         } catch (error) {
-                console.error('Error processing successful payment:', error);
+                console.error(`Unexpected error processing payment for order ${orderId}:`, error);
 
                 // Update webhook record with error
                 if (webhookId) {
@@ -266,7 +339,7 @@ async function processSuccessfulPayment(orderId, webhookId) {
                                 .from('cashfree_webhooks')
                                 .update({
                                         processed: true,
-                                        process_error: `Payment processing error: ${error.message}`,
+                                        process_error: `Unexpected error: ${error.message}`,
                                         updated_at: new Date().toISOString()
                                 })
                                 .eq('id', webhookId);
