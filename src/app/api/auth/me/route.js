@@ -31,12 +31,15 @@ export async function GET() {
                 // Check if user has additional profile data
                 const { data: profileData, error: profileError } = await supabase
                         .from('profiles')
-                        .select('full_name, role')
+                        .select('full_name, role, coins')
                         .eq('id', user.id)
                         .single();
 
                 // Role from profile data or default to authenticated
                 const userRole = profileData?.role || user.role || 'authenticated';
+
+                // Get coin balance - default to 0 if not found
+                const coinBalance = profileData?.coins || 0;
 
                 // Return minimal user profile with authenticated flag
                 return NextResponse.json({
@@ -47,6 +50,7 @@ export async function GET() {
                         last_sign_in_at: user.last_sign_in_at,
                         role: userRole,
                         full_name: profileData?.full_name || user.user_metadata?.full_name || null,
+                        coins: coinBalance
                 });
         } catch (error) {
                 console.error('Error fetching user:', error);
