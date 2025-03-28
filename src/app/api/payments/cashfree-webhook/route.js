@@ -11,6 +11,17 @@ const supabase = createClient(
 );
 
 /**
+ * Test endpoint to echo back the request for debugging
+ */
+export async function GET(request) {
+        return NextResponse.json({
+                message: 'Cashfree webhook endpoint is active',
+                instructions: 'Send a POST request to this endpoint with your webhook payload',
+                timestamp: new Date().toISOString()
+        });
+}
+
+/**
  * Cashfree Webhook Handler
  * This endpoint receives webhook events from Cashfree payment gateway
  * 
@@ -31,14 +42,80 @@ export async function POST(request) {
                 const headers = {};
                 for (const [key, value] of request.headers.entries()) {
                         headers[key] = value;
+                        console.log(`Header: ${key} = ${value}`);
                 }
 
-                // Extract webhook data
-                const webhookBody = await clonedRequest.text(); // Raw body for signature verification
-                const webhookData = await request.json(); // Parsed JSON for processing
+                // First get the raw body text for signature verification
+                const webhookBody = await clonedRequest.text();
+                console.log('Webhook raw body:', webhookBody.substring(0, 500) + (webhookBody.length > 500 ? '...' : ''));
 
-                console.log('Cashfree webhook headers:', JSON.stringify(headers));
-                console.log('Cashfree webhook received:', JSON.stringify(webhookData).substring(0, 200) + '...');
+                // Handle empty webhook body
+                if (!webhookBody || webhookBody.trim() === '') {
+                        console.error('Empty webhook body received');
+                        return NextResponse.json({
+                                success: false,
+                                error: 'Empty request body',
+                                message: 'Webhook body cannot be empty'
+                        }, { status: 400 });
+                }
+
+                // Try to parse JSON body - handle malformed JSON gracefully
+                let webhookData;
+                try {
+                        // Check content type to determine how to parse the data
+                        const contentType = request.headers.get('content-type') || '';
+
+                        if (contentType.includes('application/json')) {
+                                // Parse as JSON if content type is JSON
+                                webhookData = JSON.parse(webhookBody);
+                        } else if (contentType.includes('application/x-www-form-urlencoded')) {
+                                // Parse as form data if content type is form-urlencoded
+                                const params = new URLSearchParams(webhookBody);
+                                webhookData = {};
+                                for (const [key, value] of params.entries()) {
+                                        // Try to parse nested JSON in form fields
+                                        try {
+                                                webhookData[key] = JSON.parse(value);
+                                        } catch (e) {
+                                                webhookData[key] = value;
+                                        }
+                                }
+
+                                // If there's a 'data' parameter, it might contain the whole payload as JSON
+                                if (params.has('data')) {
+                                        try {
+                                                const dataJson = JSON.parse(params.get('data'));
+                                                if (typeof dataJson === 'object' && dataJson !== null) {
+                                                        webhookData = dataJson;
+                                                }
+                                        } catch (e) {
+                                                // Keep the form data if we can't parse the data parameter
+                                        }
+                                }
+                        } else {
+                                // Try parsing as JSON anyway as fallback
+                                try {
+                                        webhookData = JSON.parse(webhookBody);
+                                } catch (e) {
+                                        // If that fails, create a simple wrapper object with the raw body
+                                        webhookData = {
+                                                rawBody: webhookBody,
+                                                parsedAs: 'text',
+                                                contentType: contentType
+                                        };
+                                }
+                        }
+
+                        console.log('Parsed webhook data:', JSON.stringify(webhookData).substring(0, 200) + '...');
+                } catch (jsonError) {
+                        console.error('Failed to parse webhook data:', jsonError, 'Raw body:', webhookBody);
+                        return NextResponse.json({
+                                success: false,
+                                error: 'Invalid payload format',
+                                message: 'Could not parse webhook payload',
+                                contentType: request.headers.get('content-type') || 'none'
+                        }, { status: 400 });
+                }
 
                 // Extract signature from headers - Cashfree uses different header names depending on API version
                 const signature = request.headers.get('x-webhook-signature') ||
@@ -71,7 +148,20 @@ export async function POST(request) {
                 const orderId = data?.order?.order_id || data?.order_id || webhookData?.order_id;
                 if (!orderId) {
                         console.error('Missing order ID in webhook payload');
-                        return NextResponse.json({ success: false, error: 'Missing order ID' }, { status: 400 });
+                        // For test or health check webhooks, still return 200
+                        if (eventType === 'TEST' || eventType === 'HEALTH_CHECK') {
+                                return NextResponse.json({
+                                        success: true,
+                                        message: 'Test webhook received successfully',
+                                        receivedData: webhookData
+                                });
+                        }
+                        return NextResponse.json({
+                                success: false,
+                                error: 'Missing order ID',
+                                message: 'Order ID is required',
+                                receivedData: webhookData
+                        }, { status: 400 });
                 }
 
                 // Extract other payment details
