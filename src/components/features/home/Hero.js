@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '../../../utils/supabase';
+import MagicCard from '../../ui/MagicCard';
+import GradientText from '../../ui/GradientText';
+import Terminal from '../../ui/Terminal';
+import BeamEffect from '../../ui/BeamEffect';
+import ShimmerButton from '../../ui/ShimmerButton';
+import GradientBorderButton from '../../ui/GradientBorderButton';
+import Perspective3DCard from '../../ui/Perspective3DCard';
+import Badge from '../../ui/Badge';
+import GlowingText from '../../ui/GlowingText';
+import IntroducingBadge from '../../ui/IntroducingBadge';
+import PillButton from '../../ui/PillButton';
+import BrowseButton from '../../ui/BrowseButton';
 
 const Hero = () => {
   const [user, setUser] = useState(null);
@@ -36,266 +48,252 @@ const Hero = () => {
     return user ? '/dashboard' : '/auth';
   };
 
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 md:pt-24">
-      {/* Background gradient with animation */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-black"
-        animate={{
-          background: [
-            'linear-gradient(to bottom, rgb(24, 24, 27), rgb(0, 0, 0))',
-            'linear-gradient(to bottom, rgb(39, 39, 42), rgb(9, 9, 11))',
-            'linear-gradient(to bottom, rgb(24, 24, 27), rgb(0, 0, 0))',
-          ],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      ></motion.div>
+  // Terminal lines for demonstration
+  const terminalLines = [
+    "> Initializing AlgoZ trading system...",
+    "> Loading market data and indicators...",
+    "> AI prediction models ready",
+    "> Trading signals analyzed: Strong buy detected on NIFTY",
+    "> Ready for automated trading execution",
+  ];
 
-      {/* Animated gradient blobs */}
-      <div className="absolute inset-0 overflow-hidden opacity-30">
+  // Line styles for the terminal
+  const lineStyles = {
+    0: 'text-green-500',
+    1: 'text-zinc-300',
+    2: 'text-zinc-300',
+    3: 'text-purple-400',
+    4: 'text-zinc-300',
+  };
+
+  return (
+    <section className="relative min-h-screen overflow-hidden pt-28 md:pt-32 pb-20">
+      {/* Background elements */}
+      <div className="absolute inset-0 -z-10">
+        {/* Deep gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-950 to-violet-950/10"></div>
+
+        {/* Grid pattern */}
         <motion.div
-          className="absolute w-[500px] h-[500px] rounded-full bg-purple-900/20 blur-[100px]"
+          className="absolute inset-0 grid-pattern"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.07 }}
+          transition={{ duration: 2 }}
+        ></motion.div>
+
+        {/* Magic UI-style glow effects */}
+        <motion.div
+          className="absolute top-1/3 left-1/4 w-[500px] h-[500px] magic-glow"
           animate={{
-            x: ['-20%', '30%', '-20%'],
-            y: ['0%', '40%', '0%'],
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
           }}
           transition={{
             duration: 15,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: "easeInOut",
           }}
-        />
+          style={{ background: "radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(107, 33, 168, 0.1) 70%)" }}
+        ></motion.div>
+
         <motion.div
-          className="absolute w-[600px] h-[600px] rounded-full bg-blue-900/20 blur-[100px]"
+          className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] magic-glow"
           animate={{
-            x: ['60%', '10%', '60%'],
-            y: ['10%', '40%', '10%'],
+            x: [0, -70, 0],
+            y: [0, 40, 0],
+            scale: [1, 1.1, 1],
+            opacity: [0.2, 0.4, 0.2],
           }}
           transition={{
             duration: 18,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: "easeInOut",
           }}
-        />
-        <motion.div
-          className="absolute w-[400px] h-[400px] rounded-full bg-indigo-900/20 blur-[100px]"
-          animate={{
-            x: ['30%', '70%', '30%'],
-            y: ['60%', '20%', '60%'],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
+          style={{ background: "radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(67, 56, 202, 0.1) 70%)" }}
+        ></motion.div>
+
+        {/* Add BeamEffect for a moving light beam */}
+        <BeamEffect
+          direction="diagonal"
+          speed={12}
+          color="bg-purple-500/10"
         />
       </div>
 
-      {/* Grid pattern overlay with pulse effect */}
-      <motion.div
-        className="absolute inset-0 bg-[url('/images/grid.svg')] bg-center"
-        animate={{ opacity: [0.08, 0.12, 0.08] }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      ></motion.div>
-
-      {/* Floating geometric shapes */}
+      {/* Decorative elements (Magic UI style) */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Triangle */}
-        <motion.div
-          className="absolute w-24 h-24 border-2 border-zinc-700/30"
-          style={{
-            clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-          }}
-          initial={{ x: '10%', y: '20%', rotate: 0, opacity: 0.2 }}
-          animate={{
-            y: ['20%', '25%', '20%'],
-            rotate: [0, 10, 0],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-
-        {/* Square */}
-        <motion.div
-          className="absolute w-16 h-16 border-2 border-zinc-700/30"
-          initial={{ x: '80%', y: '30%', rotate: 0, opacity: 0.2 }}
-          animate={{
-            y: ['30%', '35%', '30%'],
-            rotate: [0, -15, 0],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-
-        {/* Circle */}
-        <motion.div
-          className="absolute w-20 h-20 rounded-full border-2 border-zinc-700/30"
-          initial={{ x: '70%', y: '70%', scale: 1, opacity: 0.2 }}
-          animate={{
-            y: ['70%', '65%', '70%'],
-            scale: [1, 1.1, 1],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-      </div>
-
-      {/* Enhanced animated particles */}
-      <div className="absolute inset-0">
-        {[...Array(40)].map((_, i) => (
+        {/* Subtle animated lines */}
+        <div className="absolute h-px w-full top-1/3 overflow-hidden opacity-30">
           <motion.div
-            key={i}
-            className={`absolute rounded-full ${
-              i % 3 === 0
-                ? 'w-1 h-1 bg-blue-500/40'
-                : i % 3 === 1
-                  ? 'w-1.5 h-1.5 bg-purple-500/40'
-                  : 'w-0.5 h-0.5 bg-zinc-400/60'
-            }`}
-            initial={{
-              x: Math.random() * 100 + '%',
-              y: Math.random() * 100 + '%',
-              opacity: Math.random() * 0.5 + 0.3,
-              scale: Math.random() * 0.5 + 0.5,
-            }}
-            animate={{
-              x: [
-                Math.random() * 100 + '%',
-                Math.random() * 100 + '%',
-                Math.random() * 100 + '%',
-                Math.random() * 100 + '%',
-              ],
-              y: [
-                Math.random() * 100 + '%',
-                Math.random() * 100 + '%',
-                Math.random() * 100 + '%',
-                Math.random() * 100 + '%',
-              ],
-              opacity: [0.3, 0.7, 0.5, 0.3],
-              scale: [
-                Math.random() * 0.5 + 0.5,
-                Math.random() * 1 + 0.8,
-                Math.random() * 0.5 + 0.5,
-              ],
-            }}
+            className="h-full w-[200%] bg-gradient-to-r from-transparent via-violet-500/40 to-transparent"
+            animate={{ x: ["-100%", "100%"] }}
             transition={{
-              duration: Math.random() * 20 + 15,
               repeat: Infinity,
-              ease: 'linear',
+              duration: 15,
+              ease: "linear"
             }}
-          />
-        ))}
+          ></motion.div>
+        </div>
+
+        {/* Particles effect */}
+        <div className="absolute inset-0">
+          {[...Array(30)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full bg-white/80"
+              style={{
+                width: Math.random() * 3 + 1 + "px",
+                height: Math.random() * 3 + 1 + "px",
+                x: `${Math.random() * 100}%`,
+                y: `${Math.random() * 100}%`,
+                filter: "blur(0.5px)",
+              }}
+              animate={{
+                opacity: [0.1, 0.5, 0.1],
+                scale: [1, 1.5, 1],
+              }}
+              transition={{
+                duration: Math.random() * 5 + 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: Math.random() * 5,
+              }}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="container-custom relative z-10 text-left px-4 md:px-6 pt-12 md:pt-8 w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-5xl mx-auto"
-        >
-          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight">
-            <motion.span
-              className="bg-clip-text text-transparent bg-gradient-to-r from-zinc-100 to-zinc-500 block"
-              animate={{
-                backgroundPosition: ['0% center', '100% center', '0% center'],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
+      {/* Main content */}
+      <div className="container-custom relative z-10 mx-auto pt-10 md:pt-16">
+        <div className="max-w-5xl mx-auto text-center">
+          {/* Headline with animated gradient text */}
+          <div className="relative mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
             >
-              AI-Powered Trading, Simplified
-            </motion.span>
-            <motion.span
-              className="bg-clip-text text-transparent bg-gradient-to-r from-zinc-100 to-zinc-500 block mt-2"
-              animate={{
-                backgroundPosition: ['0% center', '100% center', '0% center'],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-            >
-              -AlgoZ
-            </motion.span>
-          </h1>
+              <div className="inline-block relative mb-3">
+                <IntroducingBadge>
+                  ALGORITHMIC TRADING PLATFORM
+                </IntroducingBadge>
+              </div>
 
+              <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight tracking-tight mb-4">
+                <GradientText className="inline-block">
+                  AI-Powered
+                </GradientText>
+                <br />
+                <GradientText gradient="purple" className="inline">
+                  Trading Simplified
+                </GradientText>
+              </h1>
+            </motion.div>
+          </div>
+
+          {/* Subtitle with animation */}
           <motion.p
-            className="text-lg sm:text-xl md:text-2xl text-zinc-400 mb-8 md:mb-10 max-w-3xl"
+            className="text-lg md:text-xl lg:text-2xl text-zinc-400 max-w-3xl mx-auto mb-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
           >
-            Maximize gains and safeguard investments with next-generation algorithmic trading
-            solutions
+            Experience the future of trading with our AI-driven platform that makes sophisticated
+            market analysis accessible to everyone.
           </motion.p>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Link href={getDestination()} className="w-full sm:w-auto">
-              <button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-colors">
-                {user ? 'Go to Dashboard' : 'Get Started Now'}
-              </button>
-            </Link>
-            <a href="#features" className="w-full sm:w-auto">
-              <button className="w-full sm:w-auto bg-transparent border border-zinc-700 hover:border-zinc-500 text-white font-medium py-3 px-6 rounded-lg transition-colors">
-                Explore Features
-              </button>
-            </a>
-          </div>
-        </motion.div>
-      </div>
+          {/* CTA section with enhanced buttons */}
+          <motion.div
+            className="flex flex-col sm:flex-row gap-4 justify-center mt-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            <BrowseButton href={getDestination()}>
+              {user ? 'Go to Dashboard' : 'Get Started Now'}
+            </BrowseButton>
 
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-10 left-1/2 transform -translate-x-1/2 hidden md:block"
-        animate={{
-          y: [0, 10, 0],
-        }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M12 5V19M12 19L5 12M12 19L19 12"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </motion.div>
+            <BrowseButton dark href="#features">
+              Explore Features
+            </BrowseButton>
+          </motion.div>
+
+          {/* Terminal effect using our enhanced component inside Perspective3DCard */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.6 }}
+            className="mt-20 max-w-4xl mx-auto"
+          >
+            <Perspective3DCard
+              depth={15}
+              rotateIntensity={8}
+              className="w-full"
+            >
+              <Terminal
+                lines={terminalLines}
+                title="AlgoZ Trading Terminal"
+                lineStyles={lineStyles}
+                typingSpeed={30}
+                className="w-full"
+              />
+            </Perspective3DCard>
+
+            {/* Feature highlights with Magic Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+              <MagicCard
+                className="p-6"
+                glowColor="purple"
+                hoverEffect={true}
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-purple-500 to-violet-500 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2 text-white">Lightning Fast</h3>
+                  <p className="text-zinc-400 text-center">Execute trades in milliseconds with our high-performance infrastructure</p>
+                </div>
+              </MagicCard>
+
+              <MagicCard
+                className="p-6"
+                glowColor="blue"
+                hoverEffect={true}
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2 text-white">Secure Trading</h3>
+                  <p className="text-zinc-400 text-center">Bank-level encryption and security protocols protect your data and funds</p>
+                </div>
+              </MagicCard>
+
+              <MagicCard
+                className="p-6"
+                glowColor="violet"
+                hoverEffect={true}
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-violet-500 to-indigo-500 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2 text-white">AI-Powered</h3>
+                  <p className="text-zinc-400 text-center">Advanced machine learning algorithms analyze market data for smarter decisions</p>
+                </div>
+              </MagicCard>
+            </div>
+          </motion.div>
+        </div>
+      </div>
     </section>
   );
 };

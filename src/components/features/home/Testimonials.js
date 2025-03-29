@@ -1,79 +1,190 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import Image from 'next/image';
+import GradientText from '../../ui/GradientText';
+import GlowingText from '../../ui/GlowingText';
+import Badge from '../../ui/Badge';
+import Carousel from '../../ui/Carousel';
+import BeamEffect from '../../ui/BeamEffect';
+import IntroducingBadge from '../../ui/IntroducingBadge';
 
 const testimonials = [
   {
-    quote:
-      'AlgoZ has completely transformed my trading strategy. The automated algorithms have consistently outperformed my manual trading by a significant margin.',
-    author: 'Rajesh Sharma',
-    title: 'Hedge Fund Manager',
-    avatar: '/images/avatar1.png',
+    content:
+      "This platform has transformed my trading. I was skeptical at first, but the results speak for themselves. I've seen a 27% increase in my portfolio over the last 3 months.",
+    author: 'Sarah Johnson',
+    role: 'Day Trader',
+    image: '/images/testimonial-1.jpg',
+    rating: 5,
+    highlight: true,
+  },
+  {
+    content:
+      "The automation capabilities are incredible. I can finally sleep at night knowing my trading strategy is working 24/7 without me having to constantly monitor the markets.",
+    author: 'Michael Chen',
+    role: 'Crypto Investor',
+    image: '/images/testimonial-2.jpg',
     rating: 5,
   },
   {
-    quote:
-      "As someone who doesn't have time to monitor markets all day, AlgoZ has been a game-changer. The platform is intuitive, and the performance has exceeded my expectations.",
-    author: 'Priya Patel',
-    title: 'Tech Executive',
-    avatar: '/images/avatar2.png',
-    rating: 5,
-  },
-  {
-    quote:
-      'The risk management features alone are worth the investment. I sleep better knowing my capital is protected by sophisticated algorithms that respond to market conditions 24/7.',
-    author: 'Vikram Singh',
-    title: 'Professional Trader',
-    avatar: '/images/avatar3.png',
+    content:
+      "I was struggling to find time for trading alongside my full-time job. This platform has been a game-changer. Set it up once and it keeps working for you.",
+    author: 'David Rodriguez',
+    role: 'Part-time Trader',
+    image: '/images/testimonial-3.jpg',
     rating: 4,
   },
   {
-    quote:
-      "I've tried several algo trading platforms, but AlgoZ stands out for its ease of use and transparency. The performance metrics are comprehensive and the results speak for themselves.",
-    author: 'Anjali Gupta',
-    title: 'Financial Advisor',
-    avatar: '/images/avatar4.png',
+    content:
+      "The risk management tools are what sold me. I can control exactly how much I'm willing to risk, and the platform respects those boundaries perfectly.",
+    author: 'Emma Watson',
+    role: 'Financial Analyst',
+    image: '/images/testimonial-4.jpg',
     rating: 5,
+    highlight: true,
+  },
+  {
+    content:
+      "Customer support is outstanding. Any time I've had a question or issue, they've responded quickly with helpful solutions. Couldn't ask for better service.",
+    author: 'James Wilson',
+    role: 'Retail Investor',
+    image: '/images/testimonial-5.jpg',
+    rating: 4,
   },
 ];
 
-const Testimonials = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const TestimonialCard = ({ testimonial }) => {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
 
-  // Auto-rotate testimonials
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex(prevIndex => (prevIndex + 1) % testimonials.length);
-    }, 7000); // Increased time to 7 seconds for better readability
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      transition={{ duration: 0.5 }}
+      className="h-full flex flex-col"
+    >
+      <div className="flex-grow bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 rounded-2xl p-6 md:p-8 relative">
+        {/* Highlight badge for special testimonials */}
+        {testimonial.highlight && (
+          <Badge
+            variant="premium"
+            className="absolute -top-3 -right-3"
+            animated={true}
+            glow={true}
+          >
+            Featured
+          </Badge>
+        )}
 
-    return () => clearInterval(interval);
-  }, []);
+        {/* Rating stars */}
+        <div className="flex mb-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <svg
+              key={i}
+              className={`w-5 h-5 ${i < testimonial.rating ? 'text-violet-500' : 'text-zinc-700'
+                }`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          ))}
+        </div>
 
-  const handleDotClick = index => {
-    setCurrentIndex(index);
-  };
+        {/* Quote mark */}
+        <div className="absolute top-6 right-8 text-zinc-800 opacity-40">
+          <svg
+            className="w-16 h-16"
+            fill="currentColor"
+            viewBox="0 0 32 32"
+            aria-hidden="true"
+          >
+            <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
+          </svg>
+        </div>
 
-  const goToPrev = () => {
-    setCurrentIndex(prevIndex => (prevIndex === 0 ? testimonials.length - 1 : prevIndex - 1));
-  };
+        {/* Content */}
+        <p className="text-zinc-300 mb-6">{testimonial.content}</p>
 
-  const goToNext = () => {
-    setCurrentIndex(prevIndex => (prevIndex + 1) % testimonials.length);
-  };
+        {/* Author info */}
+        <div className="flex items-center mt-auto">
+          <div className="relative w-12 h-12 rounded-full overflow-hidden">
+            <Image
+              src={testimonial.image}
+              alt={testimonial.author}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="ml-4">
+            <GlowingText
+              as="p"
+              color={testimonial.highlight ? 'violet' : 'white'}
+              className="font-semibold"
+            >
+              {testimonial.author}
+            </GlowingText>
+            <p className="text-zinc-500 text-sm">{testimonial.role}</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const Testimonials = () => {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  // Group testimonials into slides for the carousel
+  const testimonialSlides = [];
+  for (let i = 0; i < testimonials.length; i += 2) {
+    testimonialSlides.push(
+      <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+        <TestimonialCard testimonial={testimonials[i]} />
+        {testimonials[i + 1] && (
+          <TestimonialCard testimonial={testimonials[i + 1]} />
+        )}
+      </div>
+    );
+  }
 
   return (
-    <section className="py-16 sm:py-24 bg-zinc-950 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,_var(--tw-gradient-stops))] from-transparent via-zinc-900/20 to-transparent"></div>
+    <section id="testimonials" className="py-16 md:py-24 relative">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-950 to-black"></div>
 
-      {/* Decorative elements */}
-      <div className="absolute top-1/4 left-10 w-72 h-72 bg-indigo-600/10 rounded-full filter blur-3xl"></div>
-      <div className="absolute bottom-1/4 right-10 w-72 h-72 bg-indigo-500/5 rounded-full filter blur-3xl"></div>
+      {/* Grid pattern overlay */}
+      <div className="absolute inset-0 grid-pattern opacity-[0.03]"></div>
+
+      {/* Beam effect */}
+      <BeamEffect
+        direction="vertical"
+        count={2}
+        speed={20}
+      />
+
+      {/* Animated background blob */}
+      <motion.div
+        className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] opacity-20 bg-gradient-to-br from-violet-600/30 to-purple-600/30"
+        animate={{
+          scale: [1, 1.1, 1],
+          rotate: [0, 5, 0],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
 
       <div className="container-custom relative z-10">
         <motion.div
@@ -81,141 +192,95 @@ const Testimonials = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-10 md:mb-16"
+          className="text-center mb-16"
         >
-          <h2 className="section-title">What Our Traders Say</h2>
-          <p className="section-subtitle">
-            Join thousands of satisfied traders who have elevated their trading with AlgoZ.
+          <div className="inline-block relative mb-6">
+            <IntroducingBadge>TESTIMONIALS</IntroducingBadge>
+          </div>
+
+          <h2 className="text-4xl md:text-6xl font-bold mb-6">
+            <span className="text-white">What Our </span>
+            <span className="text-purple-500">Traders Say</span>
+          </h2>
+
+          <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+            Don't just take our word for it. See what traders like you have accomplished
+            with our algorithmic trading platform.
           </p>
         </motion.div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="relative">
-            {/* Navigation Arrows - Hidden on mobile */}
-            <div className="hidden md:block">
-              <button
-                onClick={goToPrev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-20 bg-zinc-800/80 hover:bg-zinc-700 text-white rounded-full p-2 transition-colors backdrop-blur-sm border border-zinc-700/50"
-                aria-label="Previous testimonial"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
+        <div className="max-w-6xl mx-auto">
+          <Carousel
+            autoPlay={true}
+            interval={5000}
+            showArrows={true}
+            showDots={true}
+            effect="slide"
+            className="py-8"
+          >
+            {testimonialSlides}
+          </Carousel>
+        </div>
 
-              <button
-                onClick={goToNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-20 bg-zinc-800/80 hover:bg-zinc-700 text-white rounded-full p-2 transition-colors backdrop-blur-sm border border-zinc-700/50"
-                aria-label="Next testimonial"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-              </button>
+        <div className="mt-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <div className="flex flex-col md:flex-row items-center justify-between md:gap-8 max-w-4xl mx-auto bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-6 md:p-10">
+              <div className="flex items-center mb-6 md:mb-0 w-full md:w-1/3 justify-center">
+                <span className="text-5xl md:text-6xl font-bold text-white mr-3">97%</span>
+                <div className="text-left">
+                  <Badge
+                    variant="success"
+                    size="sm"
+                    className="mb-1"
+                    style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                  >
+                    Verified
+                  </Badge>
+                  <p className="text-zinc-400 text-sm">
+                    Customer<br />satisfaction
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center mb-6 md:mb-0 w-full md:w-1/3 justify-center">
+                <span className="text-5xl md:text-6xl font-bold text-white mr-3">24/7</span>
+                <div className="text-left">
+                  <Badge
+                    variant="warning"
+                    size="sm"
+                    className="mb-1"
+                    style={{ backgroundColor: 'rgba(217, 119, 6, 0.2)', borderColor: 'rgba(217, 119, 6, 0.3)' }}
+                  >
+                    Always on
+                  </Badge>
+                  <p className="text-zinc-400 text-sm">
+                    Support<br />available
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center w-full md:w-1/3 justify-center">
+                <span className="text-5xl md:text-6xl font-bold text-white mr-3">15k+</span>
+                <div className="text-left">
+                  <Badge
+                    variant="info"
+                    size="sm"
+                    className="mb-1"
+                    style={{ backgroundColor: 'rgba(37, 99, 235, 0.2)', borderColor: 'rgba(37, 99, 235, 0.3)' }}
+                  >
+                    Growing
+                  </Badge>
+                  <p className="text-zinc-400 text-sm">
+                    Active<br />traders
+                  </p>
+                </div>
+              </div>
             </div>
-
-            <div className="h-auto min-h-[280px] sm:min-h-[260px] relative">
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  className={`absolute inset-0 rounded-xl backdrop-blur-sm transition-all duration-500 ${
-                    index === currentIndex
-                      ? 'opacity-100 z-10 translate-x-0'
-                      : 'opacity-0 z-0 translate-x-8'
-                  } p-6 sm:p-8 bg-gradient-to-br from-zinc-900/90 to-zinc-800/70 border border-zinc-700/30`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={index === currentIndex ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="flex flex-col h-full justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <svg
-                          className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-500/70"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                        </svg>
-
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <svg
-                              key={i}
-                              className={`w-4 h-4 ${i < testimonial.rating ? 'text-amber-400' : 'text-zinc-600'}`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
-
-                      <p className="text-base sm:text-lg italic mb-6 leading-relaxed text-zinc-300">
-                        {testimonial.quote}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center mr-4 shadow-md shadow-indigo-900/20">
-                        {/* Placeholder for avatar */}
-                        <span className="text-lg font-bold text-white">
-                          {testimonial.author.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-white">{testimonial.author}</h4>
-                        <p className="text-zinc-400 text-sm">{testimonial.title}</p>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            <div className="flex justify-center mt-6 sm:mt-8 items-center">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleDotClick(index)}
-                  className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 mx-1.5 ${
-                    index === currentIndex
-                      ? 'bg-indigo-500 scale-125'
-                      : 'bg-zinc-700 hover:bg-zinc-600'
-                  }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-10 text-center">
-            <a
-              href="#pricing"
-              className="inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-indigo-900/30 hover:shadow-indigo-900/50"
-            >
-              Join Our Traders
-              <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
-            </a>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

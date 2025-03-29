@@ -3,51 +3,68 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import GradientText from '../../ui/GradientText';
+import GlowingText from '../../ui/GlowingText';
+import Tooltip from '../../ui/Tooltip';
+import Badge from '../../ui/Badge';
+import BeamEffect from '../../ui/BeamEffect';
+import IntroducingBadge from '../../ui/IntroducingBadge';
 
 const faqs = [
   {
-    question: 'What is algorithmic trading?',
+    question: 'How does algorithmic trading work?',
     answer:
-      'Algorithmic trading uses computer programs and mathematical models to execute trades based on predefined criteria such as price, timing, and volume. These algorithms can analyze market data and execute trades faster and more efficiently than human traders.',
+      'Algorithmic trading uses computer programs to automatically execute trades based on predefined rules and market conditions. Our platform lets you implement these strategies without writing code yourself.',
+    category: 'basics',
   },
   {
-    question: 'Do I need trading experience to use AlgoZ?',
+    question: 'Do I need coding experience to use your platform?',
     answer:
-      'While prior trading experience is beneficial, AlgoZ is designed to be accessible to traders of all levels. Our platform includes educational resources and pre-built strategies that beginners can use, while experienced traders can customize algorithms to match their specific trading styles.',
+      'No coding experience is required. Our platform provides a user-friendly interface that allows you to select from pre-built strategies or customize your own using our visual strategy builder.',
+    category: 'basics',
+    highlight: true,
   },
   {
-    question: 'How much capital do I need to start?',
+    question: 'What exchanges do you support?',
     answer:
-      'You can start with as little as ₹1,000, though we recommend at least ₹5,000 to properly diversify across multiple algorithms and markets. Our risk management tools help protect your capital regardless of your account size.',
+      'We support all major cryptocurrency exchanges including Binance, Coinbase Pro, Bybit, KuCoin, Kraken, and many more. We also support integration with traditional brokerage platforms.',
+    category: 'integration',
   },
   {
-    question: 'Which markets can I trade with AlgoZ?',
+    question: 'How secure is my trading data?',
     answer:
-      'AlgoZ supports trading across multiple markets including stocks, options, futures, forex, and cryptocurrencies. The specific markets available depend on your subscription plan and broker integration.',
+      'We prioritize security with bank-level encryption, regular security audits, and we never store your private keys. We use API connections with limited permissions to execute trades on your behalf.',
+    category: 'security',
+    highlight: true,
   },
   {
-    question: 'How do I connect my brokerage account?',
+    question: 'What are the costs involved?',
     answer:
-      "AlgoZ integrates with most major brokerages through secure API connections. After signing up, you'll be guided through the process of connecting your existing brokerage account or opening a new one with one of our partner brokers.",
+      'We offer several subscription tiers starting from $29/month. Each plan includes different features based on your trading needs. We also offer a free tier with limited functionality so you can try before you buy.',
+    category: 'pricing',
   },
   {
-    question: 'What kind of returns can I expect?',
+    question: 'Can I use this for traditional stock trading?',
     answer:
-      "While past performance doesn't guarantee future results, our top-performing algorithms have historically generated annual returns between 15-30%. Individual results may vary based on market conditions, the algorithms you select, and your risk settings.",
+      'Yes, besides cryptocurrency exchanges, we also support integration with traditional brokerage platforms that offer API access, allowing you to implement algorithmic strategies for stocks, forex, and other markets.',
+    category: 'integration',
   },
   {
-    question: 'Is my data secure?',
+    question: 'How fast can I get started?',
     answer:
-      'Absolutely. We employ bank-level encryption and security protocols to protect your personal and financial information. We never store your brokerage credentials, and all API connections are secured with OAuth or similar authentication methods.',
+      'You can set up your account and connect your first exchange in less than 10 minutes. Our quickstart guide will walk you through the process step by step, and our support team is available 24/7 to help if needed.',
+    category: 'basics',
   },
   {
-    question: 'Can I cancel my subscription anytime?',
+    question: 'Is there a mobile app available?',
     answer:
-      "Yes, you can cancel your subscription at any time. If you cancel, you'll continue to have access until the end of your current billing period. We don't lock you into long-term contracts.",
+      'Yes, we offer mobile apps for both iOS and Android, allowing you to monitor your trading bots, adjust parameters, and get notifications on the go. All the core functionality of the platform is available on our mobile apps.',
+    category: 'integration',
   },
 ];
 
-const FAQItem = ({ faq, index, isOpen, toggleOpen }) => {
+const FAQItem = ({ faq, index }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -56,28 +73,45 @@ const FAQItem = ({ faq, index, isOpen, toggleOpen }) => {
   return (
     <motion.div
       ref={ref}
-      className="border-b border-zinc-800 py-4 sm:py-6"
+      className={`border-b border-zinc-800 overflow-hidden ${faq.highlight ? 'relative' : ''}`}
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <button
-        className="flex justify-between items-center w-full text-left group"
-        onClick={() => toggleOpen(index)}
-      >
-        <h3 className="text-base sm:text-lg font-medium group-hover:text-white transition-colors">
-          {faq.question}
-        </h3>
-        <div
-          className={`flex-shrink-0 ml-4 p-1 rounded-full ${isOpen ? 'bg-indigo-600/20' : 'bg-zinc-800'} transition-colors`}
+      {/* Highlight badge for important FAQs */}
+      {faq.highlight && (
+        <Badge
+          variant="premium"
+          className="absolute right-0 top-6 z-10"
+          animated={false}
+          size="sm"
+          style={{ backgroundColor: 'rgba(124, 58, 237, 0.2)', borderColor: 'rgba(124, 58, 237, 0.3)' }}
         >
-          <svg
-            className={`w-4 h-4 sm:w-5 sm:h-5 transform transition-transform ${isOpen ? 'rotate-180 text-indigo-400' : 'text-zinc-400'}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          Popular
+        </Badge>
+      )}
+
+      <button
+        className="py-5 w-full flex justify-between items-center text-left"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        <Tooltip
+          content={faq.category === 'basics' ? 'Basic knowledge' :
+            faq.category === 'security' ? 'Security information' :
+              faq.category === 'pricing' ? 'Pricing details' :
+                'Integration specifics'}
+          position="top"
+          disabled={isOpen}
+        >
+          <h3 className="text-lg md:text-xl font-medium text-white pr-16">
+            {faq.question}
+          </h3>
+        </Tooltip>
+
+        <div className={`transition-transform duration-300 transform ${isOpen ? 'rotate-45' : ''}`}>
+          <svg className="w-6 h-6 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
         </div>
       </button>
@@ -89,11 +123,32 @@ const FAQItem = ({ faq, index, isOpen, toggleOpen }) => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="overflow-hidden"
           >
-            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-zinc-400 leading-relaxed">
-              {faq.answer}
-            </p>
+            <div className="pb-5 text-zinc-400">
+              <p>{faq.answer}</p>
+
+              {/* Category badge */}
+              <div className="mt-3">
+                <Badge
+                  variant={faq.category === 'basics' ? 'info' :
+                    faq.category === 'security' ? 'success' :
+                      faq.category === 'pricing' ? 'warning' :
+                        'default'}
+                  size="sm"
+                  style={
+                    faq.category === 'basics' ?
+                      { backgroundColor: 'rgba(37, 99, 235, 0.2)', borderColor: 'rgba(37, 99, 235, 0.3)' } :
+                      faq.category === 'security' ?
+                        { backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 0.3)' } :
+                        faq.category === 'pricing' ?
+                          { backgroundColor: 'rgba(217, 119, 6, 0.2)', borderColor: 'rgba(217, 119, 6, 0.3)' } :
+                          { backgroundColor: 'rgba(124, 58, 237, 0.2)', borderColor: 'rgba(124, 58, 237, 0.3)' }
+                  }
+                >
+                  {faq.category.charAt(0).toUpperCase() + faq.category.slice(1)}
+                </Badge>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -102,19 +157,35 @@ const FAQItem = ({ faq, index, isOpen, toggleOpen }) => {
 };
 
 const FAQ = () => {
-  const [openIndex, setOpenIndex] = useState(null);
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
 
-  const toggleOpen = index => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
+  // Filter categories
+  const categories = ['all', 'basics', 'security', 'pricing', 'integration'];
+  const [activeCategory, setActiveCategory] = useState('all');
+
+  const filteredFaqs = activeCategory === 'all'
+    ? faqs
+    : faqs.filter(faq => faq.category === activeCategory);
 
   return (
-    <section id="faq" className="py-16 sm:py-24 bg-zinc-950 relative">
-      <div className="absolute inset-0 bg-[linear-gradient(to_top,_var(--tw-gradient-stops))] from-transparent via-zinc-900/20 to-transparent"></div>
+    <section id="faq" className="py-16 md:py-24 relative">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-950 to-black"></div>
+
+      {/* Grid pattern overlay */}
+      <div className="absolute inset-0 grid-pattern opacity-[0.03]"></div>
+
+      {/* Beam effects */}
+      <BeamEffect
+        direction="horizontal"
+        count={2}
+        speed={20}
+        thickness={50}
+        color="bg-violet-500/5"
+      />
 
       <div className="container-custom relative z-10">
         <motion.div
@@ -122,45 +193,78 @@ const FAQ = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-10 md:mb-16"
+          className="text-center mb-16"
         >
-          <h2 className="section-title">Frequently Asked Questions</h2>
-          <p className="section-subtitle">
-            Have questions about AlgoZ? Find answers to the most common questions below.
+          <div className="inline-block relative mb-6">
+            <IntroducingBadge>
+              QUESTIONS & ANSWERS
+            </IntroducingBadge>
+          </div>
+
+          <h2 className="text-3xl md:text-5xl font-bold mb-6">
+            <GradientText
+              gradient="purple"
+              className="inline"
+            >
+              Frequently Asked Questions
+            </GradientText>
+          </h2>
+
+          <p className="text-zinc-400 text-lg max-w-3xl mx-auto">
+            Find answers to common questions about our platform. If you need further assistance,
+            our support team is always ready to help.
           </p>
         </motion.div>
 
-        <div className="max-w-3xl mx-auto rounded-xl bg-zinc-900/30 border border-zinc-800/50 p-4 sm:p-6 md:p-8">
-          {faqs.map((faq, index) => (
-            <FAQItem
-              key={index}
-              faq={faq}
-              index={index}
-              isOpen={openIndex === index}
-              toggleOpen={toggleOpen}
-            />
-          ))}
-
-          <div className="mt-8 pt-6 border-t border-zinc-800 text-center">
-            <p className="text-zinc-400 text-sm mb-4">Still have questions?</p>
-            <a
-              href="https://t.me/AlgoZsupport1"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors"
+        {/* Category filters */}
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`px-4 py-2 rounded-full text-sm transition-all 
+                ${activeCategory === category
+                  ? 'bg-violet-500/20 text-white border border-violet-500/40'
+                  : 'text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:text-zinc-300'
+                }`}
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-              </svg>
-              Contact Support
-            </a>
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        <div className="max-w-4xl mx-auto bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-6 md:p-8">
+          <div className="space-y-1">
+            {filteredFaqs.map((faq, index) => (
+              <FAQItem key={index} faq={faq} index={index} />
+            ))}
           </div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-center mt-12"
+        >
+          <p className="text-zinc-400 mb-6">Still have questions?</p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <a
+              href="#"
+              className="px-6 py-3 bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800 rounded-lg text-white transition-all flex items-center space-x-2 backdrop-blur-sm"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                />
+              </svg>
+              <span>Live Chat</span>
+            </a>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

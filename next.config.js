@@ -10,7 +10,11 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['avatars.githubusercontent.com', 'images.unsplash.com'],
+    domains: [
+      'avatars.githubusercontent.com',
+      'images.unsplash.com',
+      'framerusercontent.com'
+    ],
     formats: ['image/avif', 'image/webp'],
   },
   // Add your external domains here if needed

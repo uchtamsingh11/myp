@@ -1,6 +1,6 @@
 import { Toaster } from 'react-hot-toast';
 import { GeistSans } from 'geist/font/sans';
-import '../styles/globals.css';
+import './globals.css';
 import { AuthProvider } from '../contexts/AuthContext';
 import SupabaseListener from '../components/auth/SupabaseListener';
 
