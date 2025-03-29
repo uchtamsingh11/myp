@@ -97,7 +97,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   // Function to render the sidebar content (used by both desktop and mobile views)
   function renderSidebarContent() {
     return (
-      <div className="h-full flex flex-col bg-zinc-900 border-r border-zinc-800 w-[240px] text-white overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700">
+      <div className="h-full flex flex-col bg-zinc-950 border-r border-zinc-800 w-[240px] text-white overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700">
         <ul className="space-y-1 p-3 flex-grow">
           <li>
             <a
@@ -519,7 +519,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="w-64 md:min-w-[16rem] bg-zinc-900 border-r border-zinc-800 min-h-[calc(100vh-64px)] transition-all duration-300 overflow-y-auto max-h-[calc(100vh-64px)] hidden md:block">
+      <aside className="w-64 md:min-w-[16rem] bg-zinc-950 border-r border-zinc-800 min-h-[calc(100vh-64px)] transition-all duration-300 overflow-y-auto max-h-[calc(100vh-64px)] hidden md:block">
         <nav className="p-4">{renderSidebarContent()}</nav>
       </aside>
 
