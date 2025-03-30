@@ -10,13 +10,6 @@ const pricingPlans = [
     name: 'Basic',
     coins: 1000,
     price: 999,
-    description: 'You can use this coin to purchase our services',
-    features: [
-      '1000 Z Coins',
-      'Access to basic algorithms',
-      '1 market integration',
-      'Email support',
-    ],
     cta: 'Buy Now',
     popular: false,
   },
@@ -24,14 +17,6 @@ const pricingPlans = [
     name: 'Pro',
     coins: 2500,
     price: 2249,
-    description: 'You can use this coin to purchase our services',
-    features: [
-      '2500 Z Coins',
-      'Access to advanced algorithms',
-      '3 market integrations',
-      'Priority email & chat support',
-      'Strategy backtesting',
-    ],
     cta: 'Buy Now',
     popular: true,
     tag: 'Best Value',
@@ -40,15 +25,6 @@ const pricingPlans = [
     name: 'Premium',
     coins: 5000,
     price: 4499,
-    description: 'You can use this coin to purchase our services',
-    features: [
-      '5000 Z Coins',
-      'Access to all algorithms',
-      'Unlimited market integrations',
-      'Priority 24/7 support',
-      'Advanced strategy backtesting',
-      'Custom algorithm development',
-    ],
     cta: 'Buy Now',
     popular: false,
   },
@@ -128,27 +104,6 @@ const Pricing = () => {
                   </div>
 
                   <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent my-6"></div>
-
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start">
-                        <svg
-                          className={`w-5 h-5 mr-2 mt-0.5 ${plan.popular ? 'text-indigo-400' : 'text-zinc-400'}`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span className="text-zinc-300 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
 
                   <RainbowButton className="w-full">
                     {plan.cta}
