@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
 import Image from 'next/image';
+import { Activity, TrendingUp, BarChart2, PieChart, DollarSign, Users, Briefcase, ArrowUpRight, LineChart, Clock, RefreshCw, ChevronRight } from 'lucide-react';
 
 // Import broker icons from the broker auth page
 const BrokerIcons = {
@@ -51,35 +52,35 @@ const getBrokerIcon = (brokerId) => {
 const TRENDING_STRATEGIES = [
   {
     id: 1,
-    name: 'Meta Platforms',
-    icon: 'M',
+    name: 'Reliance Industries',
+    icon: 'R',
     iconBg: 'bg-blue-500',
-    reward: '48.23%',
-    change: '-2.25%',
+    reward: '38.45%',
+    change: '-2.15%',
     isPositive: false,
-    value: '-$06.25',
+    value: '-₹25.60',
     chartColor: 'text-red-500',
   },
   {
     id: 2,
-    name: 'Tesla, Inc',
-    icon: 'T',
+    name: 'HDFC Bank',
+    icon: 'H',
     iconBg: 'bg-red-500',
-    reward: '48.23%',
-    change: '+2.25%',
+    reward: '42.70%',
+    change: '+3.25%',
     isPositive: true,
-    value: '+$10.25',
+    value: '+₹54.30',
     chartColor: 'text-green-500',
   },
   {
     id: 3,
-    name: 'NVIDIA Corporation',
-    icon: 'N',
+    name: 'Infosys',
+    icon: 'I',
     iconBg: 'bg-green-500',
-    reward: '48.23%',
-    change: '+2.25%',
+    reward: '29.65%',
+    change: '+1.85%',
     isPositive: true,
-    value: '+$2.85',
+    value: '+₹29.15',
     chartColor: 'text-green-500',
   },
 ];
@@ -87,74 +88,88 @@ const TRENDING_STRATEGIES = [
 // Mock data for the stock table
 const STOCKS_DATA = [
   {
-    company: 'Microsoft Corporation Common Stock',
-    high: '$490.82',
-    low: '$385.25',
-    prevClose: '$421.27',
-    change: '-1.23',
-    gain: '2.4%',
-    performance: [1, 1, -1, 1, 1],
+    company: 'Reliance Industries Ltd',
+    symbol: 'RELIANCE',
+    high: '₹2,940.50',
+    low: '₹2,875.25',
+    prevClose: '₹2,890.30',
+    change: '-15.75',
+    gain: '0.54%',
+    performance: [1, 1, -1, 1, -1],
     isPositive: false,
+    marketCap: '₹19.9L Cr'
   },
   {
-    company: 'Apple Inc. Common Stock',
-    high: '$225.87',
-    low: '$124.87',
-    prevClose: '$171.48',
-    change: '12.53',
-    gain: '5.8%',
-    performance: [1, -1, -1, 1, 1],
+    company: 'Tata Consultancy Services Ltd',
+    symbol: 'TCS',
+    high: '₹3,758.40',
+    low: '₹3,680.15',
+    prevClose: '₹3,720.55',
+    change: '37.85',
+    gain: '1.02%',
+    performance: [1, -1, 1, 1, 1],
     isPositive: true,
+    marketCap: '₹13.7L Cr'
   },
   {
-    company: 'NVIDIA Corporation Common Stock',
-    high: '$1008.57',
-    low: '$750.28',
-    prevClose: '$903.56',
-    change: '7.56',
-    gain: '8.7%',
-    performance: [1, 1, 1, -1, -1],
+    company: 'HDFC Bank Ltd',
+    symbol: 'HDFCBANK',
+    high: '₹1,675.80',
+    low: '₹1,645.30',
+    prevClose: '₹1,662.75',
+    change: '13.05',
+    gain: '0.78%',
+    performance: [1, 1, 1, -1, 1],
     isPositive: true,
+    marketCap: '₹12.6L Cr'
   },
   {
-    company: 'Tesla, Inc. Common Stock',
-    high: '$275.30',
-    low: '$154.45',
-    prevClose: '$175.48',
-    change: '8.47',
-    gain: '8.8%',
-    performance: [1, -1, -1, 1, 1],
+    company: 'Infosys Ltd',
+    symbol: 'INFY',
+    high: '₹1,578.25',
+    low: '₹1,550.45',
+    prevClose: '₹1,560.40',
+    change: '17.85',
+    gain: '1.14%',
+    performance: [1, -1, 1, 1, 1],
     isPositive: true,
+    marketCap: '₹6.5L Cr'
   },
   {
-    company: 'NVIDIA Corporation Common Stock',
-    high: '$1008.57',
-    low: '$750.28',
-    prevClose: '$903.56',
-    change: '7.56',
-    gain: '8.7%',
+    company: 'Bharti Airtel Ltd',
+    symbol: 'BHARTIARTL',
+    high: '₹1,425.60',
+    low: '₹1,390.25',
+    prevClose: '₹1,405.80',
+    change: '-10.55',
+    gain: '0.75%',
     performance: [1, 1, -1, -1, -1],
-    isPositive: true,
+    isPositive: false,
+    marketCap: '₹7.9L Cr'
   },
   {
-    company: 'JP Morgan Chase & Co. Common Stock',
-    high: '$225.87',
-    low: '$124.87',
-    prevClose: '$200.48',
-    change: '0.98',
-    gain: '1.58%',
-    performance: [1, -1, -1, 1, 1],
+    company: 'ITC Ltd',
+    symbol: 'ITC',
+    high: '₹465.30',
+    low: '₹452.80',
+    prevClose: '₹457.50',
+    change: '7.80',
+    gain: '1.71%',
+    performance: [1, -1, 1, 1, 1],
     isPositive: true,
+    marketCap: '₹5.7L Cr'
   },
   {
-    company: 'NVIDIA Corporation Common Stock',
-    high: '$1008.57',
-    low: '$750.28',
-    prevClose: '$903.56',
-    change: '7.56',
-    gain: '8.7%',
+    company: 'Adani Enterprises Ltd',
+    symbol: 'ADANIENT',
+    high: '₹2,950.75',
+    low: '₹2,890.40',
+    prevClose: '₹2,925.60',
+    change: '-35.20',
+    gain: '1.2%',
     performance: [1, 1, -1, -1, -1],
-    isPositive: true,
+    isPositive: false,
+    marketCap: '₹3.4L Cr'
   },
 ];
 
@@ -168,9 +183,9 @@ const BROKERS = [
 
 // Market activity data
 const MARKET_ACTIVITY = [
-  { region: 'USA', percentage: 73 },
-  { region: 'Australia', percentage: 65 },
-  { region: 'Canada', percentage: 51 },
+  { region: 'NIFTY 50', percentage: 68 },
+  { region: 'BSE SENSEX', percentage: 72 },
+  { region: 'BANK NIFTY', percentage: 59 },
 ];
 
 export default function Dashboard() {
@@ -226,7 +241,7 @@ export default function Dashboard() {
   // Show loading state
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center h-[60vh] bg-zinc-950 rounded-xl">
+      <div className="flex items-center justify-center h-[60vh] bg-zinc-950/50 rounded-xl">
         <div className="relative">
           <div className="w-14 h-14 rounded-full absolute border-4 border-solid border-zinc-800"></div>
           <div className="w-14 h-14 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent shadow-lg"></div>
@@ -247,101 +262,164 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Dashboard Header with Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-5 shadow-lg backdrop-blur-sm hover:border-indigo-500/30 transition-all duration-300">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-zinc-400 text-xs font-medium uppercase tracking-wider flex items-center">
+                <Activity className="w-3.5 h-3.5 mr-1 text-indigo-400" /> Portfolio Value
+              </p>
+              <h3 className="text-white text-2xl font-bold mt-1">₹1,15,42,356</h3>
+              <p className="text-green-400 text-xs flex items-center mt-1">
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> +12.5% <span className="text-zinc-500 ml-1">from last month</span>
+              </p>
+            </div>
+            <div className="bg-indigo-500/10 p-2 rounded-lg">
+              <LineChart className="w-8 h-8 text-indigo-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-5 shadow-lg backdrop-blur-sm hover:border-indigo-500/30 transition-all duration-300">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-zinc-400 text-xs font-medium uppercase tracking-wider flex items-center">
+                <BarChart2 className="w-3.5 h-3.5 mr-1 text-amber-400" /> Active Strategies
+              </p>
+              <h3 className="text-white text-2xl font-bold mt-1">7</h3>
+              <p className="text-zinc-400 text-xs flex items-center mt-1">
+                <Clock className="w-3.5 h-3.5 mr-1" /> Last deployed <span className="text-white ml-1">2 hours ago</span>
+              </p>
+            </div>
+            <div className="bg-amber-500/10 p-2 rounded-lg">
+              <RefreshCw className="w-8 h-8 text-amber-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-5 shadow-lg backdrop-blur-sm hover:border-indigo-500/30 transition-all duration-300">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-zinc-400 text-xs font-medium uppercase tracking-wider flex items-center">
+                <PieChart className="w-3.5 h-3.5 mr-1 text-green-400" /> Success Rate
+              </p>
+              <h3 className="text-white text-2xl font-bold mt-1">68.2%</h3>
+              <p className="text-green-400 text-xs flex items-center mt-1">
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> +4.3% <span className="text-zinc-500 ml-1">from previous</span>
+              </p>
+            </div>
+            <div className="bg-green-500/10 p-2 rounded-lg">
+              <Activity className="w-8 h-8 text-green-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-5 shadow-lg backdrop-blur-sm hover:border-indigo-500/30 transition-all duration-300">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-zinc-400 text-xs font-medium uppercase tracking-wider flex items-center">
+                <DollarSign className="w-3.5 h-3.5 mr-1 text-purple-400" /> Available Credits
+              </p>
+              <h3 className="text-white text-2xl font-bold mt-1">15</h3>
+              <div className="flex items-center mt-1">
+                <button className="text-white text-xs bg-purple-600 rounded px-2 py-0.5 hover:bg-purple-500 transition-colors">
+                  Buy More
+                </button>
+              </div>
+            </div>
+            <div className="bg-purple-500/10 p-2 rounded-lg">
+              <Briefcase className="w-8 h-8 text-purple-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top Trending Strategy Section */}
-        <div className="lg:col-span-2">
-          <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl p-6 shadow-xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-white text-xl font-medium">Top Trending Strategy</h2>
-              <div className="bg-lime-200 px-4 py-1.5 rounded-full">
-                <select 
-                  value={timeFilter}
-                  onChange={(e) => setTimeFilter(e.target.value)}
-                  className="bg-transparent text-sm font-medium text-gray-800 outline-none cursor-pointer"
-                >
-                  <option>Week</option>
-                  <option>Month</option>
-                  <option>Year</option>
-                </select>
+        <div className="lg:col-span-3">
+          <div className="bg-zinc-900/80 rounded-xl border border-zinc-800/50 overflow-hidden shadow-xl">
+            <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center">
+              <div className="flex items-center">
+                <TrendingUp className="w-5 h-5 text-indigo-500 mr-2" />
+                <h2 className="text-white text-lg font-medium">Top Trending Strategies</h2>
+              </div>
+              <div className="flex space-x-2">
+                <div className="bg-zinc-800 rounded-full overflow-hidden flex text-xs">
+                  <button 
+                    className={`px-3 py-1.5 transition-colors ${timeFilter === 'Week' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'}`}
+                    onClick={() => setTimeFilter('Week')}
+                  >
+                    Week
+                  </button>
+                  <button 
+                    className={`px-3 py-1.5 transition-colors ${timeFilter === 'Month' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'}`}
+                    onClick={() => setTimeFilter('Month')}
+                  >
+                    Month
+                  </button>
+                  <button 
+                    className={`px-3 py-1.5 transition-colors ${timeFilter === 'Year' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'}`}
+                    onClick={() => setTimeFilter('Year')}
+                  >
+                    Year
+                  </button>
+                </div>
               </div>
             </div>
             
             {/* Strategy Cards */}
+            <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {TRENDING_STRATEGIES.map((strategy) => (
                 <div 
                   key={strategy.id} 
-                  className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl p-4 border border-zinc-700/30"
+                    className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700/30 hover:border-indigo-500/30 transition-all duration-300 group"
                 >
-                  <div className="flex items-center mb-2">
-                    <div className={`w-10 h-10 ${strategy.iconBg} rounded-md flex items-center justify-center text-white font-bold mr-3`}>
+                    <div className="flex items-center mb-4">
+                      <div className={`w-10 h-10 ${strategy.iconBg} rounded-lg flex items-center justify-center text-white font-bold mr-3`}>
                       {strategy.icon}
                     </div>
                     <div>
-                      <div className="text-sm text-gray-400">Backtest Tested</div>
+                        <div className="text-xs text-zinc-400">Strategy</div>
                       <div className="text-white font-medium">{strategy.name}</div>
+                      </div>
+                      <div className="ml-auto">
+                        <div className="w-7 h-7 rounded-full bg-zinc-700/50 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+                          <ChevronRight className="w-4 h-4 text-indigo-400" />
                     </div>
                   </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-xs text-gray-400">Reward Rate</div>
-                      <div className="text-white text-xl font-semibold">{strategy.reward}</div>
                     </div>
-                    <div className={`px-2 py-1 rounded-md ${strategy.isPositive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'} text-sm font-medium`}>
+                    
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div className="text-xs text-zinc-400">Reward Rate</div>
+                        <div className="text-white text-lg font-semibold">{strategy.reward}</div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-md ${strategy.isPositive ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'} text-xs font-medium flex items-center`}>
+                        {strategy.isPositive ? 
+                          <ArrowUpRight className="w-3 h-3 mr-1" /> : 
+                          <TrendingUp className="w-3 h-3 mr-1 transform rotate-180" />} 
                       {strategy.change}
                     </div>
                   </div>
                   
-                  <div className="mt-2">
-                    <div className="text-right text-sm font-medium mb-1">{strategy.value}</div>
-                    <div className={`h-12 ${strategy.chartColor}`}>
+                    <div className="mt-1">
+                      <div className={`h-10 ${strategy.chartColor}`}>
                       {/* This would be replaced with an actual chart component */}
                       <div className="h-full w-full flex items-end">
-                        <div className="w-full h-8 rounded-md bg-current opacity-20"></div>
+                          <div className="h-full w-full rounded-lg bg-current opacity-10"></div>
+                        </div>
                       </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-xs text-zinc-500">Today</span>
+                        <span className={`text-xs font-medium ${strategy.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                          {strategy.value}
+                        </span>
                     </div>
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-        
-        {/* Backtest Section */}
-        <div className="lg:col-span-1">
-          <div className="bg-gradient-to-br from-fuchsia-600 to-amber-400 rounded-xl p-6 shadow-xl h-full relative overflow-hidden">
-            <div className="relative z-10">
-              <h2 className="text-white text-2xl font-bold mb-1">Backtest</h2>
-              <p className="text-white/90 mb-4">Develop and test strategies using our lightning-fast backtest engine.</p>
-              
-              <button className="bg-zinc-900 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 hover:bg-zinc-800 transition">
-                <span>Create Strategy</span>
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-            
-            {/* Decorative elements */}
-            <div className="absolute right-0 bottom-0 transform translate-x-1/4 translate-y-1/4">
-              <div className="relative w-40 h-40">
-                <div className="absolute inset-0 bg-white/10 rounded-full"></div>
-                <div className="absolute right-5 top-5 bg-white/30 p-2 rounded-full">
-                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none">
-                    <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            {/* Chart visualization */}
-            <div className="absolute bottom-6 left-6 right-16 h-28">
-              <div className="relative h-full w-full">
-                <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white/20 to-transparent rounded-md"></div>
-                <div className="absolute bottom-0 left-1/4 h-16 w-4 bg-white/40 rounded-t-md"></div>
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-28 w-4 bg-white/40 rounded-t-md"></div>
-                <div className="absolute bottom-0 right-1/4 h-20 w-4 bg-white/40 rounded-t-md"></div>
               </div>
             </div>
           </div>
@@ -351,32 +429,45 @@ export default function Dashboard() {
       {/* Broker Connection and Stock Table */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
-          <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl p-6 shadow-xl">
+          <div className="bg-zinc-900/80 rounded-xl border border-zinc-800/50 overflow-hidden shadow-xl">
+            <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center">
+              <div className="flex items-center">
+                <BarChart2 className="w-5 h-5 text-indigo-500 mr-2" />
+                <h2 className="text-white text-lg font-medium">NSE/BSE Market Overview</h2>
+              </div>
+              <button className="text-indigo-500 hover:text-indigo-400 transition-colors text-sm font-medium flex items-center">
+                Refresh <RefreshCw className="w-4 h-4 ml-1" />
+              </button>
+            </div>
+            
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="w-full">
                 <thead>
-                  <tr className="border-b border-zinc-700/30">
-                    <th className="pb-3 font-medium text-gray-400">Company Name</th>
-                    <th className="pb-3 font-medium text-gray-400">High</th>
-                    <th className="pb-3 font-medium text-gray-400">Low</th>
-                    <th className="pb-3 font-medium text-gray-400">Prev Close</th>
-                    <th className="pb-3 font-medium text-gray-400">Change</th>
-                    <th className="pb-3 font-medium text-gray-400">Gain</th>
-                    <th className="pb-3 font-medium text-gray-400">5 Day Performance</th>
+                  <tr className="bg-zinc-800/30 text-left text-xs font-medium text-zinc-400 tracking-wider">
+                    <th className="px-6 py-3">Symbol</th>
+                    <th className="px-6 py-3">Company Name</th>
+                    <th className="px-6 py-3">High</th>
+                    <th className="px-6 py-3">Low</th>
+                    <th className="px-6 py-3">Prev Close</th>
+                    <th className="px-6 py-3">Change</th>
+                    <th className="px-6 py-3">5 Day</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-zinc-800/30">
                   {STOCKS_DATA.map((stock, index) => (
-                    <tr key={index} className="border-b border-zinc-800/30">
-                      <td className="py-3 text-white">{stock.company}</td>
-                      <td className="py-3 text-white">{stock.high}</td>
-                      <td className="py-3 text-white">{stock.low}</td>
-                      <td className="py-3 text-white">{stock.prevClose}</td>
-                      <td className={`py-3 ${stock.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                    <tr key={index} className="hover:bg-zinc-800/20 transition-colors">
+                      <td className="px-6 py-4 text-white font-medium">{stock.symbol}</td>
+                      <td className="px-6 py-4 text-zinc-300">{stock.company}</td>
+                      <td className="px-6 py-4 text-white">{stock.high}</td>
+                      <td className="px-6 py-4 text-white">{stock.low}</td>
+                      <td className="px-6 py-4 text-white">{stock.prevClose}</td>
+                      <td className={`px-6 py-4 ${stock.isPositive ? 'text-green-500' : 'text-red-500'} flex items-center`}>
+                        {stock.isPositive ? 
+                          <ArrowUpRight className="w-3.5 h-3.5 mr-1" /> : 
+                          <TrendingUp className="w-3.5 h-3.5 mr-1 transform rotate-180" />} 
                         {stock.isPositive ? '+' : ''}{stock.change}
                       </td>
-                      <td className={`py-3 ${stock.isPositive ? 'text-green-500' : 'text-red-500'}`}>{stock.gain}</td>
-                      <td className="py-3">
+                      <td className="px-6 py-4">
                         <div className="flex space-x-1">
                           {stock.performance.map((day, i) => (
                             <div 
@@ -397,9 +488,13 @@ export default function Dashboard() {
         <div className="lg:col-span-1">
           <div className="space-y-6">
             {/* Today's Market Activity */}
-            <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl p-6 shadow-xl">
-              <h2 className="text-white text-lg font-medium mb-4">Today's Market Activity</h2>
+            <div className="bg-zinc-900/80 rounded-xl border border-zinc-800/50 overflow-hidden shadow-xl">
+              <div className="p-6 border-b border-zinc-800/50 flex items-center">
+                <Activity className="w-5 h-5 text-indigo-500 mr-2" />
+                <h2 className="text-white text-lg font-medium">Market Activity</h2>
+              </div>
               
+              <div className="p-6">
               <div className="relative h-48">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative w-36 h-36">
@@ -422,27 +517,31 @@ export default function Dashboard() {
                         </div>
                       </div>
                     ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             
             {/* Available Balance */}
-            <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl p-6 shadow-xl">
-              <h2 className="text-white text-lg font-medium mb-4">Available Balance</h2>
+            <div className="bg-zinc-900/80 rounded-xl border border-zinc-800/50 overflow-hidden shadow-xl">
+              <div className="p-6 border-b border-zinc-800/50 flex items-center">
+                <DollarSign className="w-5 h-5 text-indigo-500 mr-2" />
+                <h2 className="text-white text-lg font-medium">Available Balance</h2>
+              </div>
               
-              <div className="space-y-3">
+              <div className="p-6 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-white">Backtests:</span>
+                  <span className="text-zinc-400">Backtests:</span>
                   <span className="text-white font-medium">24</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white">Credits:</span>
+                  <span className="text-zinc-400">Credits:</span>
                   <span className="text-white font-medium">15</span>
                 </div>
                 <div className="border-t border-zinc-700/30 my-3 pt-3"></div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white">Plans:</span>
+                  <span className="text-zinc-400">Plans:</span>
                   <span className="text-indigo-400 font-medium">Premium Plan</span>
                 </div>
               </div>
@@ -451,136 +550,57 @@ export default function Dashboard() {
         </div>
       </div>
       
-      {/* Broker Connection Section */}
-      <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl p-6 shadow-xl">
-        <h2 className="text-white text-lg font-medium mb-4">Link your brokerage account to implement strategies in real-time.</h2>
-        
-        <div className="flex flex-wrap gap-4">
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('alice_blue')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Alice Blue</div>
-            </div>
+      {/* My Stocks Section */}
+      <div className="bg-zinc-900/80 rounded-xl border border-zinc-800/50 overflow-hidden shadow-xl">
+        <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center">
+          <div className="flex items-center">
+            <BarChart2 className="w-5 h-5 text-indigo-500 mr-2" />
+            <h2 className="text-white text-lg font-medium">My Indian Stocks</h2>
+          </div>
+          <button className="text-indigo-500 hover:text-indigo-400 transition-colors text-sm font-medium flex items-center">
+            View All <ChevronRight className="w-4 h-4 ml-1" />
+          </button>
           </div>
           
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('angel_broking')}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-zinc-800/30 text-left text-xs font-medium text-zinc-400 tracking-wider">
+                <th className="px-6 py-3">Symbol</th>
+                <th className="px-6 py-3">Name</th>
+                <th className="px-6 py-3">Last Price</th>
+                <th className="px-6 py-3">Change</th>
+                <th className="px-6 py-3">Market Cap</th>
+                <th className="px-6 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800/30">
+              {STOCKS_DATA.map((stock) => (
+                <tr key={stock.symbol} className="hover:bg-zinc-800/20 transition-colors">
+                  <td className="px-6 py-4 text-white font-medium">{stock.symbol}</td>
+                  <td className="px-6 py-4 text-zinc-300">{stock.company}</td>
+                  <td className="px-6 py-4 text-white font-medium">{stock.high}</td>
+                  <td className={`px-6 py-4 ${stock.isPositive ? 'text-green-500' : 'text-red-500'} flex items-center`}>
+                    {stock.isPositive ? 
+                      <ArrowUpRight className="w-3.5 h-3.5 mr-1" /> : 
+                      <TrendingUp className="w-3.5 h-3.5 mr-1 transform rotate-180" />}
+                    {stock.change}
+                  </td>
+                  <td className="px-6 py-4 text-zinc-300">{stock.marketCap}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex space-x-2">
+                      <button className="p-1.5 rounded-lg bg-indigo-600/10 text-indigo-500 hover:bg-indigo-600/20 transition-colors">
+                        <LineChart className="w-4 h-4" />
+                      </button>
+                      <button className="p-1.5 rounded-lg bg-zinc-700/30 text-zinc-400 hover:bg-zinc-700/50 hover:text-white transition-colors">
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
             </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Angel Broking</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('binance')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Binance</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Delta Exchange</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Dhan</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Finvisia</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Fyers</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">ICICI Direct</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">IIFL</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Kotak Neo</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">MetaTrader 4</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">MetaTrader 5</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('default')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Upstox</div>
-            </div>
-          </div>
-          
-          <div className="bg-zinc-800 p-3 rounded-xl hover:bg-zinc-700/50 transition">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2">
-              {getBrokerIcon('zerodha')}
-            </div>
-            <div className="mt-2 text-center">
-              <div className="text-xs text-gray-300 truncate max-w-[80px]">Zerodha</div>
-            </div>
-          </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

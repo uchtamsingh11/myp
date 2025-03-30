@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CalendarIcon, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight } from 'lucide-react';
 
 export default function OptimizationPage() {
   const [pineScript, setPineScript] = useState('');
@@ -244,6 +245,7 @@ export default function OptimizationPage() {
   };
 
   const timeframeOptions = [
+    { value: 'tick', label: 'Tick Data' },
     { value: '1m', label: '1 Minute' },
     { value: '5m', label: '5 Minutes' },
     { value: '15m', label: '15 Minutes' },
@@ -277,70 +279,142 @@ bb              = input_lookback`;
   };
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-white bg-zinc-950">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Strategy Optimization</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-indigo-600 text-transparent bg-clip-text">Strategy Optimization</h1>
+            <p className="text-zinc-400 mt-1">Fine-tune your trading strategies with advanced optimization tools</p>
+          </div>
+          <div className="flex space-x-3">
+            <button 
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg flex items-center text-sm transition-all duration-200 border border-zinc-700"
+              onClick={addSampleCode}
+            >
+              <Code className="w-4 h-4 mr-2" />
+              Load Sample
+            </button>
+            {jsonData && !results && (
+              <button 
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30"
+                onClick={handleOptimize}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Optimizing...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Run Optimization
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
         
         {/* Pine Script Converter and JSON Output in a two-column layout */}
-        <div className="flex flex-col lg:flex-row gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Left column - Pine Script Converter */}
-          <div className="w-full lg:w-1/2 bg-zinc-900 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Pine Script Converter</h2>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Pine Script Code</label>
-              <textarea
-                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm h-80"
-                placeholder="Paste your Pine Script code here..."
-                value={pineScript}
-                onChange={(e) => setPineScript(e.target.value)}
-              ></textarea>
+          <div className="bg-zinc-900 rounded-xl p-6 shadow-xl border border-zinc-800">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center">
+                <Server className="w-5 h-5 mr-2 text-indigo-500" />
+                Pine Script Converter
+              </h2>
+              <div className="flex space-x-2">
+                {pineScript && (
+                  <button
+                    className="text-zinc-400 hover:text-zinc-200 p-1 transition-colors"
+                    onClick={() => setPineScript('')}
+                    title="Clear code"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                onClick={handleConvert}
-              >
-                Convert to JSON
-              </button>
-              <button
-                className="bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                onClick={addSampleCode}
-              >
-                Load Sample Code
-              </button>
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-zinc-300">Pine Script Code</label>
+                <div className="flex space-x-2">
+                  <span className="text-xs text-zinc-500">{pineScript.split('\n').length} lines</span>
+                  <span className="text-xs px-2 py-0.5 bg-zinc-800 rounded-full text-zinc-400">Pine Script v5</span>
+                </div>
+              </div>
+              <div className="relative">
+                <textarea
+                  className="w-full p-4 bg-zinc-800/80 border border-zinc-700 rounded-xl text-white font-mono text-sm h-[400px] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  placeholder="// Paste your Pine Script code here..."
+                  value={pineScript}
+                  onChange={(e) => setPineScript(e.target.value)}
+                  style={{ resize: 'none' }}
+                ></textarea>
+                <div className="absolute right-3 bottom-3 flex space-x-2">
+                  {!pineScript && (
+                    <button
+                      className="bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shadow-sm flex items-center"
+                      onClick={addSampleCode}
+                    >
+                      <Code className="w-3 h-3 mr-1" />
+                      Load Example
+                    </button>
+                  )}
+                  {pineScript && (
+                    <button
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shadow-lg shadow-indigo-900/30 flex items-center"
+                      onClick={handleConvert}
+                    >
+                      <ArrowRight className="w-3 h-3 mr-1" />
+                      Convert
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           
           {/* Right column - JSON Output with Parameter Section */}
-          <div className="w-full lg:w-1/2 bg-zinc-900 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">JSON Output</h2>
+          <div className="bg-zinc-900 rounded-xl p-6 shadow-xl border border-zinc-800">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center">
+                <BarChart2 className="w-5 h-5 mr-2 text-indigo-500" />
+                JSON Output
+              </h2>
+            </div>
             {jsonData ? (
               <div className="space-y-4">
                 {/* Input Parameters Section */}
-                <div className="bg-zinc-800 rounded-lg p-4 max-h-[500px] overflow-auto">
-                  <h3 className="text-md font-medium mb-3 text-indigo-400">
+                <div className="bg-zinc-800/50 rounded-xl p-4 max-h-[250px] overflow-auto border border-zinc-700/30">
+                  <h3 className="text-md font-medium mb-3 text-indigo-400 flex items-center">
+                    <Zap className="w-4 h-4 mr-1 text-indigo-400" />
                     Input Parameters ({Object.keys(jsonData.inputs).length})
                   </h3>
                   {Object.keys(jsonData.inputs).length > 0 ? (
-                    <div className="divide-y divide-zinc-700">
+                    <div className="divide-y divide-zinc-700/50">
                       {Object.entries(jsonData.inputs).map(([key, value]) => (
                         <div key={key} className="py-3">
                           <div className="flex justify-between items-center flex-wrap">
                             <span className="text-white font-medium">{value.title || key}</span>
                             <div className="flex space-x-2 items-center mt-1 sm:mt-0">
                               {value.group && (
-                                <span className="text-xs bg-indigo-900 px-2 py-1 rounded text-indigo-200">
+                                <span className="text-xs bg-indigo-900/70 px-2 py-0.5 rounded-full text-indigo-200">
                                   {value.group}
                                 </span>
                               )}
-                              <span className="text-xs bg-zinc-700 px-2 py-1 rounded text-zinc-300">
+                              <span className="text-xs bg-zinc-700/70 px-2 py-0.5 rounded-full text-zinc-300">
                                 {value.type}
                               </span>
                             </div>
                           </div>
                           <div className="flex flex-wrap justify-between text-sm mt-2 text-zinc-400">
-                            <span className="mr-4">Variable: <code className="text-yellow-300">{key}</code></span>
-                            <span>Default: <code className="text-green-400">{value.defaultValue}</code></span>
+                            <span className="mr-4">Variable: <code className="text-yellow-300 bg-yellow-900/20 px-1 rounded">{key}</code></span>
+                            <span>Default: <code className="text-green-400 bg-green-900/20 px-1 rounded">{value.defaultValue}</code></span>
                           </div>
                           
                           {/* Show additional details if available */}
@@ -373,126 +447,237 @@ bb              = input_lookback`;
                 </div>
                 
                 {/* Full JSON Section */}
-                <div className="bg-zinc-800 rounded-lg p-4 h-48 overflow-auto">
-                  <h3 className="text-md font-medium mb-2 text-indigo-400">Complete JSON</h3>
-                  <pre className="text-xs text-green-400">
+                <div className="bg-zinc-800/50 rounded-xl p-4 h-[134px] overflow-auto border border-zinc-700/30">
+                  <h3 className="text-md font-medium mb-2 text-indigo-400 flex items-center">
+                    <Code className="w-4 h-4 mr-1 text-indigo-400" />
+                    Complete JSON
+                  </h3>
+                  <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
                     {JSON.stringify(jsonData, null, 2)}
                   </pre>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-80 bg-zinc-800 rounded-lg">
-                <p className="text-zinc-500">Convert your Pine Script to see JSON output here</p>
+              <div className="flex flex-col items-center justify-center h-[400px] bg-zinc-800/30 rounded-xl border border-dashed border-zinc-700/50">
+                <BarChart2 className="w-12 h-12 text-zinc-700 mb-4" />
+                <p className="text-zinc-500 text-center max-w-xs">
+                  Convert your Pine Script to generate a structured JSON representation
+                </p>
+                <button
+                  className="mt-4 px-4 py-2 bg-indigo-600/80 hover:bg-indigo-600 text-white text-sm rounded-lg transition-colors flex items-center shadow-lg shadow-indigo-900/20"
+                  onClick={addSampleCode}
+                >
+                  <Code className="w-4 h-4 mr-2" />
+                  Load Sample Code
+                </button>
               </div>
             )}
           </div>
         </div>
         
-        <div className="bg-zinc-900 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Optimization Settings</h2>
+        <div className="bg-zinc-900 rounded-xl p-6 mb-8 shadow-xl border border-zinc-800">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-indigo-500" />
+              Optimization Settings
+            </h2>
+            {!jsonData && (
+              <div className="text-xs px-3 py-1 bg-amber-800/30 text-amber-400 rounded-full flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Convert Pine Script first
+              </div>
+            )}
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Symbol</label>
-              <input
-                type="text"
-                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
-                placeholder="e.g., BTCUSDT"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
-              />
+              <label className="block text-sm font-medium mb-2 text-zinc-300">Symbol</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="w-full p-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                  placeholder="e.g., BTCUSDT"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <span className="text-xs px-1.5 py-0.5 bg-zinc-700 rounded text-zinc-400">Symbol</span>
+                </div>
+              </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Timeframe</label>
-              <select
-                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
-                value={timeframe}
-                onChange={(e) => setTimeframe(e.target.value)}
-              >
-                {timeframeOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium mb-2 text-zinc-300">Timeframe</label>
+              <div className="relative">
+                <select
+                  className="w-full p-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                  value={timeframe}
+                  onChange={(e) => setTimeframe(e.target.value)}
+                >
+                  {timeframeOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <ChevronDown className="h-4 w-4 text-zinc-400" />
+                </div>
+              </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Start Date</label>
-              <input
-                type="date"
-                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">End Date</label>
-              <input
-                type="date"
-                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Quantity to Test</label>
+              <label className="block text-sm font-medium mb-2 text-zinc-300">Quantity to Test</label>
               <input
                 type="number"
-                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                className="w-full p-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
                 min="1"
                 max="100"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value))}
               />
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2 text-zinc-300">Start Date</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  className="w-full p-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <CalendarIcon className="h-4 w-4 text-zinc-400" />
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2 text-zinc-300">End Date</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  className="w-full p-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <CalendarIcon className="h-4 w-4 text-zinc-400" />
+                </div>
+              </div>
+            </div>
           </div>
           
-          <button
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            onClick={handleOptimize}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Optimizing...' : 'Optimize'}
-          </button>
+          <div className="flex justify-between items-center">
+            <div className="text-xs text-zinc-500">
+              {jsonData && <span>Optimizing {Object.keys(jsonData.inputs).length} input parameters</span>}
+            </div>
+            <button
+              className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center ${
+                jsonData 
+                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/30' 
+                  : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+              }`}
+              onClick={handleOptimize}
+              disabled={!jsonData || isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Optimizing...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Run Optimization
+                </>
+              )}
+            </button>
+          </div>
         </div>
         
         {results && (
-          <div className="bg-zinc-900 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Optimization Results</h2>
+          <div className="bg-zinc-900 rounded-xl p-6 shadow-xl border border-zinc-800">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold flex items-center">
+                <BarChart2 className="w-5 h-5 mr-2 text-indigo-500" />
+                Optimization Results
+              </h2>
+              <button className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm flex items-center transition-all duration-200">
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Export Results
+              </button>
+            </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-zinc-800">
-                    <th className="p-3 text-left border-b border-zinc-700">Parameters</th>
-                    <th className="p-3 text-left border-b border-zinc-700">Overall Returns</th>
-                    <th className="p-3 text-left border-b border-zinc-700">Max Drawdown</th>
-                    <th className="p-3 text-left border-b border-zinc-700">Profit Factor</th>
-                    <th className="p-3 text-left border-b border-zinc-700">AI Opinion</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map(result => (
-                    <tr key={result.id} className="hover:bg-zinc-800 transition-colors">
-                      <td className="p-3 border-b border-zinc-700">
-                        <div className="text-xs">
-                          {Object.entries(result.params).map(([key, value]) => (
-                            <div key={key}>{key}: {value}</div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="p-3 border-b border-zinc-700 text-green-400">{result.overallReturns}</td>
-                      <td className="p-3 border-b border-zinc-700 text-red-400">{result.maxDrawdown}</td>
-                      <td className="p-3 border-b border-zinc-700">{result.profitFactor}</td>
-                      <td className="p-3 border-b border-zinc-700">{result.aiOpinion}</td>
+            <div className="overflow-hidden rounded-xl border border-zinc-800 shadow-inner bg-zinc-800/30">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-zinc-800">
+                      <th className="p-3 text-left border-b border-zinc-700 font-medium text-zinc-300">Parameters</th>
+                      <th className="p-3 text-left border-b border-zinc-700 font-medium text-zinc-300">Overall Returns</th>
+                      <th className="p-3 text-left border-b border-zinc-700 font-medium text-zinc-300">Max Drawdown</th>
+                      <th className="p-3 text-left border-b border-zinc-700 font-medium text-zinc-300">Profit Factor</th>
+                      <th className="p-3 text-left border-b border-zinc-700 font-medium text-zinc-300">AI Opinion</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {results.map((result, index) => (
+                      <tr key={result.id} className={`hover:bg-zinc-800/70 transition-colors ${index === 0 ? 'bg-indigo-900/10' : ''}`}>
+                        <td className="p-3 border-b border-zinc-700/50">
+                          <div className="text-xs space-y-1">
+                            {Object.entries(result.params).map(([key, value]) => (
+                              <div key={key} className="flex justify-between">
+                                <span className="text-zinc-400">{key}:</span>
+                                <span className="text-white font-medium">{value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="p-3 border-b border-zinc-700/50">
+                          <span className="text-green-400 font-semibold">{result.overallReturns}</span>
+                        </td>
+                        <td className="p-3 border-b border-zinc-700/50">
+                          <span className="text-red-400 font-semibold">{result.maxDrawdown}</span>
+                        </td>
+                        <td className="p-3 border-b border-zinc-700/50">
+                          <span className="text-indigo-400 font-semibold">{result.profitFactor}</span>
+                        </td>
+                        <td className="p-3 border-b border-zinc-700/50">
+                          <div className="flex items-center">
+                            <div className={`w-2 h-2 rounded-full mr-2 ${
+                              result.profitFactor > 2 ? 'bg-green-500' : 
+                              result.profitFactor > 1.5 ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}></div>
+                            <span className="text-zinc-200">{result.aiOpinion}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-xs text-zinc-500">Showing {results.length} results</span>
+              <div className="flex space-x-2">
+                <button className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm flex items-center transition-all duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                  </svg>
+                  Sort by Profit
+                </button>
+                <button className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm flex items-center transition-all duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Compare Selected
+                </button>
+              </div>
             </div>
           </div>
         )}
