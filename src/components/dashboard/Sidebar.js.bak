@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '../../utils/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = false }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { signOut } = useAuth();
 
   // State for tracking which menu is open
@@ -36,34 +35,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   useEffect(() => {
     // This will run when the component mounts or pathname changes
     if (pathname) {
-      const tab = searchParams.get('tab');
-      const newActiveItem = getActiveMenuItemFromPath(pathname, tab);
-      console.log('Path changed, setting active item to:', newActiveItem, 'Path:', pathname, 'Tab:', tab);
-      
-      // CRITICAL FIX: Force immediate update for Trading View pages with tab parameters
-      if (pathname.startsWith('/dashboard/trading-view')) {
-        let forcedActiveItem;
-        
-        if (tab === 'manage') forcedActiveItem = 'Trading View: Manage';
-        else if (tab === 'webhook') forcedActiveItem = 'Trading View: Webhook URL';
-        else if (tab === 'json') forcedActiveItem = 'Trading View: JSON Generator';
-        else if (tab === 'symbol') forcedActiveItem = 'Trading View: Symbol';
-        else if (tab === 'logs') forcedActiveItem = 'Trading View: Trade Logs';
-        else forcedActiveItem = 'Trading View';
-        
-        console.log('FORCE UPDATING to:', forcedActiveItem);
-        setActiveItem(forcedActiveItem);
-        
-        // Force update session storage too
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('dashboardActiveMenuItem', forcedActiveItem);
-        }
-        
-        // Auto-expand the menu 
-        setTradingViewOpen(true);
-        return;
-      }
-      
+      const newActiveItem = getActiveMenuItemFromPath(pathname);
       setActiveItem(newActiveItem);
       
       // Auto-expand submenus based on the current path
@@ -90,7 +62,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
         sessionStorage.setItem('dashboardActiveMenuItem', newActiveItem);
       }
     }
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   // Sync activeItem with the prop when it changes
   useEffect(() => {
@@ -118,25 +90,26 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
     }
   }, [activeMenuItem, activeItem]);
 
-  // Function to handle menu item click - completely rewritten to fix menu activation issues
+  // Function to handle menu item click
   const handleMenuItemClick = useCallback(
     (itemName, route) => {
-      // The order matters here - set the active item last to avoid race conditions
+      // Clear any previous active item first
+      setActiveItem('');
       
+      // Then set the new active item
+      setActiveItem(itemName);
+
       // Store the active menu item in sessionStorage to preserve it across page refreshes
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('dashboardActiveMenuItem', itemName);
       }
 
-      // Pass the active item to the parent component if needed
+      // Pass the active item to the parent component
       if (onMenuItemClick) {
         onMenuItemClick(itemName);
       }
 
-      // The key fix: set active item *before* navigation to ensure it doesn't get reset
-      setActiveItem(itemName);
-      
-      // Then navigate to the route if provided
+      // Navigate to the route if provided
       if (route) {
         router.push(route);
       }
@@ -152,39 +125,45 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
     [onMenuItemClick, router]
   );
 
-  // Function to determine if a menu item is active - simplified to make behavior more consistent
+  // Function to determine if a menu item is active
   const isActive = useCallback((itemName) => {
-    // Special explicit handling for TradingView items
-    if (itemName === 'Trading View') {
-      // Parent item is ONLY active when it's exactly Trading View with no colon
-      return activeItem === 'Trading View' && !activeItem.includes(':');
-    }
-    
-    // For Trading View submenu items, strict exact match required
-    if (itemName.startsWith('Trading View:')) {
-      return itemName === activeItem;
-    }
-    
-    // Special cases for FAQ, Support, Pricing
+    // For paths that should exclusively match their exact menu item
     if (itemName === 'FAQ' && (activeItem === 'FAQ' || pathname?.includes('/dashboard/faq'))) {
+      // When on FAQ, only FAQ should be highlighted
       return true;
     }
     
     if (itemName === 'Support' && (activeItem === 'Support' || pathname?.includes('/dashboard/support'))) {
+      // When on Support, only Support should be highlighted
       return true;
     }
     
     if (itemName === 'Pricing' && (activeItem === 'Pricing' || pathname?.includes('/dashboard/pricing'))) {
+      // When on Pricing, only Pricing should be highlighted
       return true;
     }
     
-    // For Dashboard, only match exactly
+    // Only highlight Dashboard when we're specifically on the Dashboard page and not a sub-page
     if (itemName === 'Dashboard') {
       return activeItem === 'Dashboard' && pathname === '/dashboard';
     }
     
-    // For everything else, just do exact match
-    return itemName === activeItem;
+    // For other menu items with sub-items
+    if (pathname !== '/dashboard' && pathname !== '/dashboard/faq' && 
+        pathname !== '/dashboard/support' && pathname !== '/dashboard/pricing') {
+      if (itemName === 'Trading View' && activeItem?.startsWith('Trading View')) return true;
+      if (itemName === 'Scalping Tool' && activeItem?.startsWith('Scalping Tool')) return true;
+      if (itemName === 'Copy Trading' && activeItem?.startsWith('Copy Trading')) return true;
+      if (itemName === 'Marketplace' && activeItem?.startsWith('Marketplace')) return true;
+      if (itemName === 'Back Test' && activeItem?.startsWith('Back Test')) return true;
+      if (itemName === 'Optimization' && activeItem?.startsWith('Optimization')) return true;
+      if (itemName === 'My Developer' && activeItem?.startsWith('My Developer')) return true;
+      if (itemName === 'Admin' && activeItem?.startsWith('Admin')) return true;
+    }
+    
+    // Direct match for other items
+    return activeItem === itemName && !pathname?.includes('/dashboard/faq') && 
+           !pathname?.includes('/dashboard/support') && !pathname?.includes('/dashboard/pricing');
   }, [activeItem, pathname]);
 
   // Function to toggle a menu's open state and close others
@@ -280,7 +259,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     className="flex items-center w-full"
                     onClick={e => {
                       e.stopPropagation();
-                      // handleMenuItemClick('Admin');
+                      handleMenuItemClick('Admin');
                       toggleMenu('Admin');
                     }}
                   >
@@ -316,25 +295,16 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative w-full">
               <button
                 onClick={() => toggleMenu('Trading View')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors w-full ${
-                  // Only highlight Trading View parent when *exactly* Trading View with no colons
-                  activeItem === 'Trading View' && !activeItem.includes(':')
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors w-full ${isActive('Trading View')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
-                }`}
+                  }`}
               >
                 <div
                   className="flex items-center w-full"
                   onClick={e => {
                     e.stopPropagation();
-                    // When clicking the parent menu, redirect to the Manage tab instead
-                    const itemName = 'Trading View: Manage';
-                    setActiveItem(itemName);
-                    if (typeof window !== 'undefined') {
-                      sessionStorage.setItem('dashboardActiveMenuItem', itemName);
-                    }
-                    if (onMenuItemClick) onMenuItemClick(itemName);
-                    router.push('/dashboard/trading-view?tab=manage');
+                    handleMenuItemClick('Trading View');
                     toggleMenu('Trading View');
                   }}
                 >
@@ -353,22 +323,13 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: Manage' 
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('Trading View: Manage') ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
                       onClick={e => {
                         e.preventDefault();
-                        // Cleaner approach to set active item
-                        const itemName = 'Trading View: Manage';
-                        setActiveItem(itemName); 
-                        if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('dashboardActiveMenuItem', itemName);
-                        }
-                        // Force active state in parent component if needed
-                        if (onMenuItemClick) onMenuItemClick(itemName);
-                        router.push('/dashboard/trading-view?tab=manage');
+                        handleMenuItemClick(
+                          'Trading View: Manage',
+                          '/dashboard/trading-view?tab=manage'
+                        );
                       }}
                     >
                       <span>Manage</span>
@@ -377,22 +338,13 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: Webhook URL'
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('Trading View: Webhook URL') ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
                       onClick={e => {
                         e.preventDefault();
-                        // Cleaner approach to set active item
-                        const itemName = 'Trading View: Webhook URL';
-                        setActiveItem(itemName);
-                        if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('dashboardActiveMenuItem', itemName);
-                        }
-                        // Force active state in parent component if needed
-                        if (onMenuItemClick) onMenuItemClick(itemName);
-                        router.push('/dashboard/trading-view?tab=webhook');
+                        handleMenuItemClick(
+                          'Trading View: Webhook URL',
+                          '/dashboard/trading-view?tab=webhook'
+                        );
                       }}
                     >
                       <span>Webhook URL</span>
@@ -401,22 +353,13 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: JSON Generator'
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('Trading View: JSON Generator') ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
                       onClick={e => {
                         e.preventDefault();
-                        // Cleaner approach to set active item
-                        const itemName = 'Trading View: JSON Generator';
-                        setActiveItem(itemName);
-                        if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('dashboardActiveMenuItem', itemName);
-                        }
-                        // Force active state in parent component if needed
-                        if (onMenuItemClick) onMenuItemClick(itemName);
-                        router.push('/dashboard/trading-view?tab=json');
+                        handleMenuItemClick(
+                          'Trading View: JSON Generator',
+                          '/dashboard/trading-view?tab=json'
+                        );
                       }}
                     >
                       <span>JSON Generator</span>
@@ -425,22 +368,13 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: Symbol'
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('Trading View: Symbol') ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
                       onClick={e => {
                         e.preventDefault();
-                        // Cleaner approach to set active item
-                        const itemName = 'Trading View: Symbol';
-                        setActiveItem(itemName);
-                        if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('dashboardActiveMenuItem', itemName);
-                        }
-                        // Force active state in parent component if needed
-                        if (onMenuItemClick) onMenuItemClick(itemName);
-                        router.push('/dashboard/trading-view?tab=symbol');
+                        handleMenuItemClick(
+                          'Trading View: Symbol',
+                          '/dashboard/trading-view?tab=symbol'
+                        );
                       }}
                     >
                       <span>Symbol</span>
@@ -449,22 +383,13 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: Trade Logs'
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('Trading View: Trade Logs') ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'}`}
                       onClick={e => {
                         e.preventDefault();
-                        // Cleaner approach to set active item
-                        const itemName = 'Trading View: Trade Logs';
-                        setActiveItem(itemName);
-                        if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('dashboardActiveMenuItem', itemName);
-                        }
-                        // Force active state in parent component if needed
-                        if (onMenuItemClick) onMenuItemClick(itemName);
-                        router.push('/dashboard/trading-view?tab=logs');
+                        handleMenuItemClick(
+                          'Trading View: Trade Logs',
+                          '/dashboard/trading-view?tab=logs'
+                        );
                       }}
                     >
                       <span>Trade Logs</span>
@@ -478,25 +403,16 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative w-full">
               <button
                 onClick={() => toggleMenu('Scalping Tool')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors w-full ${
-                  // Only highlight Scalping Tool parent when exactly that with no spaces
-                  activeItem === 'Scalping Tool' && !activeItem.includes(' ')
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors w-full ${isActive('Scalping Tool')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
-                }`}
+                  }`}
               >
                 <div
                   className="flex items-center w-full"
                   onClick={e => {
                     e.stopPropagation();
-                    // When clicking the parent menu, redirect to the Manage tab
-                    const itemName = 'Scalping Tool Manage';
-                    setActiveItem(itemName);
-                    if (typeof window !== 'undefined') {
-                      sessionStorage.setItem('dashboardActiveMenuItem', itemName);
-                    }
-                    if (onMenuItemClick) onMenuItemClick(itemName);
-                    router.push('/dashboard/scalping-tool?tab=manage');
+                    handleMenuItemClick('Scalping Tool');
                     toggleMenu('Scalping Tool');
                   }}
                 >
@@ -519,10 +435,9 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                           ? 'bg-zinc-800 text-white'
                           : 'hover:bg-zinc-800 text-zinc-300'
                         }`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleMenuItemClick('Scalping Tool Manage', '/dashboard/scalping-tool?tab=manage');
-                      }}
+                      onClick={() =>
+                        handleMenuItemClick('Scalping Tool Manage', '/dashboard/scalping-tool')
+                      }
                     >
                       <span>Manage</span>
                     </a>
@@ -535,18 +450,16 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <div className="relative w-full">
               <button
                 onClick={() => toggleMenu('Copy Trading')}
-                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors w-full ${
-                  // Only highlight Copy Trading parent when exactly that with no spaces
-                  activeItem === 'Copy Trading' && !activeItem.includes(' ')
+                className={`flex items-center justify-between w-full p-2 rounded-lg transition-colors w-full ${isActive('Copy Trading')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
-                }`}
+                  }`}
               >
                 <div
                   className="flex items-center w-full"
                   onClick={e => {
                     e.stopPropagation();
-                    // handleMenuItemClick('Copy Trading');
+                    handleMenuItemClick('Copy Trading');
                     toggleMenu('Copy Trading');
                   }}
                 >
@@ -576,6 +489,23 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                       <span>Manage</span>
                     </a>
                   </li>
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/copy-trading/strategy"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Copy Trading Strategy')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick(
+                          'Copy Trading Strategy',
+                          '/dashboard/copy-trading/strategy'
+                        )
+                      }
+                    >
+                      <span>Strategy</span>
+                    </a>
+                  </li>
                 </ul>
               )}
             </div>
@@ -583,77 +513,221 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
           <li className="w-full">
             <div className="relative w-full">
               <button
-                onClick={e => {
-                  e.preventDefault();
-                  handleMenuItemClick('Marketplace', '/dashboard/marketplace');
-                }}
+                onClick={() => toggleMenu('Marketplace')}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('Marketplace')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
-                <div className="flex items-center w-full">
+                <div
+                  className="flex items-center w-full"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Marketplace', '/dashboard/marketplace');
+                  }}
+                >
                   <img src="/market.svg" alt="Marketplace" className="w-5 h-5 mr-3" />
                   <span>Marketplace</span>
                 </div>
               </button>
+
+              {marketplaceOpen && (
+                <ul className="pl-8 mt-1 space-y-1 w-full">
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/marketplace/browse"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Marketplace Browse')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick('Marketplace Browse', '/dashboard/marketplace/browse')
+                      }
+                    >
+                      <span>Browse</span>
+                    </a>
+                  </li>
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/marketplace/purchases"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Marketplace Purchases')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick('Marketplace Purchases', '/dashboard/marketplace/purchases')
+                      }
+                    >
+                      <span>My Purchases</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
             </div>
           </li>
           <li className="w-full">
             <div className="relative w-full">
               <button
-                onClick={e => {
-                  e.preventDefault();
-                  handleMenuItemClick('Back Test', '/dashboard/backtest');
-                }}
+                onClick={() => toggleMenu('Back Test')}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('Back Test')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
-                <div className="flex items-center w-full">
+                <div
+                  className="flex items-center w-full"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Back Test', '/dashboard/backtest');
+                  }}
+                >
                   <img src="/chart.svg" alt="Back Test" className="w-5 h-5 mr-3" />
                   <span>Back Test</span>
                 </div>
               </button>
+
+              {backTestOpen && (
+                <ul className="pl-8 mt-1 space-y-1 w-full">
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/backtest/new"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Back Test New')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick('Back Test New', '/dashboard/backtest/new')
+                      }
+                    >
+                      <span>New Test</span>
+                    </a>
+                  </li>
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/backtest/history"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Back Test History')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick('Back Test History', '/dashboard/backtest/history')
+                      }
+                    >
+                      <span>History</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
             </div>
           </li>
           <li className="w-full">
             <div className="relative w-full">
               <button
-                onClick={e => {
-                  e.preventDefault();
-                  handleMenuItemClick('Optimization', '/dashboard/optimization');
-                }}
+                onClick={() => toggleMenu('Optimization')}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('Optimization')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
-                <div className="flex items-center w-full">
+                <div
+                  className="flex items-center w-full"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('Optimization', '/dashboard/optimization');
+                  }}
+                >
                   <img src="/settings.svg" alt="Optimization" className="w-5 h-5 mr-3" />
                   <span>Optimization</span>
                 </div>
               </button>
+
+              {optimizationOpen && (
+                <ul className="pl-8 mt-1 space-y-1 w-full">
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/optimization/run"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Optimization Run')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick('Optimization Run', '/dashboard/optimization/run')
+                      }
+                    >
+                      <span>Run Optimizer</span>
+                    </a>
+                  </li>
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/optimization/results"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Optimization Results')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick('Optimization Results', '/dashboard/optimization/results')
+                      }
+                    >
+                      <span>Results</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
             </div>
           </li>
           <li className="w-full">
             <div className="relative w-full">
               <button
-                onClick={e => {
-                  e.preventDefault();
-                  handleMenuItemClick('My Developer', '/dashboard/developer');
-                }}
+                onClick={() => toggleMenu('My Developer')}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('My Developer')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
-                <div className="flex items-center w-full">
+                <div
+                  className="flex items-center w-full"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleMenuItemClick('My Developer', '/dashboard/developer');
+                  }}
+                >
                   <img src="/developer.svg" alt="My Developer" className="w-5 h-5 mr-3" />
                   <span>My Developer</span>
                 </div>
               </button>
+
+              {myDeveloperOpen && (
+                <ul className="pl-8 mt-1 space-y-1 w-full">
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/developer/profile"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('My Developer Profile')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick('My Developer Profile', '/dashboard/developer/profile')
+                      }
+                    >
+                      <span>Profile</span>
+                    </a>
+                  </li>
+                  <li className="w-full">
+                    <a
+                      href="/dashboard/developer/projects"
+                      className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('My Developer Projects')
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      onClick={() =>
+                        handleMenuItemClick('My Developer Projects', '/dashboard/developer/projects')
+                      }
+                    >
+                      <span>Projects</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
             </div>
           </li>
           <li className="w-full">
@@ -756,12 +830,12 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
 }
 
 // Helper function to determine active menu item from pathname
-function getActiveMenuItemFromPath(path, tab = null) {
+function getActiveMenuItemFromPath(path) {
   // Special handling for specific pages to ensure they're exclusively highlighted
   if (path === '/dashboard/faq' || path.includes('/dashboard/faq/')) {
     return 'FAQ';
   }
-
+  
   if (path === '/dashboard/support' || path.includes('/dashboard/support/')) {
     return 'Support';
   }
@@ -769,7 +843,7 @@ function getActiveMenuItemFromPath(path, tab = null) {
   if (path === '/dashboard/pricing') {
     return 'Pricing';
   }
-
+  
   // Only return Dashboard for the exact dashboard path
   if (path === '/dashboard') {
     return 'Dashboard';
@@ -777,32 +851,12 @@ function getActiveMenuItemFromPath(path, tab = null) {
   
   // Other paths
   if (path === '/dashboard/broker-auth') return 'Broker Auth';
-
-  // Special case for Trading View to ensure submenus are properly selected
-  if (path.startsWith('/dashboard/trading-view')) {
-    // Check for tab query parameter - MUST prioritize submenu items
-    if (tab === 'manage') return 'Trading View: Manage';
-    else if (tab === 'webhook') return 'Trading View: Webhook URL';
-    else if (tab === 'json') return 'Trading View: JSON Generator';
-    else if (tab === 'symbol') return 'Trading View: Symbol';
-    else if (tab === 'logs') return 'Trading View: Trade Logs';
-    // Only return this if no valid submenu is active
-    else return 'Trading View';
-  }
-
-  if (path.startsWith('/dashboard/scalping-tool')) {
-    // Check for tab query parameter - similar to Trading View
-    if (tab === 'manage') return 'Scalping Tool Manage';
-    // Add more tabs here as they're created
-    // Only return this if no valid submenu is active
-    else return 'Scalping Tool';
-  }
-
+  if (path.startsWith('/dashboard/trading-view')) {\n    // Check for tab query parameter\n    if (path.includes('?tab=manage')) return 'Trading View: Manage';\n    if (path.includes('?tab=webhook')) return 'Trading View: Webhook URL';\n    if (path.includes('?tab=json')) return 'Trading View: JSON Generator';\n    if (path.includes('?tab=symbol')) return 'Trading View: Symbol';\n    if (path.includes('?tab=logs')) return 'Trading View: Trade Logs';\n    return 'Trading View';\n  }
+  if (path === '/dashboard/scalping-tool') return 'Scalping Tool Manage';
   if (path.startsWith('/dashboard/copy-trading')) {
     if (path.includes('/strategy')) return 'Copy Trading Strategy';
     return 'Copy Trading Manage';
   }
-
   if (path.startsWith('/dashboard/marketplace')) return 'Marketplace';
   if (path.startsWith('/dashboard/backtest')) return 'Back Test';
   if (path.startsWith('/dashboard/optimization')) return 'Optimization';
@@ -812,3 +866,10 @@ function getActiveMenuItemFromPath(path, tab = null) {
   // If nothing else matches, return empty string to avoid default Dashboard highlighting
   return '';
 }
+
+
+
+
+
+
+

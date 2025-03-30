@@ -12,7 +12,7 @@ const ADMIN_EMAIL = 'uchtamsingh@gmail.com';
 
 // Loading component
 const Loading = () => (
-  <div className="flex items-center justify-center h-screen w-full bg-zinc-950">
+  <div className="flex items-center justify-center h-screen w-full bg-black">
     <div className="relative">
       <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
       <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }) {
   if (!user) {
     // If we somehow got here without a user, show loading and redirect
     return (
-      <div className="min-h-screen flex justify-center items-center bg-zinc-950">
+      <div className="min-h-screen flex justify-center items-center bg-black">
         <div className="text-center">
           <div className="relative mx-auto mb-4">
             <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }) {
 
   return (
     <ProtectedRoute>
-      <div className="bg-zinc-950 min-h-screen flex flex-col">
+      <div className="bg-black min-h-screen flex flex-col">
         <DashboardHeader userEmail={user?.email || ''} />
         <div className="flex flex-1 mt-[64px]">
           <aside className="fixed top-[64px] left-0 h-[calc(100vh-64px)] z-10">
@@ -93,7 +93,6 @@ function getActiveMenuItem(pathname) {
   if (pathname === '/dashboard/scalping-tool') return 'Scalping Tool Manage';
   if (pathname === '/dashboard/scalping-tool/scalp-tool') return 'Scalping Tool Scalp Tool';
   if (pathname === '/dashboard/copy-trading') return 'Copy Trading Manage';
-  if (pathname === '/dashboard/copy-trading/strategy') return 'Copy Trading Strategy';
   if (pathname === '/dashboard/strategy') return 'Strategy';
   if (pathname === '/dashboard/strategy/pine-script') return 'Strategy Pine Script';
   if (pathname === '/dashboard/strategy/mql') return 'Strategy MQL';
