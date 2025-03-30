@@ -2,13 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import MagicCard from '../../ui/MagicCard';
-import GradientText from '../../ui/GradientText';
-import BeamEffect from '../../ui/BeamEffect';
-import Perspective3DCard from '../../ui/Perspective3DCard';
-import Badge from '../../ui/Badge';
-import GlowingText from '../../ui/GlowingText';
-import IntroducingBadge from '../../ui/IntroducingBadge';
+import { BorderBeam } from '../../magicui/border-beam.jsx';
 
 const features = [
   {
@@ -30,7 +24,6 @@ const features = [
         />
       </svg>
     ),
-    color: 'purple',
   },
   {
     title: 'Scalping Tool',
@@ -51,7 +44,6 @@ const features = [
         />
       </svg>
     ),
-    color: 'blue',
   },
   {
     title: 'Copy Trading',
@@ -73,7 +65,6 @@ const features = [
         />
       </svg>
     ),
-    color: 'violet',
   },
   {
     title: 'Strategy Market Place',
@@ -95,7 +86,6 @@ const features = [
         />
       </svg>
     ),
-    color: 'cyan',
   },
   {
     title: 'Bots',
@@ -117,7 +107,6 @@ const features = [
         />
       </svg>
     ),
-    color: 'teal',
   },
   {
     title: 'Personalised Developer',
@@ -144,7 +133,6 @@ const features = [
         />
       </svg>
     ),
-    color: 'pink',
   },
 ];
 
@@ -154,94 +142,31 @@ const FeatureCard = ({ feature, index }) => {
     threshold: 0.1,
   });
 
-  // Use different component based on index for visual variety
-  const isThreeDimensional = index % 3 === 1; // Every third card will be 3D
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { opacity: 1, y: 0 },
+  };
 
   return (
-    <div ref={ref}>
-      {isThreeDimensional ? (
-        <Perspective3DCard
-          className="h-full"
-          depth={8}
-          rotateIntensity={5}
-          shadowColor={`rgba(${feature.color === 'purple' ? '139, 92, 246' :
-            feature.color === 'blue' ? '59, 130, 246' :
-              feature.color === 'cyan' ? '34, 211, 238' :
-                feature.color === 'teal' ? '45, 212, 191' :
-                  feature.color === 'violet' ? '167, 139, 250' :
-                    feature.color === 'pink' ? '236, 72, 153' :
-                      '138, 43, 226'}, 0.3)`}
-          initial={{ opacity: 0, y: 50 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-          transition={{ duration: 0.5, delay: index * 0.1 }}
-        >
-          <div className="p-6 h-full flex flex-col">
-            <div className={`text-${feature.color === 'purple' ? 'violet' : feature.color}-400 mb-4`}>{feature.icon}</div>
-            <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
-            <p className="text-zinc-400 text-sm md:text-base flex-grow">{feature.description}</p>
-
-            {/* Optional 'Learn more' link with hover effect */}
-            <motion.div
-              className={`mt-4 text-sm text-${feature.color === 'purple' ? 'violet' : feature.color}-400 hover:text-${feature.color === 'purple' ? 'violet' : feature.color}-300 flex items-center cursor-pointer`}
-              whileHover={{ x: 3 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              Learn more
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 ml-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </motion.div>
-          </div>
-        </Perspective3DCard>
-      ) : (
-        <MagicCard
-          className="p-6 h-full flex flex-col"
-          hoverEffect={true}
-          glowColor={feature.color || 'purple'}
-          initial={{ opacity: 0, y: 50 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-          transition={{ duration: 0.5, delay: index * 0.1 }}
-        >
-          <div className={`text-${feature.color === 'purple' ? 'violet' : feature.color}-400 mb-4`}>{feature.icon}</div>
-          <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
-          <p className="text-zinc-400 text-sm md:text-base flex-grow">{feature.description}</p>
-
-          {/* Optional 'Learn more' link with hover effect */}
-          <motion.div
-            className={`mt-4 text-sm text-${feature.color === 'purple' ? 'violet' : feature.color}-400 hover:text-${feature.color === 'purple' ? 'violet' : feature.color}-300 flex items-center cursor-pointer`}
-            whileHover={{ x: 3 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          >
-            Learn more
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 ml-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </motion.div>
-        </MagicCard>
-      )}
-    </div>
+    <motion.div
+      ref={ref}
+      className="card relative bg-zinc-800/50 border border-zinc-700/30 rounded-xl p-6 hover:bg-zinc-800 transition-all duration-300 h-full flex flex-col overflow-hidden"
+      variants={cardVariants}
+      initial="hidden"
+      animate={inView ? 'visible' : 'hidden'}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+    >
+      <div className="text-indigo-400 mb-4">{feature.icon}</div>
+      <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
+      <p className="text-zinc-400 text-sm md:text-base flex-grow">{feature.description}</p>
+      <BorderBeam 
+        colorFrom="#6366F1" 
+        colorTo="#A78BFA"
+        size={60} 
+        duration={6}
+        delay={0}
+      />
+    </motion.div>
   );
 };
 
@@ -252,46 +177,23 @@ const Features = () => {
   });
 
   return (
-    <section id="features" className="py-24 relative">
-      {/* Background elements */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-950 to-black"></div>
+    <section id="features" className="py-16 md:py-24 bg-black relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-800/20 to-transparent"></div>
 
-      {/* Grid pattern */}
-      <div className="absolute inset-0 grid-pattern opacity-[0.03]"></div>
-
-      {/* Beam effect */}
-      <BeamEffect
-        direction="diagonal"
-        count={2}
-        speed={20}
-      />
-
-      <div className="container-custom relative z-10">
+      <div className="container-custom relative z-10 px-4 md:px-6">
         <motion.div
           ref={ref}
-          className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
+          className="text-center mb-12 md:mb-16 max-w-3xl mx-auto"
         >
-          <div className="inline-block relative mb-6">
-            <IntroducingBadge>
-              PLATFORM FEATURES
-            </IntroducingBadge>
-          </div>
-
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            <GradientText
-              gradient="purple"
-              className="inline"
-            >
-              Powerful Trading Features
-            </GradientText>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+            Advanced Tools for Traders
           </h2>
-
-          <p className="text-zinc-400 text-lg mx-auto max-w-3xl">
-            Our platform offers a comprehensive set of tools and technologies to help you
-            automate, analyze, and optimize your trading strategies with precision.
+          <p className="text-zinc-400 text-base md:text-lg">
+            Our platform combines cutting-edge technology with intuitive design to give you the edge
+            in today's competitive markets.
           </p>
         </motion.div>
 
