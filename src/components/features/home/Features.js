@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { BorderBeam } from '../../magicui/border-beam.jsx';
+import { BorderBeam } from '../../magicui/border-beam';
 
 const features = [
   {
@@ -159,10 +159,10 @@ const FeatureCard = ({ feature, index }) => {
       <div className="text-indigo-400 mb-4">{feature.icon}</div>
       <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
       <p className="text-zinc-400 text-sm md:text-base flex-grow">{feature.description}</p>
-      <BorderBeam 
-        colorFrom="#6366F1" 
+      <BorderBeam
+        colorFrom="#6366F1"
         colorTo="#A78BFA"
-        size={60} 
+        size={60}
         duration={6}
         delay={0}
       />

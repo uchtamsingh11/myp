@@ -1,8 +1,35 @@
 'use client';
 
-import { cn } from "@/lib/utils";
-import { Marquee } from "@/components/magicui/marquee";
-import { RainbowButton } from "../../magicui/rainbow-button.jsx";
+import { cn } from "@/lib/utils.js";
+import { RainbowButton } from "../../magicui/rainbow-button";
+
+// Create the Marquee component since it's missing
+const Marquee = ({
+  children,
+  className = "",
+  reverse = false,
+  pauseOnHover = false
+}) => {
+  return (
+    <div
+      className={cn(
+        "flex w-full overflow-hidden [--duration:40s] [--gap:1rem]",
+        className,
+        pauseOnHover && "hover:[animation-play-state:paused]"
+      )}
+    >
+      <div
+        className={cn(
+          "flex w-max animate-marquee items-stretch gap-[--gap]",
+          reverse && "animate-marquee-reverse"
+        )}
+      >
+        {children}
+        {children}
+      </div>
+    </div>
+  );
+};
 
 const reviews = [
   {
@@ -106,7 +133,7 @@ const reviews = [
 const firstRow = reviews.slice(0, reviews.length / 2);
 const secondRow = reviews.slice(reviews.length / 2);
 
-const ReviewCard = function(props) {
+const ReviewCard = function (props) {
   const { img, name, username, body } = props;
   return (
     <figure
@@ -147,7 +174,7 @@ const Testimonials = () => {
           <p className="section-subtitle text-base md:text-lg max-w-3xl mx-auto mt-4">
             Join thousands of satisfied traders who have elevated their trading with AlgoZ.
           </p>
-            </div>
+        </div>
 
         <div className="relative flex w-full flex-col items-center justify-center overflow-hidden py-4">
           <Marquee pauseOnHover className="[--duration:25s] mb-6">
@@ -162,24 +189,24 @@ const Testimonials = () => {
           </Marquee>
           <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-zinc-950 to-transparent"></div>
           <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-zinc-950 to-transparent"></div>
-          </div>
+        </div>
 
-          <div className="mt-10 text-center">
+        <div className="mt-10 text-center">
           <a href="#pricing">
             <RainbowButton>
               <span className="flex items-center">
-              Join Our Traders
-              <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
+                Join Our Traders
+                <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  />
+                </svg>
               </span>
             </RainbowButton>
-            </a>
+          </a>
         </div>
       </div>
     </section>

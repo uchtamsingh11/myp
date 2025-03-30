@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { RainbowButton } from '../../magicui/rainbow-button.jsx';
+import { RainbowButton } from '../../magicui/rainbow-button';
 
 const steps = [
   {
@@ -131,9 +131,8 @@ const HowItWorks = () => {
                 <motion.div
                   key={index}
                   ref={stepRef}
-                  className={`relative flex flex-col md:flex-row ${
-                    index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                  } items-start gap-6 md:gap-8`}
+                  className={`relative flex flex-col md:flex-row ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                    } items-start gap-6 md:gap-8`}
                   initial={{ opacity: 0, y: 30 }}
                   animate={stepInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -147,21 +146,18 @@ const HowItWorks = () => {
 
                   {/* Content */}
                   <div
-                    className={`pl-24 sm:pl-32 md:pl-0 md:w-1/2 ${
-                      index % 2 === 0
+                    className={`pl-24 sm:pl-32 md:pl-0 md:w-1/2 ${index % 2 === 0
                         ? 'md:pr-16 lg:pr-24 md:text-right'
                         : 'md:pl-16 lg:pl-24 md:text-left'
-                    } group`}
+                      } group`}
                   >
                     <div
-                      className={`inline-flex items-center mb-3 ${
-                        index % 2 === 0 ? 'md:flex-row-reverse' : ''
-                      }`}
+                      className={`inline-flex items-center mb-3 ${index % 2 === 0 ? 'md:flex-row-reverse' : ''
+                        }`}
                     >
                       <div
-                        className={`hidden md:flex items-center justify-center w-12 h-12 rounded-lg bg-zinc-800/80 ${
-                          index % 2 === 0 ? 'ml-4' : 'mr-4'
-                        } transform transition-all duration-300 group-hover:scale-110 group-hover:bg-indigo-800/30 group-hover:text-indigo-400`}
+                        className={`hidden md:flex items-center justify-center w-12 h-12 rounded-lg bg-zinc-800/80 ${index % 2 === 0 ? 'ml-4' : 'mr-4'
+                          } transform transition-all duration-300 group-hover:scale-110 group-hover:bg-indigo-800/30 group-hover:text-indigo-400`}
                       >
                         {step.icon}
                       </div>

@@ -2,8 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { BorderBeam } from '../../magicui/border-beam.jsx';
-import { RainbowButton } from '../../magicui/rainbow-button.jsx';
+import { BorderBeam } from '../../magicui/border-beam';
+import { RainbowButton } from '../../magicui/rainbow-button';
 
 const pricingPlans = [
   {
@@ -90,19 +90,18 @@ const Pricing = () => {
               <motion.div
                 key={index}
                 ref={planRef}
-                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${
-                  plan.popular
+                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${plan.popular
                     ? 'bg-gradient-to-b from-zinc-800/70 to-zinc-900/70 border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
                     : 'bg-gradient-to-b from-zinc-800/40 to-zinc-900/40 border border-zinc-700/30'
-                }`}
+                  }`}
                 initial={{ opacity: 0, y: 30 }}
                 animate={planInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <BorderBeam 
-                  colorFrom={plan.popular ? "#8B5CF6" : "#6B7280"} 
+                <BorderBeam
+                  colorFrom={plan.popular ? "#8B5CF6" : "#6B7280"}
                   colorTo={plan.popular ? "#6366F1" : "#4B5563"}
-                  size={70} 
+                  size={70}
                   duration={6}
                   delay={0}
                 />

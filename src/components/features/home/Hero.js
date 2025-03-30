@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '../../../utils/supabase';
-import { BorderBeam } from '../../magicui/border-beam.jsx';
-import { Meteors } from '../../magicui/meteors.jsx';
-import { RainbowButton } from '../../magicui/rainbow-button.jsx';
+import { BorderBeam } from '../../magicui/border-beam';
+import { Meteors } from '../../magicui/meteors';
+import { RainbowButton } from '../../magicui/rainbow-button';
 
 const Hero = () => {
   const [user, setUser] = useState(null);
@@ -60,8 +60,8 @@ const Hero = () => {
 
       {/* Meteors Effect - repositioned */}
       <div className="absolute inset-0 overflow-hidden z-[20]">
-        <Meteors 
-          number={80} 
+        <Meteors
+          number={80}
           minDuration={2}
           maxDuration={4}
           angle={215}
@@ -178,13 +178,12 @@ const Hero = () => {
         {[...Array(40)].map((_, i) => (
           <motion.div
             key={i}
-            className={`absolute rounded-full ${
-              i % 3 === 0
+            className={`absolute rounded-full ${i % 3 === 0
                 ? 'w-1 h-1 bg-blue-500/40'
                 : i % 3 === 1
                   ? 'w-1.5 h-1.5 bg-purple-500/40'
                   : 'w-0.5 h-0.5 bg-zinc-400/60'
-            }`}
+              }`}
             initial={{
               x: Math.random() * 100 + '%',
               y: Math.random() * 100 + '%',
