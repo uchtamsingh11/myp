@@ -57,7 +57,12 @@ module.exports = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+  			'color-1': 'hsl(var(--color-1))',
+  			'color-2': 'hsl(var(--color-2))',
+  			'color-3': 'hsl(var(--color-3))',
+  			'color-4': 'hsl(var(--color-4))',
+  			'color-5': 'hsl(var(--color-5))'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -122,6 +127,14 @@ module.exports = {
   				'100%': {
   					transform: 'translateX(-100%)'
   				}
+  			},
+  			rainbow: {
+  				'0%': {
+  					'background-position': '0%'
+  				},
+  				'100%': {
+  					'background-position': '200%'
+  				}
   			}
   		},
   		animation: {
@@ -130,7 +143,8 @@ module.exports = {
   			'fade-in': 'fade-in 0.2s ease-out',
   			'fade-out': 'fade-out 0.2s ease-out',
   			'slide-from-left': 'slide-from-left 0.3s ease-out',
-  			'slide-to-left': 'slide-to-left 0.3s ease-out'
+  			'slide-to-left': 'slide-to-left 0.3s ease-out',
+  			rainbow: 'rainbow var(--speed, 2s) infinite linear'
   		}
   	}
   },
