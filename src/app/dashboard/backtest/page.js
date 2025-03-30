@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, BarChart2, TrendingUp, TrendingDown, Zap, ChevronDown, AlertTriangle, Info, Download, Code, Server, ArrowRight } from 'lucide-react';
+import { saveBacktestToCache, getBacktestFromCache, loadSavedConfig } from '../../../utils/localStorage';
 
 export default function Backtest() {
   const [activeTab, setActiveTab] = useState('input');
@@ -12,6 +13,7 @@ export default function Backtest() {
   const [showResults, setShowResults] = useState(false);
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [countdownTime, setCountdownTime] = useState(60); // 60 seconds countdown
+  const [useCachedResults, setUseCachedResults] = useState(true); // Toggle for using cached results
   
   // Form state
   const [symbol, setSymbol] = useState('');
@@ -43,6 +45,20 @@ export default function Backtest() {
     ]
   });
 
+  // Load saved configuration from localStorage on initial mount
+  useEffect(() => {
+    const savedConfig = loadSavedConfig();
+    if (savedConfig) {
+      setSymbol(savedConfig.symbol || '');
+      setTimeframe(savedConfig.timeframe || '1D');
+      setStartDate(savedConfig.startDate || '');
+      setEndDate(savedConfig.endDate || '');
+      setInitialCapital(savedConfig.initialCapital || 1000000);
+      setQuantity(savedConfig.quantity || 1);
+    }
+  }, []);
+
+  // Check localStorage on initial load to populate form with last used values if available
   // Countdown effect
   useEffect(() => {
     let timer;
@@ -56,6 +72,20 @@ export default function Backtest() {
             setBacktestResults(randomResults);
             setIsBacktesting(false);
             setShowResults(true);
+            
+            // Save results to localStorage for future use
+            if (pineScript) {
+              const config = {
+                symbol,
+                timeframe,
+                startDate,
+                endDate,
+                initialCapital,
+                quantity
+              };
+              saveBacktestToCache(randomResults, pineScript, config);
+            }
+            
             return 0;
           }
           return prev - 1;
@@ -66,7 +96,7 @@ export default function Backtest() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isBacktesting, countdownTime]);
+  }, [isBacktesting, countdownTime, pineScript, symbol, timeframe, startDate, endDate, initialCapital, quantity]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -412,6 +442,30 @@ export default function Backtest() {
   
   const runBacktest = () => {
     if (!symbol || !startDate || !endDate) return;
+    
+    // Create config object to store backtest parameters
+    const config = {
+      symbol,
+      timeframe,
+      startDate,
+      endDate,
+      initialCapital,
+      quantity
+    };
+    
+    // Check if we have cached results for this configuration
+    if (useCachedResults && pineScript) {
+      const cachedBacktest = getBacktestFromCache(pineScript, config);
+      
+      if (cachedBacktest) {
+        console.log('Using cached backtest results');
+        setBacktestResults(cachedBacktest.results);
+        setIsBacktesting(false);
+        setShowResults(true);
+        setActiveTab('results');
+        return;
+      }
+    }
     
     // Reset countdown time
     setCountdownTime(60);
@@ -788,31 +842,63 @@ if (shortCondition)
                 </div>
               </div>
               
+              <div className="flex flex-col w-full">
+                <label className="text-sm text-zinc-300 mb-1">Initial Capital</label>
+                <input 
+                  type="number"
+                  value={initialCapital}
+                  onChange={(e) => setInitialCapital(Number(e.target.value))}
+                  min="1000"
+                  className="w-full px-4 py-3 bg-zinc-900/70 rounded-lg border border-zinc-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white transition-colors"
+                  placeholder="1000000"
+                />
+              </div>
+              
+              <div className="flex flex-col w-full">
+                <label className="text-sm text-zinc-300 mb-1">Quantity / Contract Size</label>
+                <input 
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  min="1"
+                  className="w-full px-4 py-3 bg-zinc-900/70 rounded-lg border border-zinc-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white transition-colors"
+                  placeholder="1"
+                />
+              </div>
+              
+              {/* Toggle for using cached results */}
+              <div className="flex flex-col w-full">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm text-zinc-300">Use Cached Results</label>
+                  <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                    <input
+                      type="checkbox"
+                      name="toggle"
+                      id="toggle-cache"
+                      checked={useCachedResults}
+                      onChange={() => setUseCachedResults(!useCachedResults)}
+                      className="sr-only"
+                    />
+                    <label
+                      htmlFor="toggle-cache"
+                      className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in ${
+                        useCachedResults ? 'bg-indigo-600' : 'bg-zinc-700'
+                      }`}
+                    >
+                      <span 
+                        className={`block h-4 w-4 mt-1 ml-1 rounded-full bg-white shadow transform duration-200 ease-in ${
+                          useCachedResults ? 'translate-x-4' : ''
+                        }`}
+                      ></span>
+                    </label>
+                  </div>
+                </div>
+                <p className="text-xs text-zinc-500">
+                  When enabled, identical backtest configurations will use cached results
+                </p>
+              </div>
+              
               <div>
-                  <label htmlFor="initialCapital" className="block text-sm font-medium mb-2 text-zinc-300">Initial Capital (₹)</label>
-                  <input
-                    type="number"
-                    id="initialCapital"
-                    value={initialCapital}
-                    onChange={(e) => setInitialCapital(parseInt(e.target.value))}
-                    min="10000"
-                    className="w-full px-4 py-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="quantity" className="block text-sm font-medium mb-2 text-zinc-300">Quantity/Lots</label>
-                  <input
-                    type="number"
-                    id="quantity"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value))}
-                    min="1"
-                    className="w-full px-4 py-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-                  />
-                </div>
-                
-                <div>
                   <label htmlFor="startDate" className="block text-sm font-medium mb-2 text-zinc-300">Start Date</label>
                 <div className="relative">
                   <input
