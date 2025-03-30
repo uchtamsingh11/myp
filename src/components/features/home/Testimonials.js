@@ -1,286 +1,185 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
-import Image from 'next/image';
-import GradientText from '../../ui/GradientText';
-import GlowingText from '../../ui/GlowingText';
-import Badge from '../../ui/Badge';
-import Carousel from '../../ui/Carousel';
-import BeamEffect from '../../ui/BeamEffect';
-import IntroducingBadge from '../../ui/IntroducingBadge';
+import { cn } from "@/lib/utils";
+import { Marquee } from "@/components/magicui/marquee";
+import { RainbowButton } from "../../magicui/rainbow-button.jsx";
 
-const testimonials = [
+const reviews = [
   {
-    content:
-      "This platform has transformed my trading. I was skeptical at first, but the results speak for themselves. I've seen a 27% increase in my portfolio over the last 3 months.",
-    author: 'Sarah Johnson',
-    role: 'Day Trader',
-    image: '/images/testimonial-1.jpg',
-    rating: 5,
-    highlight: true,
+    name: "Rahul Sharma",
+    username: "@rahul_trader",
+    body: "The scalping tool has revolutionized my trading strategy. The real-time signals are incredibly accurate!",
+    img: "https://avatar.vercel.sh/rahul",
   },
   {
-    content:
-      "The automation capabilities are incredible. I can finally sleep at night knowing my trading strategy is working 24/7 without me having to constantly monitor the markets.",
-    author: 'Michael Chen',
-    role: 'Crypto Investor',
-    image: '/images/testimonial-2.jpg',
-    rating: 5,
+    name: "Priya Patel",
+    username: "@priya_invests",
+    body: "I've seen a 40% improvement in my trading performance since using this platform. The UI is intuitive and powerful.",
+    img: "https://avatar.vercel.sh/priya",
   },
   {
-    content:
-      "I was struggling to find time for trading alongside my full-time job. This platform has been a game-changer. Set it up once and it keeps working for you.",
-    author: 'David Rodriguez',
-    role: 'Part-time Trader',
-    image: '/images/testimonial-3.jpg',
-    rating: 4,
+    name: "Amit Kumar",
+    username: "@amit_trades",
+    body: "The best trading tool I've used in my 5 years of trading. The support team is also very responsive.",
+    img: "https://avatar.vercel.sh/amit",
   },
   {
-    content:
-      "The risk management tools are what sold me. I can control exactly how much I'm willing to risk, and the platform respects those boundaries perfectly.",
-    author: 'Emma Watson',
-    role: 'Financial Analyst',
-    image: '/images/testimonial-4.jpg',
-    rating: 5,
-    highlight: true,
+    name: "Neha Gupta",
+    username: "@neha_trader",
+    body: "The automated signals have saved me countless hours of market analysis. Highly recommended!",
+    img: "https://avatar.vercel.sh/neha",
   },
   {
-    content:
-      "Customer support is outstanding. Any time I've had a question or issue, they've responded quickly with helpful solutions. Couldn't ask for better service.",
-    author: 'James Wilson',
-    role: 'Retail Investor',
-    image: '/images/testimonial-5.jpg',
-    rating: 4,
+    name: "Vikram Singh",
+    username: "@vikram_trades",
+    body: "The platform's performance is exceptional. I've been consistently profitable since I started using it.",
+    img: "https://avatar.vercel.sh/vikram",
+  },
+  {
+    name: "Anjali Reddy",
+    username: "@anjali_invests",
+    body: "The combination of technical analysis and real-time alerts is exactly what I needed. Game-changer!",
+    img: "https://avatar.vercel.sh/anjali",
+  },
+  {
+    name: "Arjun Mehta",
+    username: "@arjun_markets",
+    body: "Been trading for 8 years and this platform has truly elevated my strategy. The order execution is lightning fast!",
+    img: "https://avatar.vercel.sh/arjun",
+  },
+  {
+    name: "Divya Joshi",
+    username: "@divya_trades",
+    body: "The copy trading feature has been a blessing for me as a beginner. I'm learning while earning!",
+    img: "https://avatar.vercel.sh/divya",
+  },
+  {
+    name: "Rajesh Khanna",
+    username: "@rajesh_investor",
+    body: "I appreciate how the platform integrates with multiple brokers. Switching from my old system was completely seamless.",
+    img: "https://avatar.vercel.sh/rajesh",
+  },
+  {
+    name: "Sunita Verma",
+    username: "@sunita_fx",
+    body: "The risk management tools are outstanding. I've been able to protect my capital while maximizing returns.",
+    img: "https://avatar.vercel.sh/sunita",
+  },
+  {
+    name: "Karan Malhotra",
+    username: "@karan_bull",
+    body: "AlgoZ's backtesting capabilities have transformed how I develop strategies. I can validate ideas before risking capital.",
+    img: "https://avatar.vercel.sh/karan",
+  },
+  {
+    name: "Meera Agarwal",
+    username: "@meera_investor",
+    body: "The mobile app is just as powerful as the desktop version. I can manage my trades from anywhere, anytime!",
+    img: "https://avatar.vercel.sh/meera",
+  },
+  {
+    name: "Vivek Nair",
+    username: "@vivek_daytrader",
+    body: "As a day trader, speed is everything. This platform's execution is milliseconds faster than others I've tried.",
+    img: "https://avatar.vercel.sh/vivek",
+  },
+  {
+    name: "Ananya Desai",
+    username: "@ananya_markets",
+    body: "I love the customizable alerts. They've helped me catch moves I would have otherwise missed while at my day job.",
+    img: "https://avatar.vercel.sh/ananya",
+  },
+  {
+    name: "Sanjay Kapoor",
+    username: "@sanjay_options",
+    body: "The options analysis tools have completely changed my derivatives trading. The P&L calculator is spot on!",
+    img: "https://avatar.vercel.sh/sanjay",
+  },
+  {
+    name: "Pooja Sharma",
+    username: "@pooja_techtrader",
+    body: "The educational resources provided alongside the tools have improved my technical analysis skills tremendously.",
+    img: "https://avatar.vercel.sh/pooja",
   },
 ];
 
-const TestimonialCard = ({ testimonial }) => {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
+const firstRow = reviews.slice(0, reviews.length / 2);
+const secondRow = reviews.slice(reviews.length / 2);
 
+const ReviewCard = function(props) {
+  const { img, name, username, body } = props;
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      transition={{ duration: 0.5 }}
-      className="h-full flex flex-col"
+    <figure
+      className={cn(
+        "relative h-full w-72 cursor-pointer overflow-hidden rounded-xl border p-6",
+        // light styles
+        "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
+        // dark styles
+        "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
+      )}
     >
-      <div className="flex-grow bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 rounded-2xl p-6 md:p-8 relative">
-        {/* Highlight badge for special testimonials */}
-        {testimonial.highlight && (
-          <Badge
-            variant="premium"
-            className="absolute -top-3 -right-3"
-            animated={true}
-            glow={true}
-          >
-            Featured
-          </Badge>
-        )}
-
-        {/* Rating stars */}
-        <div className="flex mb-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <svg
-              key={i}
-              className={`w-5 h-5 ${i < testimonial.rating ? 'text-violet-500' : 'text-zinc-700'
-                }`}
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          ))}
-        </div>
-
-        {/* Quote mark */}
-        <div className="absolute top-6 right-8 text-zinc-800 opacity-40">
-          <svg
-            className="w-16 h-16"
-            fill="currentColor"
-            viewBox="0 0 32 32"
-            aria-hidden="true"
-          >
-            <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
-          </svg>
-        </div>
-
-        {/* Content */}
-        <p className="text-zinc-300 mb-6">{testimonial.content}</p>
-
-        {/* Author info */}
-        <div className="flex items-center mt-auto">
-          <div className="relative w-12 h-12 rounded-full overflow-hidden">
-            <Image
-              src={testimonial.image}
-              alt={testimonial.author}
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="ml-4">
-            <GlowingText
-              as="p"
-              color={testimonial.highlight ? 'violet' : 'white'}
-              className="font-semibold"
-            >
-              {testimonial.author}
-            </GlowingText>
-            <p className="text-zinc-500 text-sm">{testimonial.role}</p>
-          </div>
+      <div className="flex flex-row items-center gap-3">
+        <img className="rounded-full w-10 h-10" width="40" height="40" alt="" src={img} />
+        <div className="flex flex-col">
+          <figcaption className="text-base font-medium dark:text-white">
+            {name}
+          </figcaption>
+          <p className="text-sm font-medium dark:text-white/40">{username}</p>
         </div>
       </div>
-    </motion.div>
+      <blockquote className="mt-4 text-base leading-relaxed">{body}</blockquote>
+    </figure>
   );
 };
 
 const Testimonials = () => {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
-
-  // Group testimonials into slides for the carousel
-  const testimonialSlides = [];
-  for (let i = 0; i < testimonials.length; i += 2) {
-    testimonialSlides.push(
-      <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-        <TestimonialCard testimonial={testimonials[i]} />
-        {testimonials[i + 1] && (
-          <TestimonialCard testimonial={testimonials[i + 1]} />
-        )}
-      </div>
-    );
-  }
-
   return (
-    <section id="testimonials" className="py-16 md:py-24 relative">
-      {/* Background elements */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-950 to-black"></div>
+    <section className="py-20 sm:py-28 bg-zinc-950 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,_var(--tw-gradient-stops))] from-transparent via-zinc-900/20 to-transparent"></div>
 
-      {/* Grid pattern overlay */}
-      <div className="absolute inset-0 grid-pattern opacity-[0.03]"></div>
-
-      {/* Beam effect */}
-      <BeamEffect
-        direction="vertical"
-        count={2}
-        speed={20}
-      />
-
-      {/* Animated background blob */}
-      <motion.div
-        className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] opacity-20 bg-gradient-to-br from-violet-600/30 to-purple-600/30"
-        animate={{
-          scale: [1, 1.1, 1],
-          rotate: [0, 5, 0],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
+      {/* Decorative elements */}
+      <div className="absolute top-1/4 left-10 w-72 h-72 bg-indigo-600/10 rounded-full filter blur-3xl"></div>
+      <div className="absolute bottom-1/4 right-10 w-72 h-72 bg-indigo-500/5 rounded-full filter blur-3xl"></div>
 
       <div className="container-custom relative z-10">
-        <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <div className="inline-block relative mb-6">
-            <IntroducingBadge>TESTIMONIALS</IntroducingBadge>
+        <div className="text-center mb-12 md:mb-20">
+          <h2 className="section-title text-3xl md:text-4xl">What Our Traders Say</h2>
+          <p className="section-subtitle text-base md:text-lg max-w-3xl mx-auto mt-4">
+            Join thousands of satisfied traders who have elevated their trading with AlgoZ.
+          </p>
+            </div>
+
+        <div className="relative flex w-full flex-col items-center justify-center overflow-hidden py-4">
+          <Marquee pauseOnHover className="[--duration:25s] mb-6">
+            {firstRow.map((review) => (
+              <ReviewCard key={review.username} {...review} />
+            ))}
+          </Marquee>
+          <Marquee reverse pauseOnHover className="[--duration:25s]">
+            {secondRow.map((review) => (
+              <ReviewCard key={review.username} {...review} />
+            ))}
+          </Marquee>
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-zinc-950 to-transparent"></div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-zinc-950 to-transparent"></div>
           </div>
 
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            <span className="text-white">What Our </span>
-            <span className="text-purple-500">Traders Say</span>
-          </h2>
-
-          <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
-            Don't just take our word for it. See what traders like you have accomplished
-            with our algorithmic trading platform.
-          </p>
-        </motion.div>
-
-        <div className="max-w-6xl mx-auto">
-          <Carousel
-            autoPlay={true}
-            interval={5000}
-            showArrows={true}
-            showDots={true}
-            effect="slide"
-            className="py-8"
-          >
-            {testimonialSlides}
-          </Carousel>
-        </div>
-
-        <div className="mt-20 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <div className="flex flex-col md:flex-row items-center justify-between md:gap-8 max-w-4xl mx-auto bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-6 md:p-10">
-              <div className="flex items-center mb-6 md:mb-0 w-full md:w-1/3 justify-center">
-                <span className="text-5xl md:text-6xl font-bold text-white mr-3">97%</span>
-                <div className="text-left">
-                  <Badge
-                    variant="success"
-                    size="sm"
-                    className="mb-1"
-                    style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 0.3)' }}
-                  >
-                    Verified
-                  </Badge>
-                  <p className="text-zinc-400 text-sm">
-                    Customer<br />satisfaction
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center mb-6 md:mb-0 w-full md:w-1/3 justify-center">
-                <span className="text-5xl md:text-6xl font-bold text-white mr-3">24/7</span>
-                <div className="text-left">
-                  <Badge
-                    variant="warning"
-                    size="sm"
-                    className="mb-1"
-                    style={{ backgroundColor: 'rgba(217, 119, 6, 0.2)', borderColor: 'rgba(217, 119, 6, 0.3)' }}
-                  >
-                    Always on
-                  </Badge>
-                  <p className="text-zinc-400 text-sm">
-                    Support<br />available
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center w-full md:w-1/3 justify-center">
-                <span className="text-5xl md:text-6xl font-bold text-white mr-3">15k+</span>
-                <div className="text-left">
-                  <Badge
-                    variant="info"
-                    size="sm"
-                    className="mb-1"
-                    style={{ backgroundColor: 'rgba(37, 99, 235, 0.2)', borderColor: 'rgba(37, 99, 235, 0.3)' }}
-                  >
-                    Growing
-                  </Badge>
-                  <p className="text-zinc-400 text-sm">
-                    Active<br />traders
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+          <div className="mt-10 text-center">
+          <a href="#pricing">
+            <RainbowButton>
+              <span className="flex items-center">
+              Join Our Traders
+              <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
+              </svg>
+              </span>
+            </RainbowButton>
+            </a>
         </div>
       </div>
     </section>
