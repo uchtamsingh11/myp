@@ -147,8 +147,8 @@ const HowItWorks = () => {
                   {/* Content */}
                   <div
                     className={`pl-24 sm:pl-32 md:pl-0 md:w-1/2 ${index % 2 === 0
-                        ? 'md:pr-16 lg:pr-24 md:text-right'
-                        : 'md:pl-16 lg:pl-24 md:text-left'
+                      ? 'md:pr-16 lg:pr-24 md:text-right'
+                      : 'md:pl-16 lg:pl-24 md:text-left'
                       } group`}
                   >
                     <div

@@ -179,10 +179,10 @@ const Hero = () => {
           <motion.div
             key={i}
             className={`absolute rounded-full ${i % 3 === 0
-                ? 'w-1 h-1 bg-blue-500/40'
-                : i % 3 === 1
-                  ? 'w-1.5 h-1.5 bg-purple-500/40'
-                  : 'w-0.5 h-0.5 bg-zinc-400/60'
+              ? 'w-1 h-1 bg-blue-500/40'
+              : i % 3 === 1
+                ? 'w-1.5 h-1.5 bg-purple-500/40'
+                : 'w-0.5 h-0.5 bg-zinc-400/60'
               }`}
             initial={{
               x: Math.random() * 100 + '%',
