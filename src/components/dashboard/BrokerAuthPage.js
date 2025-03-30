@@ -8,10 +8,10 @@ import toast from 'react-hot-toast';
 
 // SVG Icons for brokers - replacing emojis for a more modern look
 const BrokerIcons = {
-        alice_blue: <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>,
-        angel_broking: <svg className="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"></path><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>,
-        binance: <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16L6 10 7.4 8.6 12 13.2 16.6 8.6 18 10z"></path><path d="M12 8L6 14 7.4 15.4 12 10.8 16.6 15.4 18 14z"></path><path d="M13.5 5.5L12 4 10.5 5.5 12 7z"></path><path d="M13.5 18.5L12 20 10.5 18.5 12 17z"></path></svg>,
-        default: <svg className="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21 17h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2zm-9-7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h4a2 2 0 012 2v4zm6 0a2 2 0 01-2 2h-2a2 2 0 01-2-2V6a2 2 0 012-2h2a2 2 0 012 2v4zm-6 8a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2h4a2 2 0 012 2v4z"></path></svg>
+        alice_blue: <svg className="w-7 h-7 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>,
+        angel_broking: <svg className="w-7 h-7 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"></path><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>,
+        binance: <svg className="w-7 h-7 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16L6 10 7.4 8.6 12 13.2 16.6 8.6 18 10z"></path><path d="M12 8L6 14 7.4 15.4 12 10.8 16.6 15.4 18 14z"></path><path d="M13.5 5.5L12 4 10.5 5.5 12 7z"></path><path d="M13.5 18.5L12 20 10.5 18.5 12 17z"></path></svg>,
+        default: <svg className="w-7 h-7 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21 17h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2zm-9-7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h4a2 2 0 012 2v4zm6 0a2 2 0 01-2 2h-2a2 2 0 01-2-2V6a2 2 0 012-2h2a2 2 0 012 2v4zm-6 8a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2h4a2 2 0 012 2v4z"></path></svg>
 };
 
 // Get broker icon, fall back to default if not found
@@ -515,24 +515,8 @@ export default function BrokerAuthPage() {
 
         return (
                 <div className="mx-auto bg-gradient-to-b from-zinc-950 to-zinc-900 rounded-xl min-h-[500px] shadow-xl">
-                        <div className="mb-8 pl-6 pt-6 flex items-center">
-                                <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-5 w-5 mr-2 text-indigo-400"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                >
-                                        <path
-                                                fillRule="evenodd"
-                                                d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                clipRule="evenodd"
-                                        />
-                                </svg>
-                                <span className="text-indigo-400 font-medium text-lg">Broker Authentication</span>
-                        </div>
-
                         {error && (
-                                <div className="mx-6 mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg flex items-center">
+                                <div className="mx-6 mt-6 mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg flex items-center">
                                         <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
@@ -570,7 +554,7 @@ export default function BrokerAuthPage() {
                                                 </div>
 
                                                 {savedBrokers.length > 0 ? (
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
                                                                 {savedBrokers.map(broker => {
                                                                         // Find broker details from available brokers
                                                                         const brokerDetails = availableBrokers.find(b => b.id === broker.broker_id) || {
@@ -586,7 +570,7 @@ export default function BrokerAuthPage() {
                                                                                         animate={{ opacity: 1, y: 0 }}
                                                                                         whileHover={{ scale: 1.02 }}
                                                                                         transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative"
+                                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-4 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative aspect-square flex flex-col max-w-[260px] max-h-[260px] h-full"
                                                                                 >
                                                                                         {/* Toggle switch in top-right */}
                                                                                         <div className="absolute top-3 right-4">
@@ -601,22 +585,19 @@ export default function BrokerAuthPage() {
                                                                                                 </button>
                                                                                         </div>
 
-                                                                                        <div className="flex items-start mb-4">
-                                                                                                <div className="mr-3 p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                                                                                        <div className="flex items-start mb-5">
+                                                                                                <div className="mr-4 p-2.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
                                                                                                         {getBrokerIcon(broker.broker_id)}
                                                                                                 </div>
                                                                                                 <div>
-                                                                                                        <h3 className="text-lg font-medium text-white">{brokerDetails.name}</h3>
-                                                                                                        <p className="text-xs text-indigo-300 font-medium mt-0.5">
+                                                                                                        <h3 className="text-xl font-medium text-white">{brokerDetails.name}</h3>
+                                                                                                        <p className="text-sm text-indigo-300 font-medium mt-1">
                                                                                                                 {broker.account_label || 'Primary Account'}
-                                                                                                        </p>
-                                                                                                        <p className="text-xs text-gray-500 mt-1">
-                                                                                                                {Object.keys(broker.credentials)[0] && broker.credentials[Object.keys(broker.credentials)[0]]}
                                                                                                         </p>
                                                                                                 </div>
                                                                                         </div>
 
-                                                                                        <div className="flex space-x-3 mt-5">
+                                                                                        <div className="flex space-x-2 mt-auto">
                                                                                                 <button
                                                                                                         onClick={() => {
                                                                                                                 // Find the original broker from available brokers
@@ -627,7 +608,7 @@ export default function BrokerAuthPage() {
                                                                                                                         handleOpenModal(originalBroker, broker);
                                                                                                                 }
                                                                                                         }}
-                                                                                                        className="flex-1 py-2 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center"
+                                                                                                        className="flex-1 py-2 px-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center"
                                                                                                 >
                                                                                                         <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -637,7 +618,7 @@ export default function BrokerAuthPage() {
                                                                                                 <button
                                                                                                         onClick={() => handleRemoveBrokerCredentials(broker)}
                                                                                                         disabled={removingBroker === broker.id}
-                                                                                                        className="flex-1 py-2 px-4 bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-red-600 hover:to-red-700 text-white text-sm rounded-lg transition-all flex items-center justify-center disabled:opacity-50"
+                                                                                                        className="flex-1 py-2 px-3 bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-red-600 hover:to-red-700 text-white text-sm rounded-lg transition-all flex items-center justify-center disabled:opacity-50"
                                                                                                 >
                                                                                                         {removingBroker === broker.id ? (
                                                                                                                 <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -719,7 +700,7 @@ export default function BrokerAuthPage() {
                                                         </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
                                                         {getFilteredBrokers().map(broker => (
                                                                 <motion.div
                                                                         key={broker.id}
@@ -727,7 +708,7 @@ export default function BrokerAuthPage() {
                                                                         animate={{ opacity: 1, y: 0 }}
                                                                         whileHover={{ scale: 1.02 }}
                                                                         transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative"
+                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-4 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative aspect-square flex flex-col max-w-[260px] max-h-[260px] h-full"
                                                                 >
                                                                         {/* Display accounts connected badge if applicable */}
                                                                         {isBrokerSaved(broker.id) && (
@@ -739,22 +720,22 @@ export default function BrokerAuthPage() {
                                                                                 </div>
                                                                         )}
 
-                                                                        <div className="flex items-start mb-4">
-                                                                                <div className="mr-3 p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                                                                        <div className="flex items-start mb-5">
+                                                                                <div className="mr-4 p-2.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
                                                                                         {getBrokerIcon(broker.id)}
                                                                                 </div>
                                                                                 <div>
-                                                                                        <h3 className="text-lg font-medium text-white">{broker.name}</h3>
-                                                                                        <p className="text-xs text-gray-400 mt-1">{broker.description}</p>
+                                                                                        <h3 className="text-xl font-medium text-white">{broker.name}</h3>
+                                                                                        <p className="text-sm text-gray-400 mt-1">{broker.description}</p>
                                                                                 </div>
                                                                         </div>
 
                                                                         {broker.status === 'available' ? (
-                                                                                <div className="mt-4">
+                                                                                <div className="mt-auto">
                                                                                         {isBrokerSaved(broker.id) ? (
                                                                                                 <button
                                                                                                         onClick={() => handleOpenModal(broker)}
-                                                                                                        className="w-full py-2 px-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+                                                                                                        className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-sm rounded-lg transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
                                                                                                 >
                                                                                                         <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -774,7 +755,7 @@ export default function BrokerAuthPage() {
                                                                                         )}
                                                                                 </div>
                                                                         ) : (
-                                                                                <div className="mt-4">
+                                                                                <div className="mt-auto">
                                                                                         <button
                                                                                                 className="w-full py-2.5 px-4 bg-zinc-700/50 text-zinc-400 text-sm rounded-lg cursor-not-allowed border border-zinc-600/30 flex items-center justify-center"
                                                                                                 disabled
