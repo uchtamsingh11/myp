@@ -113,6 +113,22 @@ const Pricing = () => {
             );
           })}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center mt-16 max-w-4xl mx-auto"
+        >
+          <div className="bg-gradient-to-r from-zinc-900/50 via-zinc-800/50 to-zinc-900/50 rounded-2xl p-6 border border-zinc-800/50 backdrop-blur-sm">
+            <p className="text-lg md:text-xl whitespace-nowrap overflow-hidden">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-400">Z Coins</span>
+              <span className="text-zinc-300"> can be used to purchase any of our </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">products and services</span>
+              <span className="text-zinc-300"> across the platform.</span>
+            </p>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
