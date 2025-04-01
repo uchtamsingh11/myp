@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function WebhookUrlComponent() {
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -32,35 +33,81 @@ export default function WebhookUrlComponent() {
       const userId = sessionData.session.user.id;
       console.log('User ID from session:', userId);
 
-      // Directly query the profiles table
-      const { data: profiles, error: profileError } = await supabase
+      // First check if webhook_url exists in the profile
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('webhook_url, id')
-        .eq('id', userId);
+        .select('*')
+        .eq('id', userId)
+        .single();
 
       if (profileError) {
-        console.error('Profile lookup error:', profileError);
-        throw new Error(`Unable to retrieve your webhook URL. Please try again later.`);
+        if (profileError.message.includes('does not exist')) {
+          console.log('webhook_url column does not exist, creating webhook token manually');
+          // Create a webhook token for the user
+          const webhookToken = uuidv4();
+
+          // Store it in profile using a different approach - we'll use profile.webhook_token
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ webhook_token: webhookToken })
+            .eq('id', userId);
+
+          if (updateError) {
+            console.error('Failed to update profile with webhook token:', updateError);
+            throw new Error('Unable to create your webhook URL. Please try again later.');
+          }
+
+          // Set the webhook URL using the newly created token
+          setWebhookUrl(`${domain}/api/webhook/${webhookToken}`);
+          return;
+        } else {
+          console.error('Profile lookup error:', profileError);
+          throw new Error(`Unable to retrieve your webhook URL. Please try again later.`);
+        }
       }
 
-      console.log('Profiles data:', profiles);
+      // Handle the case where we successfully retrieved the profile
+      if (profile) {
+        console.log('Profile data:', profile);
 
-      if (!profiles || profiles.length === 0) {
-        console.error('No profiles found for user ID:', userId);
-        throw new Error('Unable to retrieve your webhook URL. Please try again later.');
-      }
+        // Check if webhook_url exists and has a value
+        if (profile.webhook_url) {
+          console.log('Found webhook_url in profile:', profile.webhook_url);
+          setWebhookUrl(`${domain}/api/webhook/${profile.webhook_url}`);
+        }
+        // Try webhook_token instead if webhook_url doesn't exist
+        else if (profile.webhook_token) {
+          console.log('Found webhook_token in profile:', profile.webhook_token);
+          setWebhookUrl(`${domain}/api/webhook/${profile.webhook_token}`);
+        }
+        // Create a new webhook token if neither exists
+        else {
+          console.log('No webhook identifiers found, creating one');
+          const webhookToken = uuidv4();
 
-      // Use the first profile found
-      const profile = profiles[0];
-      console.log('Profile data:', profile);
+          // Try to update with webhook_url first
+          let updateResult = await supabase
+            .from('profiles')
+            .update({ webhook_url: webhookToken })
+            .eq('id', userId);
 
-      // Set the webhook URL
-      if (profile.webhook_url) {
-        console.log('Found webhook_url in profile:', profile.webhook_url);
-        setWebhookUrl(`${domain}/api/webhook/${profile.webhook_url}`);
+          // If that fails due to column not existing, try webhook_token
+          if (updateResult.error && updateResult.error.message.includes('does not exist')) {
+            updateResult = await supabase
+              .from('profiles')
+              .update({ webhook_token: webhookToken })
+              .eq('id', userId);
+          }
+
+          if (updateResult.error) {
+            console.error('Failed to update profile with webhook token:', updateResult.error);
+            throw new Error('Unable to create your webhook URL. Please try again later.');
+          }
+
+          setWebhookUrl(`${domain}/api/webhook/${webhookToken}`);
+        }
       } else {
-        console.error('No webhook_url found in profile', profile);
-        throw new Error('Unable to retrieve your webhook URL. Please try again later.');
+        throw new Error('Unable to retrieve your profile information. Please try again later.');
       }
     } catch (err) {
       console.error('Error fetching webhook URL:', err);

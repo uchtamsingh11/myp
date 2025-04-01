@@ -26,11 +26,25 @@ export async function GET(request, { params }) {
     console.log('GET request received for webhook ID:', webhookId);
 
     // Check if the webhook ID is valid (matches a profile)
-    const { data: profileData, error: profileError } = await supabaseAdmin
+    // First try with webhook_url
+    let { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('id, full_name')
       .eq('webhook_url', webhookId)
       .maybeSingle();
+
+    // If webhook_url doesn't exist or no match found, try webhook_token
+    if ((profileError && profileError.message.includes('does not exist')) || !profileData) {
+      console.log('Checking webhook_token instead');
+      const response = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name')
+        .eq('webhook_token', webhookId)
+        .maybeSingle();
+
+      profileData = response.data;
+      profileError = response.error;
+    }
 
     if (profileError) {
       console.error('Profile lookup error:', profileError);
@@ -133,13 +147,28 @@ export async function POST(request, { params }) {
     });
     console.log('Request headers:', JSON.stringify(headers));
 
-    // Find user by webhook_url
-    console.log('Looking up profile with webhook_url:', webhookId);
-    const { data: profileData, error: profileError } = await supabaseAdmin
+    // Find user by webhook_url or webhook_token
+    console.log('Looking up profile with webhook identifier:', webhookId);
+
+    // First try looking up by webhook_url
+    let { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('id, full_name')
       .eq('webhook_url', webhookId)
       .maybeSingle();
+
+    if (profileError && profileError.message.includes('does not exist')) {
+      console.log('webhook_url column does not exist, trying webhook_token instead');
+      // Try looking up by webhook_token instead
+      const response = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name')
+        .eq('webhook_token', webhookId)
+        .maybeSingle();
+
+      profileData = response.data;
+      profileError = response.error;
+    }
 
     if (profileError) {
       console.error('Error finding profile with webhook ID:', profileError);

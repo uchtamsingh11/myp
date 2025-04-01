@@ -35,7 +35,7 @@ export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now',
       console.log("Order created response:", orderData);
       
       if (!createOrderResponse.ok) {
-        throw new Error(orderData.error || 'Failed to create payment order');
+        throw new Error(orderData.error || orderData.message || 'Failed to create payment order');
       }
       
       if (!orderData.paymentSessionId) {
@@ -56,24 +56,33 @@ export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now',
         });
       }
       
-      // Initialize Cashfree SDK - Always use production mode
-      console.log("Initializing Cashfree in production mode");
+      // Initialize Cashfree SDK - Must match environment in backend
+      const mode = 'production'; // Must match CASHFREE_ENVIRONMENT in .env
+      console.log(`Initializing Cashfree in ${mode} mode`);
       const cashfree = window.Cashfree({
-        mode: 'production',
+        mode: mode,
       });
       
-      // Open Cashfree checkout as popup
+      // Open Cashfree checkout
       const checkoutOptions = {
         paymentSessionId: orderData.paymentSessionId,
-        redirectTarget: '_self', // Changed from '_modal' to prevent popup issues
+        redirectTarget: '_self', // Redirect in same window for better UX
       };
       
       console.log("Starting checkout with session ID:", orderData.paymentSessionId);
       
-      // Launch the checkout
-      await cashfree.checkout(checkoutOptions);
+      try {
+        // Launch the checkout - this will redirect or open modal based on redirectTarget
+        await cashfree.checkout(checkoutOptions);
+        
+        // This code may not run if redirected away
+        console.log("Checkout initiated");
+      } catch (checkoutError) {
+        console.error("Checkout error:", checkoutError);
+        throw new Error('Payment gateway error: ' + (checkoutError.message || 'Failed to open checkout'));
+      }
       
-      // Verify payment status
+      // The following code only runs for modal or inline checkout, not for redirects
       const verifyResponse = await fetch(`/api/payments/verify-payment?order_id=${orderData.orderId}`);
       const verifyData = await verifyResponse.json();
       

@@ -39,33 +39,33 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
       const tab = searchParams.get('tab');
       const newActiveItem = getActiveMenuItemFromPath(pathname, tab);
       console.log('Path changed, setting active item to:', newActiveItem, 'Path:', pathname, 'Tab:', tab);
-      
+
       // CRITICAL FIX: Force immediate update for Trading View pages with tab parameters
       if (pathname.startsWith('/dashboard/trading-view')) {
         let forcedActiveItem;
-        
+
         if (tab === 'manage') forcedActiveItem = 'Trading View: Manage';
         else if (tab === 'webhook') forcedActiveItem = 'Trading View: Webhook URL';
         else if (tab === 'json') forcedActiveItem = 'Trading View: JSON Generator';
         else if (tab === 'symbol') forcedActiveItem = 'Trading View: Symbol';
         else if (tab === 'logs') forcedActiveItem = 'Trading View: Trade Logs';
         else forcedActiveItem = 'Trading View';
-        
+
         console.log('FORCE UPDATING to:', forcedActiveItem);
         setActiveItem(forcedActiveItem);
-        
+
         // Force update session storage too
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('dashboardActiveMenuItem', forcedActiveItem);
         }
-        
+
         // Auto-expand the menu 
         setTradingViewOpen(true);
         return;
       }
-      
+
       setActiveItem(newActiveItem);
-      
+
       // Auto-expand submenus based on the current path
       if (newActiveItem.includes('Trading View')) {
         setTradingViewOpen(true);
@@ -84,7 +84,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
       } else if (newActiveItem.includes('Admin')) {
         setAdminOpen(true);
       }
-      
+
       // Store it in session storage
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('dashboardActiveMenuItem', newActiveItem);
@@ -122,7 +122,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   const handleMenuItemClick = useCallback(
     (itemName, route) => {
       // The order matters here - set the active item last to avoid race conditions
-      
+
       // Store the active menu item in sessionStorage to preserve it across page refreshes
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('dashboardActiveMenuItem', itemName);
@@ -135,7 +135,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
 
       // The key fix: set active item *before* navigation to ensure it doesn't get reset
       setActiveItem(itemName);
-      
+
       // Then navigate to the route if provided
       if (route) {
         router.push(route);
@@ -159,30 +159,30 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
       // Parent item is ONLY active when it's exactly Trading View with no colon
       return activeItem === 'Trading View' && !activeItem.includes(':');
     }
-    
+
     // For Trading View submenu items, strict exact match required
     if (itemName.startsWith('Trading View:')) {
       return itemName === activeItem;
     }
-    
+
     // Special cases for FAQ, Support, Pricing
     if (itemName === 'FAQ' && (activeItem === 'FAQ' || pathname?.includes('/dashboard/faq'))) {
       return true;
     }
-    
+
     if (itemName === 'Support' && (activeItem === 'Support' || pathname?.includes('/dashboard/support'))) {
       return true;
     }
-    
+
     if (itemName === 'Pricing' && (activeItem === 'Pricing' || pathname?.includes('/dashboard/pricing'))) {
       return true;
     }
-    
+
     // For Dashboard, only match exactly
     if (itemName === 'Dashboard') {
       return activeItem === 'Dashboard' && pathname === '/dashboard';
     }
-    
+
     // For everything else, just do exact match
     return itemName === activeItem;
   }, [activeItem, pathname]);
@@ -229,14 +229,14 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   // Function to render the sidebar content (used by both desktop and mobile views)
   function renderSidebarContent() {
     return (
-      <div className="h-full flex flex-col bg-black border-r border-zinc-800 w-[240px] text-white overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700">
+      <div className="h-full flex flex-col bg-zinc-950 border-r border-zinc-800 w-[240px] text-white overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-indigo-600 scrollbar-track-zinc-900">
         <ul className="space-y-1 p-3 flex-grow w-full">
           <li className="w-full">
             <a
               href="#"
               className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('Dashboard')
-                  ? 'bg-zinc-800 text-white'
-                  : 'hover:bg-zinc-800 text-zinc-300'
+                ? 'bg-zinc-800 text-white'
+                : 'hover:bg-zinc-800 text-zinc-300'
                 }`}
               onClick={e => {
                 e.preventDefault();
@@ -252,8 +252,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <a
               href="#"
               className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('Broker Auth')
-                  ? 'bg-zinc-800 text-white'
-                  : 'hover:bg-zinc-800 text-zinc-300'
+                ? 'bg-zinc-800 text-white'
+                : 'hover:bg-zinc-800 text-zinc-300'
                 }`}
               onClick={e => {
                 e.preventDefault();
@@ -272,8 +272,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 <button
                   onClick={() => toggleMenu('Admin')}
                   className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('Admin') || isActive('Admin Users')
-                      ? 'bg-zinc-800 text-white'
-                      : 'hover:bg-zinc-800 text-zinc-300'
+                    ? 'bg-zinc-800 text-white'
+                    : 'hover:bg-zinc-800 text-zinc-300'
                     }`}
                 >
                   <div
@@ -295,8 +295,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                       <a
                         href="/dashboard/admin/users"
                         className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Admin Users')
-                            ? 'bg-zinc-800 text-white'
-                            : 'hover:bg-zinc-800 text-zinc-300'
+                          ? 'bg-zinc-800 text-white'
+                          : 'hover:bg-zinc-800 text-zinc-300'
                           }`}
                         onClick={e => {
                           e.preventDefault();
@@ -321,7 +321,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   activeItem === 'Trading View' && !activeItem.includes(':')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
-                }`}
+                  }`}
               >
                 <div
                   className="flex items-center w-full"
@@ -353,16 +353,15 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: Manage' 
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${activeItem === 'Trading View: Manage'
+                        ? 'bg-zinc-800 text-white'
+                        : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={e => {
                         e.preventDefault();
                         // Cleaner approach to set active item
                         const itemName = 'Trading View: Manage';
-                        setActiveItem(itemName); 
+                        setActiveItem(itemName);
                         if (typeof window !== 'undefined') {
                           sessionStorage.setItem('dashboardActiveMenuItem', itemName);
                         }
@@ -377,11 +376,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: Webhook URL'
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${activeItem === 'Trading View: Webhook URL'
+                        ? 'bg-zinc-800 text-white'
+                        : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={e => {
                         e.preventDefault();
                         // Cleaner approach to set active item
@@ -401,11 +399,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: JSON Generator'
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${activeItem === 'Trading View: JSON Generator'
+                        ? 'bg-zinc-800 text-white'
+                        : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={e => {
                         e.preventDefault();
                         // Cleaner approach to set active item
@@ -425,11 +422,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: Symbol'
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${activeItem === 'Trading View: Symbol'
+                        ? 'bg-zinc-800 text-white'
+                        : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={e => {
                         e.preventDefault();
                         // Cleaner approach to set active item
@@ -449,11 +445,10 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   <li className="w-full">
                     <a
                       href="#"
-                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${
-                        activeItem === 'Trading View: Trade Logs'
-                          ? 'bg-zinc-800 text-white' 
-                          : 'hover:bg-zinc-800 text-zinc-300'
-                      }`}
+                      className={`flex items-center p-2 rounded-lg transition-colors w-full ${activeItem === 'Trading View: Trade Logs'
+                        ? 'bg-zinc-800 text-white'
+                        : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
                       onClick={e => {
                         e.preventDefault();
                         // Cleaner approach to set active item
@@ -483,7 +478,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   activeItem === 'Scalping Tool' && !activeItem.includes(' ')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
-                }`}
+                  }`}
               >
                 <div
                   className="flex items-center w-full"
@@ -516,8 +511,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/scalping-tool"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Scalping Tool Manage')
-                          ? 'bg-zinc-800 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
+                        ? 'bg-zinc-800 text-white'
+                        : 'hover:bg-zinc-800 text-zinc-300'
                         }`}
                       onClick={(e) => {
                         e.preventDefault();
@@ -540,7 +535,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   activeItem === 'Copy Trading' && !activeItem.includes(' ')
                     ? 'bg-zinc-800 text-white'
                     : 'hover:bg-zinc-800 text-zinc-300'
-                }`}
+                  }`}
               >
                 <div
                   className="flex items-center w-full"
@@ -566,8 +561,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                     <a
                       href="/dashboard/copy-trading"
                       className={`flex items-center p-2 text-sm rounded-lg transition-colors w-full ${isActive('Copy Trading Manage')
-                          ? 'bg-zinc-800 text-white'
-                          : 'hover:bg-zinc-800 text-zinc-300'
+                        ? 'bg-zinc-800 text-white'
+                        : 'hover:bg-zinc-800 text-zinc-300'
                         }`}
                       onClick={() =>
                         handleMenuItemClick('Copy Trading Manage', '/dashboard/copy-trading')
@@ -588,8 +583,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   handleMenuItemClick('Marketplace', '/dashboard/marketplace');
                 }}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('Marketplace')
-                    ? 'bg-zinc-800 text-white'
-                    : 'hover:bg-zinc-800 text-zinc-300'
+                  ? 'bg-zinc-800 text-white'
+                  : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
                 <div className="flex items-center w-full">
@@ -607,8 +602,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   handleMenuItemClick('Back Test', '/dashboard/backtest');
                 }}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('Back Test')
-                    ? 'bg-zinc-800 text-white'
-                    : 'hover:bg-zinc-800 text-zinc-300'
+                  ? 'bg-zinc-800 text-white'
+                  : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
                 <div className="flex items-center w-full">
@@ -626,8 +621,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   handleMenuItemClick('Optimization', '/dashboard/optimization');
                 }}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('Optimization')
-                    ? 'bg-zinc-800 text-white'
-                    : 'hover:bg-zinc-800 text-zinc-300'
+                  ? 'bg-zinc-800 text-white'
+                  : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
                 <div className="flex items-center w-full">
@@ -645,8 +640,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   handleMenuItemClick('My Developer', '/dashboard/developer');
                 }}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('My Developer')
-                    ? 'bg-zinc-800 text-white'
-                    : 'hover:bg-zinc-800 text-zinc-300'
+                  ? 'bg-zinc-800 text-white'
+                  : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
                 <div className="flex items-center w-full">
@@ -664,8 +659,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                   handleMenuItemClick('Pricing', '/dashboard/pricing');
                 }}
                 className={`flex items-center w-full p-2 rounded-lg transition-colors w-full ${isActive('Pricing')
-                    ? 'bg-zinc-800 text-white'
-                    : 'hover:bg-zinc-800 text-zinc-300'
+                  ? 'bg-zinc-800 text-white'
+                  : 'hover:bg-zinc-800 text-zinc-300'
                   }`}
               >
                 <div className="flex items-center">
@@ -680,8 +675,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <a
               href="/dashboard/faq"
               className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('FAQ')
-                  ? 'bg-zinc-800 text-white'
-                  : 'hover:bg-zinc-800 text-zinc-300'
+                ? 'bg-zinc-800 text-white'
+                : 'hover:bg-zinc-800 text-zinc-300'
                 }`}
               onClick={(e) => {
                 e.preventDefault();
@@ -701,8 +696,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <a
               href="/dashboard/support"
               className={`flex items-center p-2 rounded-lg transition-colors w-full ${isActive('Support')
-                  ? 'bg-zinc-800 text-white'
-                  : 'hover:bg-zinc-800 text-zinc-300'
+                ? 'bg-zinc-800 text-white'
+                : 'hover:bg-zinc-800 text-zinc-300'
                 }`}
               onClick={(e) => {
                 e.preventDefault();
@@ -723,8 +718,8 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
             <a
               href="#"
               className={`flex items-center p-2 text-zinc-300 rounded-lg hover:bg-zinc-800 transition-colors w-full ${isActive('Logout')
-                  ? 'bg-zinc-800 text-white'
-                  : ''
+                ? 'bg-zinc-800 text-white'
+                : ''
                 }`}
               onClick={e => {
                 e.preventDefault();
@@ -743,13 +738,13 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="w-64 md:min-w-[16rem] bg-black border-r border-zinc-800 min-h-[calc(100vh-64px)] transition-all duration-300 overflow-y-auto max-h-[calc(100vh-64px)] hidden md:block">
+      <aside className="w-64 md:min-w-[16rem] bg-zinc-950 border-r border-zinc-800 min-h-[calc(100vh-64px)] transition-all duration-300 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-indigo-600 max-h-[calc(100vh-64px)] hidden md:block">
         <nav className="p-4 w-full">{renderSidebarContent()}</nav>
       </aside>
 
-      {/* Mobile Sidebar - This is just a placeholder div for the dashboard page to target */}
-      <div className="md:hidden w-full">
-        <nav className="p-4 w-full">{renderSidebarContent()}</nav>
+      {/* Mobile Sidebar - Fix for bottom scrollbar */}
+      <div className="md:hidden w-full bg-zinc-950 overflow-hidden">
+        <nav className="w-full overflow-x-hidden">{renderSidebarContent()}</nav>
       </div>
     </>
   );
@@ -765,7 +760,7 @@ function getActiveMenuItemFromPath(path, tab = null) {
   if (path === '/dashboard/support' || path.includes('/dashboard/support/')) {
     return 'Support';
   }
-  
+
   if (path === '/dashboard/pricing') {
     return 'Pricing';
   }
@@ -774,7 +769,7 @@ function getActiveMenuItemFromPath(path, tab = null) {
   if (path === '/dashboard') {
     return 'Dashboard';
   }
-  
+
   // Other paths
   if (path === '/dashboard/broker-auth') return 'Broker Auth';
 
@@ -808,7 +803,7 @@ function getActiveMenuItemFromPath(path, tab = null) {
   if (path.startsWith('/dashboard/optimization')) return 'Optimization';
   if (path.startsWith('/dashboard/developer')) return 'My Developer';
   if (path.startsWith('/dashboard/admin')) return 'Admin Users';
-  
+
   // If nothing else matches, return empty string to avoid default Dashboard highlighting
   return '';
 }

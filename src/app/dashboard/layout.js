@@ -66,9 +66,9 @@ export default function DashboardLayout({ children }) {
 
   return (
     <ProtectedRoute>
-      <div className="bg-black min-h-screen flex flex-col">
+      <div className="bg-zinc-950 min-h-screen flex flex-col overflow-hidden">
         <DashboardHeader userEmail={user?.email || ''} />
-        <div className="flex flex-1 mt-[64px]">
+        <div className="flex flex-1 mt-[64px] overflow-hidden">
           <aside className="fixed top-[64px] left-0 h-[calc(100vh-64px)] z-10">
             <Sidebar
               onMenuItemClick={setActiveMenuItem}
@@ -76,7 +76,7 @@ export default function DashboardLayout({ children }) {
               isAdmin={isAdmin}
             />
           </aside>
-          <main className="flex-1 ml-[240px] p-6 overflow-auto">
+          <main className="flex-1 ml-0 md:ml-[240px] p-6 overflow-y-auto overflow-x-hidden bg-zinc-950">
             <Suspense fallback={<Loading />}>{children}</Suspense>
           </main>
         </div>

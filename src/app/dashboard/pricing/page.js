@@ -21,7 +21,7 @@ export default function PricingPage() {
 
   useEffect(() => {
     document.title = 'Pricing Plans | MyP';
-    
+
     // Fetch user's data
     const fetchUserData = async () => {
       try {
@@ -80,10 +80,13 @@ export default function PricingPage() {
       window.location.href = '/auth/signin?redirect=/dashboard/pricing';
       return;
     }
-    
-    // Handle payment process
-    console.log('Selected plan:', plan);
-    // Call your payment API or redirect to payment page
+
+    // Generate a unique order ID for the transaction
+    const orderId = `${userId.substring(0, 8)}-${plan.id}-${Date.now()}`;
+
+    // Use the PaymentButton component programmatically by simulating a click
+    // We'll replace the "Buy Now" button with actual PaymentButton in the UI
+    console.log('Processing purchase:', { plan, orderId });
   };
 
   const handleCustomAmountChange = (e) => {
@@ -97,7 +100,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen text-white bg-black relative">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-zinc-800/10 to-transparent"></div>
-      
+
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* History Button */}
         <div className="absolute right-4 top-8 z-20">
@@ -254,11 +257,10 @@ export default function PricingPage() {
               <motion.div
                 key={plan.id}
                 ref={planRef}
-                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${
-                  plan.highlighted
-                    ? 'bg-gradient-to-b from-zinc-800/70 to-zinc-900/70 border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
-                    : 'bg-gradient-to-b from-zinc-800/40 to-zinc-900/40 border border-zinc-700/30'
-                }`}
+                className={`relative rounded-xl overflow-hidden backdrop-blur-sm transition-transform hover:translate-y-[-8px] ${plan.highlighted
+                  ? 'bg-gradient-to-b from-zinc-800/70 to-zinc-900/70 border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
+                  : 'bg-gradient-to-b from-zinc-800/40 to-zinc-900/40 border border-zinc-700/30'
+                  }`}
                 initial={{ opacity: 0, y: 30 }}
                 animate={planInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -278,10 +280,10 @@ export default function PricingPage() {
                     </span>
                   </div>
                 )}
-                
+
                 <div className="p-8 flex flex-col items-center">
                   <h3 className="text-xl md:text-2xl font-bold mb-2 text-center">{plan.name}</h3>
-                  
+
                   <div className="mb-6 text-center">
                     <div className="flex items-center justify-center">
                       <span className="text-4xl font-bold">{plan.coins}</span>
@@ -293,13 +295,17 @@ export default function PricingPage() {
                   </div>
 
                   <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent my-6"></div>
-                  
-                  <RainbowButton
-                    onClick={() => handlePurchase(plan)}
-                    className="w-full"
-                  >
-                    Buy Now
-                  </RainbowButton>
+
+                  <PaymentButton
+                    amount={parseInt(plan.price.replace('₹', ''))}
+                    orderId={`${userId ? userId.substring(0, 8) : 'guest'}-${plan.id}-${Date.now()}`}
+                    buttonText="Buy Now"
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                    onSuccess={(data) => {
+                      // Refresh user data after successful payment
+                      window.location.href = `/dashboard/payment-status?order_id=${data.orderId}&status=success`;
+                    }}
+                  />
                 </div>
               </motion.div>
             );
@@ -319,10 +325,10 @@ export default function PricingPage() {
               duration={6}
               delay={0}
             />
-            
+
             <div className="p-8 flex flex-col items-center">
               <h3 className="text-xl md:text-2xl font-bold mb-2 text-center">Custom</h3>
-              
+
               <div className="mb-6 text-center">
                 <div className="flex items-center justify-center">
                   <span className="text-4xl font-bold">{customAmount || '0'}</span>
@@ -343,14 +349,18 @@ export default function PricingPage() {
               </div>
 
               <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent my-6"></div>
-              
-              <RainbowButton
-                onClick={() => handlePurchase({ id: 'custom', coins: parseInt(customAmount) || 0, price: customAmount })}
-                className="w-full"
+
+              <PaymentButton
+                amount={parseInt(customAmount) || 0}
+                orderId={`${userId ? userId.substring(0, 8) : 'guest'}-custom-${Date.now()}`}
+                buttonText="Buy Now"
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                onSuccess={(data) => {
+                  // Refresh user data after successful payment
+                  window.location.href = `/dashboard/payment-status?order_id=${data.orderId}&status=success`;
+                }}
                 disabled={!customAmount}
-              >
-                Buy Now
-              </RainbowButton>
+              />
             </div>
           </motion.div>
         </div>

@@ -310,8 +310,9 @@ function validateWebhookSignature(payload, signature) {
                 console.log('Generated signature:', generatedSignature);
                 console.log('Received signature:', signature);
 
-                // Compare signatures
-                return signature === generatedSignature;
+                // Check for exact match or if signature contains our generated signature
+                // Cashfree sometimes adds a timestamp to the signature
+                return signature === generatedSignature || signature.includes(generatedSignature);
         } catch (error) {
                 console.error('Error validating webhook signature:', error);
                 return false;

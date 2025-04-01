@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../../utils/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
@@ -213,17 +213,11 @@ export default function BrokerAuthPage() {
         const [availableBrokers] = useState(AVAILABLE_BROKERS);
         const [savedBrokers, setSavedBrokers] = useState([]);
 
-        useEffect(() => {
-                // Fetch saved brokers when user changes
-                if (user) {
-                        fetchSavedBrokers();
-                } else {
-                        setLoading(false);
-                }
-        }, [user]);
+        // Track if initial data has been loaded
+        const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
-        // Fetch saved brokers for the current user
-        const fetchSavedBrokers = async () => {
+        // Memoize fetch function to prevent recreating it on re-renders
+        const fetchSavedBrokers = useCallback(async () => {
                 try {
                         setLoading(true);
                         setError(null);
@@ -239,54 +233,26 @@ export default function BrokerAuthPage() {
 
                         // Update state with saved brokers
                         setSavedBrokers(data || []);
+                        setInitialDataLoaded(true);
                 } catch (err) {
                         console.error('Error fetching saved brokers:', err);
                         setError('Failed to load your connected brokers. Please try again.');
                 } finally {
                         setLoading(false);
                 }
-        };
+        }, [user]);
 
-        // Handle opening the credentials modal
-        const handleOpenModal = (broker, existingAccount = null) => {
-                setSelectedBroker(broker);
-
-                // Initialize empty credentials object
-                const initialCredentials = {};
-                broker.fields.forEach(field => {
-                        initialCredentials[field.name] = '';
-                });
-
-                setCredentials(initialCredentials);
-
-                // Set account label if editing an existing account
-                if (existingAccount) {
-                        setAccountLabel(existingAccount.account_label);
-
-                        // For each field in the broker's fields, set the value from existingAccount if available
-                        const storedCredentials = {};
-                        broker.fields.forEach(field => {
-                                if (existingAccount.credentials[field.name]) {
-                                        // For password fields, don't show the actual value
-                                        storedCredentials[field.name] = field.type === 'password'
-                                                ? '' // Don't reveal stored passwords
-                                                : existingAccount.credentials[field.name];
-                                } else {
-                                        storedCredentials[field.name] = '';
-                                }
-                        });
-
-                        setCredentials(storedCredentials);
-                } else {
-                        // Reset account label when adding a new account
-                        setAccountLabel('Primary Account');
+        useEffect(() => {
+                // Only fetch saved brokers when user changes or if initial data hasn't been loaded
+                if (user && !initialDataLoaded) {
+                        fetchSavedBrokers();
+                } else if (!user) {
+                        setLoading(false);
                 }
-
-                setIsModalOpen(true);
-        };
+        }, [user, fetchSavedBrokers, initialDataLoaded]);
 
         // Handle saving broker credentials
-        const handleSaveBrokerCredentials = async () => {
+        const handleSaveBrokerCredentials = useCallback(async () => {
                 try {
                         setSavingCredentials(true);
                         setError(null);
@@ -353,10 +319,10 @@ export default function BrokerAuthPage() {
                 } finally {
                         setSavingCredentials(false);
                 }
-        };
+        }, [user, selectedBroker, credentials, accountLabel, savedBrokers, fetchSavedBrokers]);
 
         // Handle removing saved broker credentials
-        const handleRemoveBrokerCredentials = async savedBroker => {
+        const handleRemoveBrokerCredentials = useCallback(async savedBroker => {
                 try {
                         setRemovingBroker(savedBroker.id);
 
@@ -396,10 +362,10 @@ export default function BrokerAuthPage() {
                 } finally {
                         setRemovingBroker(null);
                 }
-        };
+        }, [user]);
 
         // Toggle broker active state
-        const toggleBrokerActive = async savedBroker => {
+        const toggleBrokerActive = useCallback(async savedBroker => {
                 try {
                         if (!user) {
                                 throw new Error('Authentication required to update broker active state');
@@ -455,30 +421,68 @@ export default function BrokerAuthPage() {
                         toast.error(err.message);
                         setError(err.message);
                 }
-        };
+        }, [user]);
 
         // Helper function to get filtered available brokers
-        const getFilteredBrokers = () => {
+        const getFilteredBrokers = useMemo(() => {
                 if (!searchTerm) return availableBrokers;
 
                 return availableBrokers.filter(broker =>
                         broker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         broker.description.toLowerCase().includes(searchTerm.toLowerCase())
                 );
-        };
+        }, [availableBrokers, searchTerm]);
+
+        // Helper function to handle opening the modal - memoized to prevent recreating on re-renders
+        const handleOpenModal = useCallback((broker, existingAccount = null) => {
+                setSelectedBroker(broker);
+
+                // Initialize empty credentials object
+                const initialCredentials = {};
+                broker.fields.forEach(field => {
+                        initialCredentials[field.name] = '';
+                });
+
+                setCredentials(initialCredentials);
+
+                // Set account label if editing an existing account
+                if (existingAccount) {
+                        setAccountLabel(existingAccount.account_label);
+
+                        // For each field in the broker's fields, set the value from existingAccount if available
+                        const storedCredentials = {};
+                        broker.fields.forEach(field => {
+                                if (existingAccount.credentials[field.name]) {
+                                        // For password fields, don't show the actual value
+                                        storedCredentials[field.name] = field.type === 'password'
+                                                ? '' // Don't reveal stored passwords
+                                                : existingAccount.credentials[field.name];
+                                } else {
+                                        storedCredentials[field.name] = '';
+                                }
+                        });
+
+                        setCredentials(storedCredentials);
+                } else {
+                        // Reset account label when adding a new account
+                        setAccountLabel('Primary Account');
+                }
+
+                setIsModalOpen(true);
+        }, []);
 
         // Helper function to check if a broker is already saved
-        const isBrokerSaved = brokerId => {
+        const isBrokerSaved = useCallback(brokerId => {
                 return savedBrokers.some(saved => saved.broker_id === brokerId);
-        };
+        }, [savedBrokers]);
 
         // Helper function to get the count of accounts for a broker
-        const getBrokerAccountCount = brokerId => {
+        const getBrokerAccountCount = useCallback(brokerId => {
                 return savedBrokers.filter(saved => saved.broker_id === brokerId).length;
-        };
+        }, [savedBrokers]);
 
         // Render credential modal fields based on selected broker
-        const renderCredentialFields = () => {
+        const renderCredentialFields = useCallback(() => {
                 if (!selectedBroker) return null;
 
                 return (
@@ -511,7 +515,7 @@ export default function BrokerAuthPage() {
                                 ))}
                         </div>
                 );
-        };
+        }, [selectedBroker, accountLabel, credentials]);
 
         return (
                 <div className="mx-auto bg-gradient-to-b from-zinc-950 to-zinc-900 rounded-xl min-h-[500px] shadow-xl">
@@ -701,7 +705,7 @@ export default function BrokerAuthPage() {
                                                 </div>
 
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-                                                        {getFilteredBrokers().map(broker => (
+                                                        {getFilteredBrokers.map(broker => (
                                                                 <motion.div
                                                                         key={broker.id}
                                                                         initial={{ opacity: 0, y: 20 }}
