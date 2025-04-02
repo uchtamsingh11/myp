@@ -13,20 +13,20 @@ export async function POST(request) {
   try {
     // Get client IP address for security logging
     const ipAddress = request.headers.get('x-forwarded-for') || 'unknown';
-    
+
     // Get webhook data
     const webhookData = await request.json();
-    
+
     // Check if this is a Cashfree webhook - if so, redirect to the dedicated endpoint
-    if (isCashfreeWebhook(webhookData)) {
+    if (isCashfreeWebhook(webhookData, request.headers)) {
       console.log('Detected Cashfree webhook, redirecting to dedicated endpoint');
       // Return a response indicating this should go to the Cashfree endpoint
-      return NextResponse.json({ 
-        success: false, 
-        error: 'This appears to be a Cashfree webhook. Please use /api/payments/cashfree-webhook endpoint' 
+      return NextResponse.json({
+        success: false,
+        error: 'This appears to be a Cashfree webhook. Please use /api/payments/cashfree-webhook endpoint'
       });
     }
-    
+
     // This is a TradingView webhook, proceed normally
     console.log('TradingView webhook received:', JSON.stringify(webhookData).substring(0, 200) + '...');
 
@@ -45,22 +45,35 @@ export async function POST(request) {
 }
 
 // Check if this is a Cashfree webhook based on payload structure
-function isCashfreeWebhook(payload) {
+function isCashfreeWebhook(payload, headers) {
+  // Check for Cashfree webhook signature headers
+  if (
+    headers.get('x-webhook-signature') ||
+    headers.get('x-cashfree-signature') ||
+    headers.get('x-signature')
+  ) {
+    return true;
+  }
+
   // Check for common Cashfree webhook fields
   if (payload.data && (
-    payload.data.order_id || 
-    payload.data.order_status || 
-    payload.data.cf_payment_id || 
+    payload.data.order_id ||
+    payload.data.order_status ||
+    payload.data.cf_payment_id ||
     payload.data.payment_status
   )) {
     return true;
   }
-  
-  // Check for Cashfree signature header
-  if (payload.type && payload.type.includes('payment')) {
+
+  // Check for Cashfree event types
+  if (payload.type && (
+    payload.type.includes('payment') ||
+    payload.type.includes('order') ||
+    payload.type.includes('refund')
+  )) {
     return true;
   }
-  
+
   return false;
 }
 

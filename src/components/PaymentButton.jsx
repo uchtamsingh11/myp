@@ -57,7 +57,8 @@ export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now',
       }
       
       // Initialize Cashfree SDK - Must match environment in backend
-      const mode = 'production'; // Must match CASHFREE_ENVIRONMENT in .env
+      // Get the environment from the response instead of hardcoding
+      const mode = orderData.environment || 'production';
       console.log(`Initializing Cashfree in ${mode} mode`);
       const cashfree = window.Cashfree({
         mode: mode,

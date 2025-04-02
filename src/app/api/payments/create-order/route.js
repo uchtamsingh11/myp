@@ -149,7 +149,8 @@ export async function POST(request) {
                         success: true,
                         orderId: orderId,
                         paymentSessionId: responseData.payment_session_id,
-                        cfOrderId: responseData.cf_order_id
+                        cfOrderId: responseData.cf_order_id,
+                        environment: process.env.CASHFREE_ENVIRONMENT || 'production'
                 });
         } catch (error) {
                 console.error('Error creating payment order:', error);

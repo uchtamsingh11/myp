@@ -14,8 +14,11 @@ const DashboardHeader = ({ userEmail }) => {
   // Effect to fetch coin balance when user changes
   useEffect(() => {
     // Initialize coin balance from profile if available
+    // Check both possible column names
     if (profile?.coins !== undefined) {
       setCoinBalance(profile.coins);
+    } else if (profile?.coin_balance !== undefined) {
+      setCoinBalance(profile.coin_balance);
     }
 
     const fetchCoinBalance = async () => {
@@ -25,11 +28,10 @@ const DashboardHeader = ({ userEmail }) => {
       setError(null);
 
       try {
-        // Fetch the user's coin balance directly from the profiles table
-        // This ensures we get the latest data
+        // Fetch both possible column names from the profiles table
         const { data, error } = await supabase
           .from('profiles')
-          .select('coins')
+          .select('coins, coin_balance')
           .eq('id', user.id)
           .single();
 
@@ -37,8 +39,14 @@ const DashboardHeader = ({ userEmail }) => {
           throw error;
         }
 
-        // Update state with coin balance (defaulting to 0 if null)
-        setCoinBalance(data?.coins || 0);
+        // Use coins column if available, fall back to coin_balance, default to 0
+        const balance = data?.coins !== undefined && data?.coins !== null
+          ? data.coins
+          : (data?.coin_balance !== undefined && data?.coin_balance !== null
+            ? data.coin_balance
+            : 0);
+
+        setCoinBalance(balance);
       } catch (err) {
         console.error('Error fetching coin balance:', err);
         setError(err.message);
@@ -61,8 +69,13 @@ const DashboardHeader = ({ userEmail }) => {
           table: 'profiles',
           filter: `id=eq.${user.id}`,
         }, payload => {
-          if (payload.new && payload.new.coins !== undefined) {
-            setCoinBalance(payload.new.coins);
+          if (payload.new) {
+            // Check both possible column names
+            if (payload.new.coins !== undefined) {
+              setCoinBalance(payload.new.coins);
+            } else if (payload.new.coin_balance !== undefined) {
+              setCoinBalance(payload.new.coin_balance);
+            }
           }
         })
         .subscribe();
