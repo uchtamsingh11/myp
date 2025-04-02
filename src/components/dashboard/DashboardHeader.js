@@ -33,9 +33,8 @@ const DashboardHeader = ({ userEmail }) => {
           <img
             src="/images/logo.png"
             alt="AlgoZ Logo"
-            className="w-7 h-7 mr-2"
+            className="w-10 h-10 mr-2"
           />
-          AlgoZ
         </Link>
       </div>
 
