@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import CopyTradingManageComponent from '../../../components/dashboard/CopyTradingManageComponent';
+import CopyTradingManageComponent from '../../../components/dashboard/copy-trading/ManageComponent';
 
 export default function CopyTradingPage() {
   useEffect(() => {

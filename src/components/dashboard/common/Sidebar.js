@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { supabase } from '../../utils/supabase';
-import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../../utils/supabase';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = false }) {
   const router = useRouter();

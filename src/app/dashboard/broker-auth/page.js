@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import BrokerAuthPage from '../../../components/dashboard/BrokerAuthPage';
+import BrokerAuthPage from '../../../components/dashboard/common/BrokerAuth';
 
 export default function BrokerAuth() {
         useEffect(() => {

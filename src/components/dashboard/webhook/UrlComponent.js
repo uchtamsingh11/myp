@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '../../utils/supabase';
+import { supabase } from '../../../utils/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function WebhookUrlComponent() {

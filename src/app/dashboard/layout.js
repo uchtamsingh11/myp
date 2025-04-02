@@ -2,8 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
-import Sidebar from '../../components/dashboard/Sidebar';
-import DashboardHeader from '../../components/dashboard/DashboardHeader';
+import Sidebar from '../../components/dashboard/common/Sidebar';
+import DashboardHeader from '../../components/dashboard/common/Header';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import { useAuth } from '../../contexts/AuthContext';
 

@@ -127,3 +127,41 @@ docker run -p 3000:3000 algoz-app
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+# Dashboard Components
+
+The dashboard components have been organized by feature and functionality:
+
+## Component Structure
+
+```
+src/components/dashboard/
+├── admin/                 # Admin components for user management
+├── bots/                  # Trading bot components
+├── common/                # Shared components like Header, Sidebar
+├── copy-trading/          # Copy trading related components
+├── scalping-tool/         # Scalping tool components
+├── strategy/              # Strategy components for different script languages
+├── trading-view/          # TradingView integration components
+└── webhook/               # Webhook URL and logs components
+```
+
+## Importing Components
+
+Components can be imported individually or via feature-specific index files:
+
+```js
+// Import individual components
+import { Header, Sidebar } from '@/components/dashboard/common';
+
+// Import feature components
+import { ManageComponent as TradingViewManage } from '@/components/dashboard/trading-view';
+import { UserDataComponent } from '@/components/dashboard/admin';
+```
+
+## Common Components
+
+- `Header`: Dashboard header with user info and navigation
+- `Sidebar`: Main navigation sidebar for the dashboard
+- `BrokerAuth`: Broker authentication component
+- `ServicePurchase`: Service purchase flow component

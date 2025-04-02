@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '../../utils/supabase';
+import { supabase } from '../../../utils/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 // SVG Icons for brokers - replacing emojis for a more modern look

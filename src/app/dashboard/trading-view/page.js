@@ -2,14 +2,14 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import TradingViewManageComponent from '../../../components/dashboard/TradingViewManageComponent';
-import TradingViewSymbolComponent from '../../../components/dashboard/TradingViewSymbolComponent';
-import TradingViewJSONComponent from '../../../components/dashboard/TradingViewJSONComponent';
-import WebhookUrlComponent from '../../../components/dashboard/WebhookUrlComponent';
-import WebhookLogsComponent from '../../../components/dashboard/WebhookLogsComponent';
+import TradingViewManageComponent from '../../../components/dashboard/trading-view/ManageComponent';
+import TradingViewSymbolComponent from '../../../components/dashboard/trading-view/SymbolComponent';
+import TradingViewJSONComponent from '../../../components/dashboard/trading-view/JSONComponent';
+import WebhookUrlComponent from '../../../components/dashboard/webhook/UrlComponent';
+import WebhookLogsComponent from '../../../components/dashboard/webhook/LogsComponent';
 
 // Client component that uses useSearchParams
-const TradingViewContent = () => {
+const TradingViewContent = () => {  
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab') || 'manage';

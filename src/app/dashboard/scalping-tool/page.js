@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import ScalpingToolManageComponent from '../../../components/dashboard/ScalpingToolManageComponent';
+import ScalpingToolManageComponent from '../../../components/dashboard/scalping-tool/ManageComponent';
 
 // We'll create a TabContainer component to handle tab switching
 const ScalpingToolContent = () => {

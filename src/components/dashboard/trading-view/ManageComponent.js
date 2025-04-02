@@ -12,7 +12,7 @@ const BrokerIcons = {
   angel_broking: <svg className="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"></path><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>,
   binance: <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16L6 10 7.4 8.6 12 13.2 16.6 8.6 18 10z"></path><path d="M12 8L6 14 7.4 15.4 12 10.8 16.6 15.4 18 14z"></path><path d="M13.5 5.5L12 4 10.5 5.5 12 7z"></path><path d="M13.5 18.5L12 20 10.5 18.5 12 17z"></path></svg>,
   default: <svg className="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21 17h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2zm-9-7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h4a2 2 0 012 2v4zm6 0a2 2 0 01-2 2h-2a2 2 0 01-2-2V6a2 2 0 012-2h2a2 2 0 012 2v4zm-6 8a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2h4a2 2 0 012 2v4z"></path></svg>,
-  zerodha: <svg className="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>,
+  zerodha: <svg className="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>,
 };
 
 // Get broker icon, fall back to default if not found
@@ -50,11 +50,11 @@ const TradingViewManageComponent = () => {
 
   useEffect(() => {
     fetchSavedBrokers();
-    
+
     // Load selected broker from localStorage
     const savedSelectedBroker = localStorage.getItem('tradingViewSelectedBroker');
     const savedIsPaused = localStorage.getItem('tradingViewIsPaused');
-    
+
     if (savedSelectedBroker) {
       try {
         setSelectedBroker(JSON.parse(savedSelectedBroker));
@@ -73,13 +73,13 @@ const TradingViewManageComponent = () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user) {
         const { data, error } = await supabase
           .from('broker_credentials')
           .select('*')
           .eq('user_id', user.id);
-        
+
         if (error) throw error;
         setSavedBrokers(data || []);
       }
@@ -147,10 +147,10 @@ const TradingViewManageComponent = () => {
         <h2 className="text-2xl font-bold mb-6">
           TradingView: Choose your broker
         </h2>
-        
+
         {/* Notification */}
         {showNotification && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 50 }}
@@ -163,15 +163,15 @@ const TradingViewManageComponent = () => {
                 <p className="text-sm text-red-200 mb-3">
                   You already have a broker connected. For multiple accounts, use Copy Trading.
                 </p>
-                <button 
+                <button
                   onClick={navigateToCopyTrading}
                   className="text-xs bg-red-800 hover:bg-red-700 text-white py-1.5 px-3 rounded transition-colors"
                 >
                   Go to Copy Trading
                 </button>
               </div>
-              <button 
-                onClick={() => setShowNotification(false)} 
+              <button
+                onClick={() => setShowNotification(false)}
                 className="ml-auto text-red-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
@@ -179,11 +179,11 @@ const TradingViewManageComponent = () => {
             </div>
           </motion.div>
         )}
-        
+
         <div className="mt-6 flex flex-wrap gap-6">
           {/* Square Box with Plus Icon - Only show if no broker is selected */}
           {!selectedBroker && (
-            <div 
+            <div
               className="w-48 h-48 border-2 border-dashed border-zinc-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-zinc-800/30 transition-colors"
               onClick={toggleModal}
             >
@@ -201,17 +201,17 @@ const TradingViewManageComponent = () => {
                 </div>
                 <span className="font-medium text-center">{getBrokerName(selectedBroker.broker_id)}</span>
                 <p className="text-sm text-zinc-400 text-center mt-1">{selectedBroker.account_label || 'Primary Account'}</p>
-                
+
                 {/* Status indicator */}
                 <div className="mt-2 flex items-center">
                   <span className={`inline-block w-2 h-2 rounded-full mr-2 ${isPaused ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
                   <span className="text-xs">{isPaused ? 'Paused' : 'Active'}</span>
                 </div>
               </div>
-              
+
               {/* Hover actions overlay */}
               <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                <button 
+                <button
                   onClick={togglePauseResume}
                   className="p-2 bg-zinc-700 rounded-full hover:bg-zinc-600 transition-colors"
                   title={isPaused ? "Resume" : "Pause"}
@@ -222,7 +222,7 @@ const TradingViewManageComponent = () => {
                     <PauseCircle className="w-6 h-6 text-yellow-400" />
                   )}
                 </button>
-                <button 
+                <button
                   onClick={handleDeleteBroker}
                   className="p-2 bg-zinc-700 rounded-full hover:bg-red-900 transition-colors"
                   title="Delete"
@@ -232,10 +232,10 @@ const TradingViewManageComponent = () => {
               </div>
             </div>
           )}
-          
+
           {/* Add button to add another broker if one is already selected */}
           {selectedBroker && (
-            <div 
+            <div
               className="w-48 h-48 border-2 border-dashed border-zinc-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-zinc-800/30 transition-colors"
               onClick={toggleModal}
             >
@@ -250,7 +250,7 @@ const TradingViewManageComponent = () => {
             <div className="bg-zinc-900 rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold">Pick a Broker</h3>
-                <button 
+                <button
                   onClick={toggleModal}
                   className="text-zinc-400 hover:text-white"
                 >
@@ -266,8 +266,8 @@ const TradingViewManageComponent = () => {
                 ) : savedBrokers.length > 0 ? (
                   <div className="space-y-3">
                     {savedBrokers.map((broker) => (
-                      <div 
-                        key={broker.id} 
+                      <div
+                        key={broker.id}
                         className="bg-zinc-800 p-3 rounded-lg flex items-center justify-between hover:bg-zinc-700 cursor-pointer"
                         onClick={() => handleSelectBroker(broker)}
                       >
