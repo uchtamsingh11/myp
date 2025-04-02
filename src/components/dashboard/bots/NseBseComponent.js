@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '../../utils/supabase';
+import { supabase } from '../../../utils/supabase';
 
 export default function BotsNseBseComponent() {
   const [loading, setLoading] = useState(true);

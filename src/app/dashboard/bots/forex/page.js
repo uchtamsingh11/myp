@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import BotsForexComponent from '@/components/dashboard/BotsForexComponent';
+import BotsForexComponent from '@/components/dashboard/bots/ForexComponent';
 
 export default function BotsForexPage() {
   useEffect(() => {

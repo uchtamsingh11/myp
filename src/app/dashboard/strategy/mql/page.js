@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import StrategyMQLComponent from '../../../../components/dashboard/StrategyMQLComponent';
+import StrategyMQLComponent from '../../../../components/dashboard/strategy/MQLComponent';
 
 export default function StrategyMQLPage() {
   useEffect(() => {

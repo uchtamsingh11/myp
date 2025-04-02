@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import BotsNseBseComponent from '../../../../components/dashboard/BotsNseBseComponent';
+import BotsNseBseComponent from '../../../../components/dashboard/bots/NseBseComponent';
 
 export default function BotsNseBsePage() {
   useEffect(() => {

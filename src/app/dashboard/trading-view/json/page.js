@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import TradingViewJSONComponent from '../../../../components/dashboard/TradingViewJSONComponent';
+import TradingViewJSONComponent from '../../../../components/dashboard/trading-view/JSONComponent';
 
 export default function TradingViewJSONPage() {
   // Set the title

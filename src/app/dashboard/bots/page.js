@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import BotsMyBotsComponent from '../../../components/dashboard/BotsMyBotsComponent';
+import BotsMyBotsComponent from '../../../components/dashboard/bots/MyBotsComponent';
 
 export default function BotsPage() {
   useEffect(() => {

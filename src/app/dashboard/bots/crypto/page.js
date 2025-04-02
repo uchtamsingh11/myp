@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import BotsCryptoComponent from '@/components/dashboard/BotsCryptoComponent';
+import BotsCryptoComponent from '@/components/dashboard/bots/CryptoComponent';
 
 export default function BotsCryptoPage() {
   useEffect(() => {
