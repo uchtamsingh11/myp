@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { supabase } from '../../../utils/supabase';
 import PaymentButton from '../../../components/PaymentButton';
-import { BorderBeam } from '../../../components/magicui/border-beam';
-import { RainbowButton } from '../../../components/magicui/rainbow-button';
+import { BorderBeam } from '../../../components/ui/effects/BorderBeam';
+import { RainbowButton } from '../../../components/ui/buttons/RainbowButton';
 
 export default function PricingPage() {
   const [userId, setUserId] = useState(null);

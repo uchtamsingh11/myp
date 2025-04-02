@@ -2,8 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { BorderBeam } from '../../magicui/border-beam';
-import { RainbowButton } from '../../magicui/rainbow-button';
+import { BorderBeam } from '../../ui/effects/BorderBeam';
+import { RainbowButton } from '../../ui/buttons/RainbowButton';
 
 const pricingPlans = [
   {

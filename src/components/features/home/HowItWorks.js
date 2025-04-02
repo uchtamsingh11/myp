@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { RainbowButton } from '../../magicui/rainbow-button';
+import { RainbowButton } from '../../ui/buttons/RainbowButton';
 
 const steps = [
   {

@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
 import Link from 'next/link';
-import { BorderBeam } from '../magicui/border-beam';
-import { RainbowButton } from '../magicui/rainbow-button';
+import { BorderBeam } from '../ui/effects/BorderBeam';
+import { RainbowButton } from '../ui/buttons/RainbowButton';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);

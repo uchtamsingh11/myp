@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import GradientText from '../../ui/GradientText';
-import GlowingText from '../../ui/GlowingText';
-import Tooltip from '../../ui/Tooltip';
-import Badge from '../../ui/Badge';
-import BeamEffect from '../../ui/BeamEffect';
-import IntroducingBadge from '../../ui/IntroducingBadge';
+import GradientText from '../../ui/effects/GradientText';
+import GlowingText from '../../ui/effects/GlowingText';
+import Tooltip from '../../ui/tooltips/Tooltip';
+import Badge from '../../ui/badges/Badge';
+import BeamEffect from '../../ui/effects/BeamEffect';
+import IntroducingBadge from '../../ui/badges/IntroducingBadge';
 
 const faqs = [
   {

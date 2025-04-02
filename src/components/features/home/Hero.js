@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '../../../utils/supabase';
-import { BorderBeam } from '../../magicui/border-beam';
-import { Meteors } from '../../magicui/meteors';
-import { RainbowButton } from '../../magicui/rainbow-button';
+import { BorderBeam } from '../../ui/effects/BorderBeam';
+import { Meteors } from '../../ui/effects/Meteors';
+import { RainbowButton } from '../../ui/buttons/RainbowButton';
 
 const Hero = () => {
   const [user, setUser] = useState(null);

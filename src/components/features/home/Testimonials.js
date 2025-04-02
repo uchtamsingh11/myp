@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from "@/lib/utils.js";
-import { RainbowButton } from "../../magicui/rainbow-button";
+import { RainbowButton } from "../../ui/buttons/RainbowButton";
 
 // Create the Marquee component since it's missing
 const Marquee = ({
