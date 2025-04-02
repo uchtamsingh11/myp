@@ -10,6 +10,7 @@ export default function WebhookUrlComponent() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const domain = 'https://algoz.tech';
 
   const fetchWebhookUrl = async () => {
@@ -59,6 +60,7 @@ export default function WebhookUrlComponent() {
 
           // Set the webhook URL using the newly created token
           setWebhookUrl(`${domain}/api/webhook/${webhookToken}`);
+          setInitialDataLoaded(true);
           return;
         } else {
           console.error('Profile lookup error:', profileError);
@@ -109,6 +111,7 @@ export default function WebhookUrlComponent() {
       } else {
         throw new Error('Unable to retrieve your profile information. Please try again later.');
       }
+      setInitialDataLoaded(true);
     } catch (err) {
       console.error('Error fetching webhook URL:', err);
       setError(err.message);
@@ -117,9 +120,21 @@ export default function WebhookUrlComponent() {
     }
   };
 
+  const resetComponentState = () => {
+    setLoading(true);
+    setError(null);
+    setInitialDataLoaded(false);
+  };
+
   useEffect(() => {
-    fetchWebhookUrl();
-  }, []);
+    // Only fetch webhook URL if it hasn't been loaded before
+    if (!initialDataLoaded) {
+      fetchWebhookUrl();
+    } else {
+      // If data was already loaded, just set loading to false
+      setLoading(false);
+    }
+  }, [initialDataLoaded]);
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -135,15 +150,22 @@ export default function WebhookUrlComponent() {
   };
 
   return (
-    <div className="mx-auto">
+    <div className="mx-auto p-6 bg-gradient-to-b from-zinc-950 to-zinc-900 rounded-xl shadow-xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-2xl font-bold mb-6">Webhook URL</h2>
+        <div className="flex items-center mb-6">
+          <h2 className="text-xl font-semibold text-white flex items-center">
+            <svg className="w-5 h-5 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            Webhook URL
+          </h2>
+        </div>
 
-        <div className="bg-zinc-900 rounded-xl p-6 mb-8">
+        <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl p-6 mb-8 border border-zinc-800/50 shadow-lg">
           <p className="text-zinc-400 mb-4">
             Your unique webhook URL for TradingView integration. This URL is specific to your
             account and should be kept confidential.
@@ -157,33 +179,22 @@ export default function WebhookUrlComponent() {
               </div>
             </div>
           ) : error ? (
-            <div className="text-red-500 mb-4 p-3 bg-red-900/20 rounded-lg">
-              <p>{error}</p>
-              <div className="mt-3">
-                <p className="text-zinc-400 text-sm">
-                  If this issue persists, please contact support.
-                </p>
+            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
+              <div className="flex items-center mb-2">
+                <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+              <div className="flex justify-between items-center mt-2">
                 <button
-                  onClick={e => {
-                    e.preventDefault();
-                    setLoading(true);
-                    setError(null);
-                    fetchWebhookUrl();
-                  }}
-                  disabled={loading}
-                  className={`mt-3 px-4 py-2 ${loading ? 'bg-blue-800 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} rounded-lg text-sm flex items-center`}
+                  onClick={resetComponentState}
+                  className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
                 >
-                  {loading ? (
-                    <>
-                      <div className="relative h-4 w-4 mr-2">
-                        <div className="w-4 h-4 rounded-full absolute border-2 border-solid border-zinc-800"></div>
-                        <div className="w-4 h-4 rounded-full animate-spin absolute border-2 border-solid border-indigo-500 border-t-transparent"></div>
-                      </div>
-                      Loading...
-                    </>
-                  ) : (
-                    'Retry'
-                  )}
+                  Retry Loading
+                </button>
+                <button className="text-xs underline" onClick={() => setError(null)}>
+                  Dismiss
                 </button>
               </div>
             </div>
@@ -245,7 +256,7 @@ export default function WebhookUrlComponent() {
           )}
 
           <div className="mt-6 border-t border-zinc-800 pt-6">
-            <h3 className="text-lg font-semibold mb-3">How to Use Your Webhook URL</h3>
+            <h3 className="text-lg font-semibold mb-3 text-white">How to Use Your Webhook URL</h3>
             <ol className="list-decimal list-inside space-y-3 text-zinc-400">
               <li>Copy the webhook URL above.</li>
               <li>Open TradingView and create or edit your strategy/alert.</li>

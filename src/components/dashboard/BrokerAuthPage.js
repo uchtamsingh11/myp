@@ -242,11 +242,21 @@ export default function BrokerAuthPage() {
                 }
         }, [user]);
 
+        // Function to reset component state
+        const resetComponentState = () => {
+                setLoading(true);
+                setError(null);
+                setInitialDataLoaded(false);
+        };
+
         useEffect(() => {
                 // Only fetch saved brokers when user changes or if initial data hasn't been loaded
                 if (user && !initialDataLoaded) {
                         fetchSavedBrokers();
                 } else if (!user) {
+                        setLoading(false);
+                } else {
+                        // If we already have the data, just ensure we're not in loading state
                         setLoading(false);
                 }
         }, [user, fetchSavedBrokers, initialDataLoaded]);
@@ -307,7 +317,7 @@ export default function BrokerAuthPage() {
                                 );
                         } else {
                                 // New broker - need to fetch to get the assigned ID
-                                await fetchSavedBrokers();
+                                resetComponentState();
                         }
 
                         // Success
@@ -319,7 +329,7 @@ export default function BrokerAuthPage() {
                 } finally {
                         setSavingCredentials(false);
                 }
-        }, [user, selectedBroker, credentials, accountLabel, savedBrokers, fetchSavedBrokers]);
+        }, [user, selectedBroker, credentials, accountLabel, savedBrokers, resetComponentState]);
 
         // Handle removing saved broker credentials
         const handleRemoveBrokerCredentials = useCallback(async savedBroker => {
@@ -330,11 +340,6 @@ export default function BrokerAuthPage() {
                                 throw new Error('Authentication required to remove broker credentials');
                         }
 
-                        // Optimistically update local state
-                        setSavedBrokers(prevBrokers =>
-                                prevBrokers.filter(broker => broker.id !== savedBroker.id)
-                        );
-
                         // Call the Supabase function to delete the credentials
                         const { data, error } = await supabase.rpc('delete_broker_credentials_v2', {
                                 p_broker_id: savedBroker.broker_id,
@@ -342,27 +347,24 @@ export default function BrokerAuthPage() {
                         });
 
                         if (error) {
-                                // Restore the removed broker in case of error
-                                setSavedBrokers(prevBrokers => [...prevBrokers, savedBroker]);
                                 throw new Error('Failed to remove credentials: ' + error.message);
                         }
 
                         if (!data) {
-                                // Restore the removed broker in case of error
-                                setSavedBrokers(prevBrokers => [...prevBrokers, savedBroker]);
                                 throw new Error('Failed to remove credentials. Please try again.');
                         }
 
                         // Success
                         toast.success(`${savedBroker.broker_name} credentials removed successfully!`);
-                        // No need to fetch all brokers again as we've already updated the state
+                        // Reset component state to trigger a fresh data fetch
+                        resetComponentState();
                 } catch (err) {
                         toast.error(err.message);
                         setError(err.message);
                 } finally {
                         setRemovingBroker(null);
                 }
-        }, [user]);
+        }, [user, resetComponentState]);
 
         // Toggle broker active state
         const toggleBrokerActive = useCallback(async savedBroker => {
@@ -371,16 +373,6 @@ export default function BrokerAuthPage() {
                                 throw new Error('Authentication required to update broker active state');
                         }
 
-                        // Update the state locally first for immediate UI feedback
-                        setSavedBrokers(prevBrokers =>
-                                prevBrokers.map(broker => {
-                                        if (broker.id === savedBroker.id) {
-                                                return { ...broker, is_active: !broker.is_active };
-                                        }
-                                        return broker;
-                                })
-                        );
-
                         // Call the Supabase function to toggle the broker active state
                         const { data, error } = await supabase.rpc('toggle_broker_active_v2', {
                                 p_broker_id: savedBroker.broker_id,
@@ -388,40 +380,23 @@ export default function BrokerAuthPage() {
                         });
 
                         if (error) {
-                                // Revert the local state change if server update fails
-                                setSavedBrokers(prevBrokers =>
-                                        prevBrokers.map(broker => {
-                                                if (broker.id === savedBroker.id) {
-                                                        return { ...broker, is_active: savedBroker.is_active };
-                                                }
-                                                return broker;
-                                        })
-                                );
                                 throw new Error('Failed to update broker status: ' + error.message);
                         }
 
                         if (!data) {
-                                // Revert the local state change if server update returns no data
-                                setSavedBrokers(prevBrokers =>
-                                        prevBrokers.map(broker => {
-                                                if (broker.id === savedBroker.id) {
-                                                        return { ...broker, is_active: savedBroker.is_active };
-                                                }
-                                                return broker;
-                                        })
-                                );
                                 throw new Error('Failed to update broker status. Please try again.');
                         }
 
                         // Success toast notification
                         toast.success(`${savedBroker.broker_name} status updated!`);
 
-                        // No need to fetch all brokers again, we've already updated the state
+                        // Reset component state to trigger a fresh data fetch
+                        resetComponentState();
                 } catch (err) {
                         toast.error(err.message);
                         setError(err.message);
                 }
-        }, [user]);
+        }, [user, resetComponentState]);
 
         // Helper function to get filtered available brokers
         const getFilteredBrokers = useMemo(() => {
@@ -518,30 +493,38 @@ export default function BrokerAuthPage() {
         }, [selectedBroker, accountLabel, credentials]);
 
         return (
-                <div className="mx-auto bg-gradient-to-b from-zinc-950 to-zinc-900 rounded-xl min-h-[500px] shadow-xl">
+                <div className="mx-auto p-6 bg-gradient-to-b from-zinc-950 to-zinc-900 rounded-xl shadow-xl">
                         {error && (
-                                <div className="mx-6 mt-6 mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg flex items-center">
-                                        <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <div className="flex-1">
+                                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
+                                        <div className="flex items-center mb-2">
+                                                <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
                                                 <p className="text-sm font-medium">{error}</p>
                                         </div>
-                                        <button className="text-xs underline ml-2" onClick={() => setError(null)}>
-                                                Dismiss
-                                        </button>
+                                        <div className="flex justify-between items-center mt-2">
+                                                <button
+                                                        onClick={resetComponentState}
+                                                        className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                                                >
+                                                        Retry Loading
+                                                </button>
+                                                <button className="text-xs underline" onClick={() => setError(null)}>
+                                                        Dismiss
+                                                </button>
+                                        </div>
                                 </div>
                         )}
 
                         {loading ? (
-                                <div className="h-96 flex justify-center items-center bg-zinc-950 rounded-xl">
+                                <div className="h-96 flex justify-center items-center">
                                         <div className="relative">
                                                 <div className="w-14 h-14 rounded-full absolute border-4 border-solid border-zinc-800"></div>
                                                 <div className="w-14 h-14 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent shadow-lg"></div>
                                         </div>
                                 </div>
                         ) : (
-                                <div className="space-y-10 px-6 pb-10">
+                                <div className="space-y-10">
                                         {/* Saved Brokers Section */}
                                         <section>
                                                 <div className="flex items-center justify-between mb-6">
@@ -558,7 +541,7 @@ export default function BrokerAuthPage() {
                                                 </div>
 
                                                 {savedBrokers.length > 0 ? (
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                                 {savedBrokers.map(broker => {
                                                                         // Find broker details from available brokers
                                                                         const brokerDetails = availableBrokers.find(b => b.id === broker.broker_id) || {
@@ -574,7 +557,7 @@ export default function BrokerAuthPage() {
                                                                                         animate={{ opacity: 1, y: 0 }}
                                                                                         whileHover={{ scale: 1.02 }}
                                                                                         transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-4 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative aspect-square flex flex-col max-w-[260px] max-h-[260px] h-full"
+                                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-4 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative flex flex-col h-60"
                                                                                 >
                                                                                         {/* Toggle switch in top-right */}
                                                                                         <div className="absolute top-3 right-4">
@@ -704,7 +687,7 @@ export default function BrokerAuthPage() {
                                                         </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                         {getFilteredBrokers.map(broker => (
                                                                 <motion.div
                                                                         key={broker.id}
@@ -712,7 +695,7 @@ export default function BrokerAuthPage() {
                                                                         animate={{ opacity: 1, y: 0 }}
                                                                         whileHover={{ scale: 1.02 }}
                                                                         transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-4 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative aspect-square flex flex-col max-w-[260px] max-h-[260px] h-full"
+                                                                        className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-4 rounded-xl border border-zinc-800/50 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/10 transition-all relative flex flex-col h-60"
                                                                 >
                                                                         {/* Display accounts connected badge if applicable */}
                                                                         {isBrokerSaved(broker.id) && (
