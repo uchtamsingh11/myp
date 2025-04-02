@@ -270,9 +270,9 @@ export default function Dashboard() {
               <p className="text-zinc-400 text-xs font-medium uppercase tracking-wider flex items-center">
                 <Activity className="w-3.5 h-3.5 mr-1 text-indigo-400" /> Portfolio Value
               </p>
-              <h3 className="text-white text-2xl font-bold mt-1">₹1,15,42,356</h3>
+              <h3 className="text-white text-2xl font-bold mt-1">₹0</h3>
               <p className="text-green-400 text-xs flex items-center mt-1">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" /> +12.5% <span className="text-zinc-500 ml-1">from last month</span>
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> +0% <span className="text-zinc-500 ml-1">from last month</span>
               </p>
             </div>
             <div className="bg-indigo-500/10 p-2 rounded-lg">
