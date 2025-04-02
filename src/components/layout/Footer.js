@@ -23,7 +23,14 @@ const Footer = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-2xl font-bold mb-4">AlgoZ</h2>
+              <div className="flex items-center mb-4">
+                <img
+                  src="/images/logo.png"
+                  alt="AlgoZ Logo"
+                  className="w-8 h-8 mr-2"
+                />
+                <h2 className="text-2xl font-bold">AlgoZ</h2>
+              </div>
               <p className="text-zinc-400 mb-6 max-w-md text-sm sm:text-base">
                 Advanced algorithmic trading solutions for modern investors. Harness the power of
                 cutting-edge technology to maximize your trading potential.

@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { BorderBeam } from '../magicui/border-beam';
 import { RainbowButton } from '../magicui/rainbow-button';
 
-
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -76,7 +75,14 @@ const Header = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <span className="text-2xl font-bold tracking-tight">AlgoZ</span>
+          <Link href="/" className="flex items-center">
+            <img
+              src="/images/logo.png"
+              alt="AlgoZ Logo"
+              className="w-12 h-12 mr-2"
+            />
+            {/* <span className="text-2xl font-bold tracking-tight">AlgoZ</span> */}
+          </Link>
         </motion.div>
 
         {/* Desktop Navigation */}

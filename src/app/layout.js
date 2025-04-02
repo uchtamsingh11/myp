@@ -20,6 +20,7 @@ export const metadata = {
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
+    shortcut: '/favicon.ico',
   },
   manifest: '/site.webmanifest',
   openGraph: {
@@ -31,9 +32,9 @@ export const metadata = {
     siteName: 'Algoz Trading',
     images: [
       {
-        url: '/og-image.jpg',
+        url: '/images/logo.png',
         width: 1200,
-        height: 630,
+        height: 1200,
         alt: 'Algoz Trading',
       },
     ],
@@ -42,7 +43,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Algoz Trading | Automated Trading Tools',
     description: 'Professional automated trading tools and algorithms for traders',
-    images: ['/og-image.jpg'],
+    images: ['/images/logo.png'],
   },
 };
 
