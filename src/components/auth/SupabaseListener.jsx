@@ -3,8 +3,11 @@
 import { useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
 
-// This component syncs the browser session with the server session
-// It needs to be included in the layout
+/**
+ * SupabaseListener - Syncs browser auth session with server session
+ * This component should be included in the root layout to ensure 
+ * authentication state is properly maintained across the application.
+ */
 export default function SupabaseListener() {
   useEffect(() => {
     // Helper function to handle API calls with retry logic

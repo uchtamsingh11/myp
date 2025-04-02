@@ -4,7 +4,11 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Component to wrap routes that require authentication
+/**
+ * ProtectedRoute - Component to wrap routes that require authentication
+ * Redirects unauthenticated users to the login page
+ * Shows loading state while checking authentication
+ */
 export default function ProtectedRoute({ children }) {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
