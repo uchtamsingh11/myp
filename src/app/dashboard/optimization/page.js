@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight, Info, AlertTriangle } from 'lucide-react';
-import { getOptimizationFromCache, loadSavedConfig } from '../../../utils/localStorage';
+import { getOptimizationFromCache, loadSavedConfig, saveOptimizationToCache } from '../../../utils/localStorage';
 
 export default function OptimizationPage() {
   const [activeTab, setActiveTab] = useState('input');
@@ -48,7 +48,7 @@ export default function OptimizationPage() {
             setResults(randomResults);
             setIsLoading(false);
             setShowResults(true);
-            
+
             // Save results to localStorage for future use
             if (pineScript) {
               const config = {
@@ -61,14 +61,14 @@ export default function OptimizationPage() {
               };
               saveOptimizationToCache(randomResults, pineScript, config);
             }
-            
+
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
     }
-    
+
     return () => {
       if (timer) clearInterval(timer);
     };
@@ -85,7 +85,7 @@ export default function OptimizationPage() {
     }
 
     setIsConverting(true);
-    
+
     try {
       // This is a simplified conversion - in a real app this would be more complex
       // and would properly parse the Pine Script syntax
@@ -100,25 +100,25 @@ export default function OptimizationPage() {
 
       // Extract indicators, conditions, and inputs (simplified example)
       const lines = pineScript.split('\n');
-      
+
       // First pass: extract all input parameters
       lines.forEach(line => {
         // Use more permissive pattern matching for input parameters
         const trimmedLine = line.trim();
-        
+
         // Skip empty lines or comments
         if (!trimmedLine || trimmedLine.startsWith('//')) {
           return;
         }
-        
+
         // Check if line contains input definition
         if (trimmedLine.includes('input.') || trimmedLine.includes('input(')) {
           // Extract variable name (before the = sign)
           const varNameMatch = trimmedLine.match(/^([a-zA-Z0-9_]+)\s*=/);
-          
+
           if (varNameMatch) {
             const varName = varNameMatch[1].trim();
-            
+
             // Create the input info object with defaults
             const inputInfo = {
               type: 'unknown',
@@ -131,7 +131,7 @@ export default function OptimizationPage() {
               group: null,
               fullLine: trimmedLine // Store the full line for debugging
             };
-            
+
             // Determine input type
             if (trimmedLine.includes('input.int')) {
               inputInfo.type = 'integer';
@@ -146,15 +146,15 @@ export default function OptimizationPage() {
             } else if (trimmedLine.includes('input(')) {
               inputInfo.type = 'simple';
             }
-            
+
             // Extract default value - try multiple patterns
             let defaultValue = null;
-            
+
             // Pattern 1: defval = value
             const defvalMatch = trimmedLine.match(/defval\s*=\s*([^,\)]+)/);
             if (defvalMatch) {
               defaultValue = defvalMatch[1].trim();
-            } 
+            }
             // Pattern 2: input(value, ...
             else {
               const simpleDefaultMatch = trimmedLine.match(/input\(([^,\)]+)/);
@@ -162,29 +162,29 @@ export default function OptimizationPage() {
                 defaultValue = simpleDefaultMatch[1].trim();
               }
             }
-            
+
             if (defaultValue) {
               inputInfo.defaultValue = defaultValue;
             }
-            
+
             // Extract title - be more permissive with the pattern
             const titleMatch = trimmedLine.match(/title\s*=\s*(['"])([^'"]*)\1/);
             if (titleMatch && titleMatch[2]) {
               inputInfo.title = titleMatch[2];
             }
-            
+
             // Extract min value - try multiple patterns
             const minvalMatch = trimmedLine.match(/minval\s*=\s*([^,\)]+)/);
             if (minvalMatch) {
               inputInfo.minval = minvalMatch[1].trim();
             }
-            
+
             // Extract max value
             const maxvalMatch = trimmedLine.match(/maxval\s*=\s*([^,\)]+)/);
             if (maxvalMatch) {
               inputInfo.maxval = maxvalMatch[1].trim();
             }
-            
+
             // Extract tooltip - handles both variable references and string literals
             const tooltipDirectMatch = trimmedLine.match(/tooltip\s*=\s*(['"])([^'"]*)\1/);
             if (tooltipDirectMatch) {
@@ -195,7 +195,7 @@ export default function OptimizationPage() {
                 inputInfo.tooltip = tooltipVarMatch[1]; // Variable reference
               }
             }
-            
+
             // Extract group - handles both string literals and variable references
             const groupDirectMatch = trimmedLine.match(/group\s*=\s*(['"])([^'"]*)\1/);
             if (groupDirectMatch) {
@@ -206,7 +206,7 @@ export default function OptimizationPage() {
                 inputInfo.group = groupVarMatch[1]; // Variable reference
               }
             }
-            
+
             // Extract options for string inputs
             const optionsMatch = trimmedLine.match(/options\s*=\s*\[([^\]]+)\]/);
             if (optionsMatch) {
@@ -215,21 +215,21 @@ export default function OptimizationPage() {
               const options = optionsStr.split(',').map(opt => opt.trim());
               inputInfo.options = options;
             }
-            
+
             // Store the input in our JSON result
             jsonResult.inputs[varName] = inputInfo;
           }
         }
       });
-      
+
       // Second pass: Extract indicators, conditions, and other settings
       lines.forEach(line => {
         const trimmedLine = line.trim();
-        
+
         if (!trimmedLine || trimmedLine.startsWith('//')) {
           return;
         }
-        
+
         if (trimmedLine.includes('indicator(')) {
           jsonResult.indicators.push(trimmedLine);
         } else if (trimmedLine.includes('if ') && trimmedLine.includes('then')) {
@@ -249,11 +249,11 @@ export default function OptimizationPage() {
 
       // For debugging - log the inputs to console
       console.log("Detected inputs:", Object.keys(jsonResult.inputs).length, jsonResult.inputs);
-      
+
       setJsonData(jsonResult);
       setJsonOutput(JSON.stringify(jsonResult, null, 2));
       setIsConverting(false);
-      
+
       // Auto-advance to configure tab if we have inputs
       if (Object.keys(jsonResult.inputs).length > 0) {
         setTimeout(() => {
@@ -272,21 +272,21 @@ export default function OptimizationPage() {
       alert('Please convert the Pine Script first');
       return;
     }
-    
+
     if (!symbol) {
       alert('Please enter a symbol');
       return;
     }
-    
+
     if (!startDate || !endDate) {
       alert('Please select both start and end dates');
       return;
     }
-    
+
     // Start optimization process
     setIsLoading(true);
     setCountdownTime(60);
-    
+
     // In a real app, this would call an API to start the optimization
     // For this demo, we'll simulate the process with a countdown
   };
@@ -294,15 +294,15 @@ export default function OptimizationPage() {
   const generateRandomResults = () => {
     // Generate random optimization results
     // In a real app, this would come from the backend
-    
+
     // Generate a random number of parameters to optimize
     const numParams = Math.floor(Math.random() * 3) + 2; // 2-4 parameters
-    
+
     // Create parameter combinations
     const parameterSets = [];
     const paramNames = ['fastLength', 'slowLength', 'stopLoss', 'takeProfit', 'rsiPeriod', 'rsiOverbought'];
     const selectedParams = paramNames.slice(0, numParams);
-    
+
     // Create parameter grid with random range values
     const paramRanges = {};
     selectedParams.forEach(param => {
@@ -316,11 +316,11 @@ export default function OptimizationPage() {
         paramRanges[param] = { min: 1, max: 10, step: 1 };
       }
     });
-    
+
     // Generate random parameter sets with results
     for (let i = 0; i < 20; i++) {
       const paramSet = {};
-      
+
       // Generate random parameter values
       selectedParams.forEach(param => {
         const range = paramRanges[param];
@@ -328,7 +328,7 @@ export default function OptimizationPage() {
         const randomStep = Math.floor(Math.random() * (steps + 1));
         paramSet[param] = range.min + (randomStep * range.step);
       });
-      
+
       // Generate random performance metrics
       paramSet.return = +(Math.random() * 50 - 10).toFixed(2);
       paramSet.winRate = +(Math.random() * 40 + 40).toFixed(2);
@@ -336,13 +336,13 @@ export default function OptimizationPage() {
       paramSet.maxDrawdown = +(Math.random() * 25 + 5).toFixed(2);
       paramSet.sharpeRatio = +(Math.random() * 2 + 0.1).toFixed(2);
       paramSet.totalTrades = Math.floor(Math.random() * 150 + 30);
-      
+
       parameterSets.push(paramSet);
     }
-    
+
     // Sort by return (descending)
     parameterSets.sort((a, b) => b.return - a.return);
-    
+
     // Generate heat map data
     let heatMapData = [];
     if (selectedParams.length >= 2) {
@@ -350,7 +350,7 @@ export default function OptimizationPage() {
       const param2 = selectedParams[1];
       const range1 = paramRanges[param1];
       const range2 = paramRanges[param2];
-      
+
       for (let v1 = range1.min; v1 <= range1.max; v1 += range1.step) {
         for (let v2 = range2.min; v2 <= range2.max; v2 += range2.step) {
           heatMapData.push({
@@ -361,7 +361,7 @@ export default function OptimizationPage() {
         }
       }
     }
-    
+
     // Generate surface plot data (3D visualization data)
     let surfacePlotData = [];
     if (selectedParams.length >= 3) {
@@ -370,7 +370,7 @@ export default function OptimizationPage() {
       const param3 = selectedParams[2];
       const range1 = paramRanges[param1];
       const range2 = paramRanges[param2];
-      
+
       for (let v1 = range1.min; v1 <= range1.max; v1 += range1.step) {
         for (let v2 = range2.min; v2 <= range2.max; v2 += range2.step) {
           surfacePlotData.push({
@@ -382,16 +382,16 @@ export default function OptimizationPage() {
         }
       }
     }
-    
+
     // Find optimal parameter set (best return)
-    const optimalParameters = {...parameterSets[0]};
+    const optimalParameters = { ...parameterSets[0] };
     delete optimalParameters.return;
     delete optimalParameters.winRate;
     delete optimalParameters.profitFactor;
     delete optimalParameters.maxDrawdown;
     delete optimalParameters.sharpeRatio;
     delete optimalParameters.totalTrades;
-    
+
     return {
       parameterSets,
       optimizedParameters: optimalParameters,
@@ -444,7 +444,7 @@ bb              = input_lookback`;
 
     setPineScript(samplePineScript);
   };
-  
+
   const clearCode = () => {
     setPineScript('');
     setJsonOutput('');
@@ -459,10 +459,10 @@ bb              = input_lookback`;
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-indigo-600 text-transparent bg-clip-text">Strategy Optimization</h1>
             <p className="text-zinc-400 mt-1">Fine-tune your trading strategies with advanced optimization tools</p>
           </div>
-          
+
           <div className="flex space-x-3">
             {activeTab === 'input' && (
-              <button 
+              <button
                 className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg flex items-center text-sm transition-all duration-200 border border-zinc-700"
                 onClick={addSampleCode}
               >
@@ -470,9 +470,9 @@ bb              = input_lookback`;
                 Load Sample
               </button>
             )}
-            
+
             {activeTab === 'configure' && symbol && startDate && endDate && (
-              <button 
+              <button
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30"
                 onClick={handleOptimize}
               >
@@ -482,15 +482,14 @@ bb              = input_lookback`;
             )}
           </div>
         </div>
-        
+
         {/* Tabs */}
         <div className="flex mb-6 bg-zinc-900/50 p-1 rounded-lg">
           <button
-            className={`px-5 py-3 font-medium rounded-md transition-all ${
-              activeTab === 'input' 
-              ? 'bg-indigo-600 text-white shadow-lg' 
+            className={`px-5 py-3 font-medium rounded-md transition-all ${activeTab === 'input'
+              ? 'bg-indigo-600 text-white shadow-lg'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
-            }`}
+              }`}
             onClick={() => handleTabChange('input')}
           >
             <div className="flex items-center">
@@ -499,11 +498,10 @@ bb              = input_lookback`;
             </div>
           </button>
           <button
-            className={`px-5 py-3 font-medium rounded-md transition-all ${
-              activeTab === 'configure' 
-              ? 'bg-indigo-600 text-white shadow-lg' 
+            className={`px-5 py-3 font-medium rounded-md transition-all ${activeTab === 'configure'
+              ? 'bg-indigo-600 text-white shadow-lg'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
-            }`}
+              }`}
             onClick={() => handleTabChange('configure')}
           >
             <div className="flex items-center">
@@ -512,11 +510,10 @@ bb              = input_lookback`;
             </div>
           </button>
           <button
-            className={`px-5 py-3 font-medium rounded-md transition-all ${
-              activeTab === 'results' 
-              ? 'bg-indigo-600 text-white shadow-lg' 
+            className={`px-5 py-3 font-medium rounded-md transition-all ${activeTab === 'results'
+              ? 'bg-indigo-600 text-white shadow-lg'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
-            }`}
+              }`}
             onClick={() => handleTabChange('results')}
           >
             <div className="flex items-center">
@@ -525,7 +522,7 @@ bb              = input_lookback`;
             </div>
           </button>
         </div>
-        
+
         {/* Strategy Input Tab Content */}
         {activeTab === 'input' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -541,7 +538,7 @@ bb              = input_lookback`;
                       <span className="text-xs text-zinc-500">{pineScript.split('\n').length} lines</span>
                       <span className="text-xs px-2 py-0.5 bg-zinc-800 rounded-full text-zinc-400">Pine Script v5</span>
                     </div>
-                    <button 
+                    <button
                       className="p-1.5 bg-zinc-700 hover:bg-zinc-600 rounded text-xs text-zinc-300 transition-colors"
                       onClick={clearCode}
                       title="Clear code"
@@ -575,7 +572,7 @@ if (shortCondition)
     strategy.entry(&quot;Short&quot;, strategy.short)"
                     style={{ resize: 'none' }}
                   ></textarea>
-                  
+
                   <div className="absolute right-3 bottom-3 flex space-x-2">
                     {!pineScript && (
                       <button
@@ -587,7 +584,7 @@ if (shortCondition)
                       </button>
                     )}
                     {pineScript && (
-                      <button 
+                      <button
                         onClick={handleConvert}
                         disabled={isConverting}
                         className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shadow-lg shadow-indigo-900/30 flex items-center"
@@ -617,14 +614,14 @@ if (shortCondition)
                 </div>
               </div>
             </div>
-            
+
             <div className="lg:col-span-1">
               <div className="bg-zinc-800/70 rounded-xl shadow-xl h-full overflow-hidden border border-zinc-700/50">
                 <div className="p-4 bg-zinc-900/70 border-b border-zinc-700/50 flex items-center">
                   <BarChart2 className="w-5 h-5 text-indigo-500 mr-2" />
                   <h2 className="text-white font-medium">JSON Output</h2>
                 </div>
-                
+
                 {jsonData ? (
                   <div className="p-4 h-[450px] overflow-auto space-y-4">
                     {/* Input Parameters Section */}
@@ -653,7 +650,7 @@ if (shortCondition)
                         <p className="text-zinc-500 text-sm">No input parameters detected</p>
                       )}
                     </div>
-                    
+
                     {/* Optimization Options */}
                     <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
                       <h3 className="text-md font-medium mb-2 text-indigo-400 flex items-center">
@@ -679,10 +676,10 @@ if (shortCondition)
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
                       <h3 className="text-md font-medium mb-2 text-zinc-400 flex items-center">
-                        <AlertTriangle className="w-4 h-4 mr-1 text-yellow-500" /> 
+                        <AlertTriangle className="w-4 h-4 mr-1 text-yellow-500" />
                         Notice
                       </h3>
                       <p className="text-zinc-400 text-sm">
@@ -706,7 +703,7 @@ if (shortCondition)
             </div>
           </div>
         )}
-        
+
         {/* Configure Test Tab Content */}
         {activeTab === 'configure' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -727,7 +724,7 @@ if (shortCondition)
                     className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-2">Timeframe</label>
                   <select
@@ -745,7 +742,7 @@ if (shortCondition)
                   </select>
                 </div>
               </div>
-              
+
               {/* Date range */}
               <h3 className="text-md font-medium mb-3 text-zinc-300">Date Range</h3>
               <div className="grid grid-cols-2 gap-4 mb-6">
@@ -768,7 +765,7 @@ if (shortCondition)
                   />
                 </div>
               </div>
-              
+
               {/* Account parameters */}
               <h3 className="text-md font-medium mb-3 text-zinc-300">Account Parameters</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -793,13 +790,13 @@ if (shortCondition)
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <Zap className="w-5 h-5 mr-2 text-indigo-500" />
                 Optimization Settings
               </h2>
-              
+
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-2">Optimization Algorithm</label>
@@ -813,7 +810,7 @@ if (shortCondition)
                   </select>
                   <p className="text-xs text-zinc-500 mt-1">Brute force tests all combinations for maximum accuracy but can take longer.</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-2">Optimization Target</label>
                   <select
@@ -826,7 +823,7 @@ if (shortCondition)
                     <option value="max-drawdown">Minimize Max Drawdown</option>
                   </select>
                 </div>
-                
+
                 <div className="bg-amber-900/20 border border-amber-900/40 rounded-lg p-3 flex text-amber-400">
                   <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
                   <div className="text-sm">
@@ -834,8 +831,8 @@ if (shortCondition)
                     <p className="mt-1 text-xs">Be careful of overfitting - optimal parameters on historical data may not perform well on future data.</p>
                   </div>
                 </div>
-                
-                <button 
+
+                <button
                   className="w-full mt-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center justify-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30"
                   onClick={handleOptimize}
                   disabled={isLoading}
@@ -856,7 +853,7 @@ if (shortCondition)
             </div>
           </div>
         )}
-        
+
         {/* Results Tab Content */}
         {activeTab === 'results' && (
           <div>
@@ -871,8 +868,8 @@ if (shortCondition)
                     <h3 className="text-xl font-semibold text-white mb-2">Optimization In Progress</h3>
                     <p className="text-zinc-400 mb-6">Testing parameter combinations to find the optimal strategy</p>
                     <div className="bg-zinc-700/50 h-2 rounded-full max-w-md mx-auto overflow-hidden">
-                      <div 
-                        className="bg-indigo-500 h-full rounded-full" 
+                      <div
+                        className="bg-indigo-500 h-full rounded-full"
                         style={{ width: `${Math.max(5, 100 - (countdownTime / 60 * 100))}%` }}
                       ></div>
                     </div>
@@ -900,7 +897,7 @@ if (shortCondition)
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="mt-6 pt-4 border-t border-zinc-700/30 grid grid-cols-3 gap-4">
                         <div>
                           <div className="text-zinc-400 text-xs mb-1">Return</div>
@@ -915,14 +912,14 @@ if (shortCondition)
                           <div className="text-white font-semibold text-lg">{results?.bestResult?.profitFactor}</div>
                         </div>
                       </div>
-                      
+
                       <div className="mt-4 text-xs text-zinc-500 flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
                         Optimization completed in {results?.optimizationTime} seconds
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Optimization Performance Charts */}
                   <div className="lg:col-span-2 bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50">
                     <div className="p-4 bg-zinc-900/70 border-b border-zinc-700/50 flex items-center justify-between">
@@ -946,7 +943,7 @@ if (shortCondition)
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Parameter Results Table */}
                 <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50">
                   <div className="p-4 bg-zinc-900/70 border-b border-zinc-700/50 flex items-center justify-between">
@@ -1000,7 +997,7 @@ if (shortCondition)
                     <p className="text-zinc-400 max-w-md mx-auto">
                       Complete the strategy input and configuration steps, then run the optimization to see results.
                     </p>
-                    <button 
+                    <button
                       onClick={() => handleTabChange('input')}
                       className="mt-6 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30 mx-auto"
                     >
@@ -1013,7 +1010,7 @@ if (shortCondition)
             )}
           </div>
         )}
-        
+
       </div>
     </div>
   );
