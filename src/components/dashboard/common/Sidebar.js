@@ -165,7 +165,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
       return itemName === activeItem;
     }
 
-    // Special cases for FAQ, Support, Pricing
+    // Special cases for common navigation items
     if (itemName === 'FAQ' && (activeItem === 'FAQ' || pathname?.includes('/dashboard/faq'))) {
       return true;
     }
@@ -181,6 +181,23 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
     // For Dashboard, only match exactly
     if (itemName === 'Dashboard') {
       return activeItem === 'Dashboard' && pathname === '/dashboard';
+    }
+
+    // Add special handling for Marketplace, Back Test, Optimization, and My Developer
+    if (itemName === 'Marketplace' && (activeItem === 'Marketplace' || pathname?.includes('/dashboard/marketplace'))) {
+      return true;
+    }
+
+    if (itemName === 'Back Test' && (activeItem === 'Back Test' || pathname?.includes('/dashboard/backtest'))) {
+      return true;
+    }
+
+    if (itemName === 'Optimization' && (activeItem === 'Optimization' || pathname?.includes('/dashboard/optimization'))) {
+      return true;
+    }
+
+    if (itemName === 'My Developer' && (activeItem === 'My Developer' || pathname?.includes('/dashboard/developer'))) {
+      return true;
     }
 
     // For everything else, just do exact match
