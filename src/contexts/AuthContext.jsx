@@ -27,13 +27,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Helper function to generate a unique referral code
-const generateReferralCode = name => {
-  const namePart = name.split(' ')[0].toLowerCase().substring(0, 4);
-  const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${namePart}-${randomPart}`;
-};
-
 // AuthProvider component
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -111,7 +104,7 @@ export function AuthProvider({ children }) {
   };
 
   // Sign up with email and password
-  const signUp = async ({ email, password, name, phoneNumber, referral = null }) => {
+  const signUp = async ({ email, password, name, phoneNumber }) => {
     try {
       // Sign up the user
       const { data, error } = await supabase.auth.signUp({
@@ -121,33 +114,20 @@ export function AuthProvider({ children }) {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             full_name: name,
-            phone: phoneNumber,
-            referral: referral,
+            phone_number: phoneNumber,
           },
         },
       });
 
       if (error) throw error;
 
-      // Create a profile for the new user
-      if (data.user) {
-        const userReferralCode = generateReferralCode(name);
-        const { error: profileError } = await supabase.from('profiles').insert([
-          {
-            id: data.user.id,
-            full_name: name,
-            phone_number: phoneNumber,
-            referral_code: userReferralCode,
-            referral_used: referral,
-            created_at: new Date(),
-          },
-        ]);
-
-        if (profileError) throw profileError;
-      }
-
+      // Note: We don't need to manually create a profile anymore
+      // The profile will be created by a Supabase trigger or automatically 
+      // populated from the migration script when the user confirms their email
+      
       return { data, error: null };
     } catch (error) {
+      console.error('Sign up error:', error);
       return { data: null, error };
     }
   };

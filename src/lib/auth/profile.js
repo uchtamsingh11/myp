@@ -87,26 +87,3 @@ export const getCurrentUserProfile = async () => {
     return null;
   }
 };
-
-/**
- * Checks if a referral code exists
- * @param {string} referralCode - The referral code to check
- * @returns {Promise<boolean>} - True if the referral code exists, false otherwise
- */
-export const checkReferralCode = async referralCode => {
-  try {
-    if (!referralCode) return false;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('referral_code', referralCode)
-      .single();
-
-    if (error) return false;
-    return !!data;
-  } catch (error) {
-    console.error('Error checking referral code:', error);
-    return false;
-  }
-};

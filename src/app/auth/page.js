@@ -22,7 +22,6 @@ const AuthContent = () => {
     password: '',
     name: '',
     confirmPassword: '',
-    referral: '',
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -164,16 +163,23 @@ const AuthContent = () => {
         throw new Error('Passwords do not match');
       }
 
-      // Sign up with new auth context
-      const { error } = await signUp({
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
-        phoneNumber: formData.phoneNumber,
-        referral: formData.referral || null,
+      // Use the server-side signup API for better security
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          phoneNumber: formData.phoneNumber,
+        }),
       });
 
-      if (error) throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error creating account');
+      }
 
       // Show success notification about email verification
       toast.info('Please check your email to verify your account. Redirecting to login...', {
@@ -189,7 +195,6 @@ const AuthContent = () => {
           password: '',
           name: '',
           confirmPassword: '',
-          referral: '',
         });
       }, 5000);
     } catch (error) {
@@ -218,7 +223,6 @@ const AuthContent = () => {
       password: '',
       name: '',
       confirmPassword: '',
-      referral: '',
     });
   };
 
@@ -460,20 +464,6 @@ const AuthContent = () => {
                         className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-zinc-500"
                         placeholder="Confirm your password"
                         required
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-zinc-400 mb-2 text-sm" htmlFor="referral">
-                        Referral Code <span className="text-zinc-500">(optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="referral"
-                        name="referral"
-                        value={formData.referral}
-                        onChange={handleChange}
-                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-zinc-500"
-                        placeholder="Enter referral code if you have one"
                       />
                     </div>
                   </>
