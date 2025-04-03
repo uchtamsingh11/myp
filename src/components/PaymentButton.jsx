@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now', className = '', onSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -92,11 +93,15 @@ export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now',
         if (onSuccess && typeof onSuccess === 'function') {
           onSuccess(verifyData);
         } else {
-          // Redirect to payment success page if no success handler
-          router.push(`/dashboard/payment-status?order_id=${orderData.orderId}&status=success`);
+          // Show toast notification for successful payment
+          toast.success('Payment successful! Coins added to your account.');
+          
+          // Redirect to the page specified in the API response or default to pricing page
+          router.push(verifyData.redirectTo || '/dashboard/pricing');
         }
       } else {
         // Payment failed or pending
+        // Still show error states on payment status page
         router.push(`/dashboard/payment-status?order_id=${orderData.orderId}&status=pending`);
       }
     } catch (error) {

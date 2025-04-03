@@ -375,12 +375,83 @@ async function processPaymentWebhook(webhookData, orderId, orderStatus, paymentI
                 // Add custom business logic based on the payment status
                 if (orderStatus === 'PAID') {
                         console.log(`Payment successful for order ${orderId}`);
-                        // Add credits/coins or fulfill order here
 
-                        // For now, just return success
+                        // Extract the user_id from the order
+                        const userId = orderData.user_id;
+                        const orderAmount = orderData.amount;
+
+                        if (userId && orderAmount) {
+                                // Calculate coins - 1 coin per rupee
+                                const coinsToAdd = Math.floor(parseFloat(orderAmount));
+
+                                console.log(`Adding ${coinsToAdd} coins to user ${userId}`);
+
+                                // Get current user profile
+                                const { data: profileData, error: profileError } = await supabase
+                                        .from('profiles')
+                                        .select('coins, coin_balance')
+                                        .eq('id', userId)
+                                        .single();
+
+                                if (profileError) {
+                                        console.error(`User profile not found for ${userId}:`, profileError);
+                                        return {
+                                                success: false,
+                                                error: 'User profile not found',
+                                                timestamp: new Date().toISOString()
+                                        };
+                                }
+
+                                // Determine which coin field to update (support both column names)
+                                let currentCoins = 0;
+                                let coinField = 'coins';
+
+                                if (profileData.coins !== undefined && profileData.coins !== null) {
+                                        currentCoins = profileData.coins;
+                                        coinField = 'coins';
+                                } else if (profileData.coin_balance !== undefined && profileData.coin_balance !== null) {
+                                        currentCoins = profileData.coin_balance;
+                                        coinField = 'coin_balance';
+                                }
+
+                                // Add coins to user profile
+                                const newCoinBalance = currentCoins + coinsToAdd;
+
+                                // Update profile with new coin balance
+                                const updateData = {};
+                                updateData[coinField] = newCoinBalance;
+
+                                const { error: coinUpdateError } = await supabase
+                                        .from('profiles')
+                                        .update(updateData)
+                                        .eq('id', userId);
+
+                                if (coinUpdateError) {
+                                        console.error(`Failed to update coins for user ${userId}:`, coinUpdateError);
+                                        return {
+                                                success: false,
+                                                error: 'Failed to update user coins',
+                                                timestamp: new Date().toISOString()
+                                        };
+                                }
+
+                                console.log(`Successfully updated ${userId}'s coin balance to ${newCoinBalance}`);
+
+                                // Record purchase in purchases table for history
+                                await supabase.from('purchases').insert({
+                                        user_id: userId,
+                                        amount: orderAmount,
+                                        coins: coinsToAdd,
+                                        order_id: orderId,
+                                        payment_id: paymentId,
+                                        plan_name: orderData.description || 'Coin Purchase',
+                                        status: 'completed'
+                                });
+                        }
+
                         return {
                                 success: true,
-                                message: 'Payment successful and order updated',
+                                message: 'Payment successful and coins added',
                                 orderId,
                                 orderStatus,
                                 paymentId,

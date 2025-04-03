@@ -99,6 +99,7 @@ export async function GET(request) {
                         orderAmount: orderData.order_amount,
                         currency: orderData.order_currency,
                         isPaid: isPaid,
+                        redirectTo: '/dashboard/pricing',
                         paymentDetails: {
                                 paymentMethod: orderData.payment_method,
                                 paymentTime: orderData.payment_time,
