@@ -376,87 +376,85 @@ async function processPaymentWebhook(webhookData, orderId, orderStatus, paymentI
                 if (orderStatus === 'PAID') {
                         console.log(`Payment successful for order ${orderId}`);
 
-                        // Extract the user_id from the order
+                        // Get user ID from order data
                         const userId = orderData.user_id;
-                        const orderAmount = orderData.amount;
 
-                        if (userId && orderAmount) {
-                                // Calculate coins - 1 coin per rupee
-                                const coinsToAdd = Math.floor(parseFloat(orderAmount));
-
-                                console.log(`Adding ${coinsToAdd} coins to user ${userId}`);
-
-                                // Get current user profile
-                                const { data: profileData, error: profileError } = await supabase
-                                        .from('profiles')
-                                        .select('coins, coin_balance')
-                                        .eq('id', userId)
-                                        .single();
-
-                                if (profileError) {
-                                        console.error(`User profile not found for ${userId}:`, profileError);
-                                        return {
-                                                success: false,
-                                                error: 'User profile not found',
-                                                timestamp: new Date().toISOString()
-                                        };
-                                }
-
-                                // Determine which coin field to update (support both column names)
-                                let currentCoins = 0;
-                                let coinField = 'coins';
-
-                                if (profileData.coins !== undefined && profileData.coins !== null) {
-                                        currentCoins = profileData.coins;
-                                        coinField = 'coins';
-                                } else if (profileData.coin_balance !== undefined && profileData.coin_balance !== null) {
-                                        currentCoins = profileData.coin_balance;
-                                        coinField = 'coin_balance';
-                                }
-
-                                // Add coins to user profile
-                                const newCoinBalance = currentCoins + coinsToAdd;
-
-                                // Update profile with new coin balance
-                                const updateData = {};
-                                updateData[coinField] = newCoinBalance;
-
-                                const { error: coinUpdateError } = await supabase
-                                        .from('profiles')
-                                        .update(updateData)
-                                        .eq('id', userId);
-
-                                if (coinUpdateError) {
-                                        console.error(`Failed to update coins for user ${userId}:`, coinUpdateError);
-                                        return {
-                                                success: false,
-                                                error: 'Failed to update user coins',
-                                                timestamp: new Date().toISOString()
-                                        };
-                                }
-
-                                console.log(`Successfully updated ${userId}'s coin balance to ${newCoinBalance}`);
-
-                                // Record purchase in purchases table for history
-                                await supabase.from('purchases').insert({
-                                        user_id: userId,
-                                        amount: orderAmount,
-                                        coins: coinsToAdd,
-                                        order_id: orderId,
-                                        payment_id: paymentId,
-                                        plan_name: orderData.description || 'Coin Purchase',
-                                        status: 'completed'
-                                });
+                        if (!userId) {
+                                console.error(`No user ID found for order ${orderId}`);
+                                return {
+                                        success: false,
+                                        error: 'No user ID associated with order',
+                                        timestamp: new Date().toISOString()
+                                };
                         }
 
-                        return {
-                                success: true,
-                                message: 'Payment successful and coins added',
-                                orderId,
-                                orderStatus,
-                                paymentId,
-                                timestamp: new Date().toISOString()
-                        };
+                        // Get amount from order data or webhook data
+                        const amount = parseFloat(orderData.amount || webhookData.data?.order?.order_amount || "0");
+
+                        try {
+                                // Check if coins already added to avoid duplicates
+                                if (orderData.coins_added) {
+                                        console.log(`Coins already added for order ${orderId}: ${orderData.coins_added}`);
+                                        return {
+                                                success: true,
+                                                message: 'Payment already processed and coins already added',
+                                                orderId,
+                                                orderStatus: 'FULFILLED',
+                                                paymentId,
+                                                coinsAdded: orderData.coins_added,
+                                                timestamp: new Date().toISOString()
+                                        };
+                                }
+
+                                // Calculate coins (1 INR = 1 coin)
+                                const coinsToAdd = Math.floor(amount);
+
+                                if (coinsToAdd <= 0) {
+                                        console.error(`Invalid coin amount for order ${orderId}: ${coinsToAdd}`);
+                                        return {
+                                                success: false,
+                                                error: 'Invalid coin amount',
+                                                timestamp: new Date().toISOString()
+                                        };
+                                }
+
+                                // Import the coin management service
+                                const { addCoins } = await import('../../../../lib/services/coin-management');
+
+                                // Add coins to the user's balance
+                                const newBalance = await addCoins(userId, coinsToAdd);
+
+                                console.log(`Added ${coinsToAdd} coins to user ${userId}. New balance: ${newBalance}`);
+
+                                // Update the order with fulfillment details
+                                await supabase
+                                        .from('payment_orders')
+                                        .update({
+                                                coins_added: coinsToAdd,
+                                                status: 'FULFILLED',
+                                                fulfilled_at: new Date().toISOString()
+                                        })
+                                        .eq('order_id', orderId);
+
+                                return {
+                                        success: true,
+                                        message: 'Payment successful and coins added to user account',
+                                        orderId,
+                                        orderStatus: 'FULFILLED',
+                                        paymentId,
+                                        coinsAdded: coinsToAdd,
+                                        newBalance,
+                                        timestamp: new Date().toISOString()
+                                };
+                        } catch (coinError) {
+                                console.error(`Error adding coins for order ${orderId}:`, coinError);
+                                return {
+                                        success: false,
+                                        error: 'Failed to add coins to user account',
+                                        details: coinError.message,
+                                        timestamp: new Date().toISOString()
+                                };
+                        }
                 } else if (orderStatus === 'FAILED') {
                         console.log(`Payment failed for order ${orderId}`);
                         // Handle failed payment

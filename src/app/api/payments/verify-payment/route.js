@@ -91,6 +91,57 @@ export async function GET(request) {
                         console.error('Error updating order status in database:', updateError);
                 }
 
+                // If payment is successful, add coins to user's account
+                let coinBalanceUpdated = false;
+                let coinsAdded = 0;
+                let newBalance = 0;
+
+                if (isPaid) {
+                        try {
+                                // Get order details from database to find the user
+                                const { data: orderDetails, error: orderError } = await adminSupabase
+                                        .from('payment_orders')
+                                        .select('user_id, amount, coins_added')
+                                        .eq('order_id', orderId)
+                                        .single();
+
+                                if (orderError) {
+                                        console.error('Error fetching order details:', orderError);
+                                } else if (!orderDetails.coins_added) { // Only add coins if not already added
+                                        const userId = orderDetails.user_id;
+                                        const amount = parseFloat(orderDetails.amount || orderData.order_amount || "0");
+
+                                        // Calculate coins (1 INR = 1 coin)
+                                        coinsAdded = Math.floor(amount);
+
+                                        // Import the coin management functions
+                                        const { addCoins } = await import('../../../../lib/services/coin-management');
+
+                                        // Add coins to user's balance
+                                        newBalance = await addCoins(userId, coinsAdded);
+
+                                        // Update order with fulfillment details
+                                        await adminSupabase
+                                                .from('payment_orders')
+                                                .update({
+                                                        coins_added: coinsAdded,
+                                                        status: 'FULFILLED',
+                                                        fulfilled_at: new Date().toISOString()
+                                                })
+                                                .eq('order_id', orderId);
+
+                                        console.log(`Added ${coinsAdded} coins to user ${userId}. New balance: ${newBalance}`);
+                                        coinBalanceUpdated = true;
+                                } else {
+                                        console.log(`Coins already added for order ${orderId}`);
+                                        coinsAdded = orderDetails.coins_added;
+                                        coinBalanceUpdated = true;
+                                }
+                        } catch (coinError) {
+                                console.error('Error processing coins for order:', coinError);
+                        }
+                }
+
                 // Return payment status
                 return NextResponse.json({
                         success: true,
@@ -99,7 +150,9 @@ export async function GET(request) {
                         orderAmount: orderData.order_amount,
                         currency: orderData.order_currency,
                         isPaid: isPaid,
-                        redirectTo: '/dashboard/pricing',
+                        coinBalanceUpdated,
+                        coinsAdded,
+                        newBalance,
                         paymentDetails: {
                                 paymentMethod: orderData.payment_method,
                                 paymentTime: orderData.payment_time,

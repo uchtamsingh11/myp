@@ -34,7 +34,10 @@ export default function PaymentStatusPage() {
           amount: data.orderAmount || searchParams.get('amount') || 'N/A',
           status: data.orderStatus,
           timestamp: new Date().toLocaleString(),
-          coins: Math.floor(parseFloat(data.orderAmount || '0')) // 1 coin per rupee
+          // Use coins from API if available, otherwise calculate
+          coins: data.coinsAdded || Math.floor(parseFloat(data.orderAmount || '0')), 
+          newBalance: data.newBalance || null, // Track new balance if returned
+          coinBalanceUpdated: data.coinBalanceUpdated || false // Track if coins were added
         });
       } catch (error) {
         console.error('Error checking payment status:', error);
@@ -100,7 +103,11 @@ export default function PaymentStatusPage() {
                   <span className="text-3xl font-bold text-white">{paymentDetails?.coins || 0}</span>
                   <span className="text-zinc-400">coins added</span>
                 </div>
-                <p className="text-sm text-zinc-500">1 coin = 1 trade</p>
+                {paymentDetails?.newBalance ? (
+                  <p className="text-sm text-green-400">New balance: {paymentDetails.newBalance} coins</p>
+                ) : (
+                  <p className="text-sm text-zinc-500">1 coin = 1 trade</p>
+                )}
               </div>
               
               <div className="bg-zinc-800/40 rounded-lg p-4 mb-6 text-left">

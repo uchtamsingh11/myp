@@ -7,7 +7,6 @@ import { supabase } from '../../../utils/supabase';
 import PaymentButton from '../../../components/PaymentButton';
 import { BorderBeam } from '../../../components/ui/effects/BorderBeam';
 import { RainbowButton } from '../../../components/ui/buttons/RainbowButton';
-import toast from 'react-hot-toast';
 
 export default function PricingPage() {
   const [userId, setUserId] = useState(null);
@@ -303,8 +302,8 @@ export default function PricingPage() {
                     buttonText="Buy Now"
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                     onSuccess={(data) => {
-                      // Show toast notification and stay on pricing page
-                      toast.success('Payment successful! Coins added to your account.');
+                      // Refresh user data after successful payment
+                      window.location.href = `/dashboard/payment-status?order_id=${data.orderId}&status=success`;
                     }}
                   />
                 </div>
@@ -357,8 +356,8 @@ export default function PricingPage() {
                 buttonText="Buy Now"
                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                 onSuccess={(data) => {
-                  // Show toast notification and stay on pricing page
-                  toast.success('Payment successful! Coins added to your account.');
+                  // Refresh user data after successful payment
+                  window.location.href = `/dashboard/payment-status?order_id=${data.orderId}&status=success`;
                 }}
                 disabled={!customAmount}
               />
