@@ -287,9 +287,9 @@ export default function Dashboard() {
               <p className="text-zinc-400 text-xs font-medium uppercase tracking-wider flex items-center">
                 <BarChart2 className="w-3.5 h-3.5 mr-1 text-amber-400" /> Active Strategies
               </p>
-              <h3 className="text-white text-2xl font-bold mt-1">7</h3>
+              <h3 className="text-white text-2xl font-bold mt-1">0</h3>
               <p className="text-zinc-400 text-xs flex items-center mt-1">
-                <Clock className="w-3.5 h-3.5 mr-1" /> Last deployed <span className="text-white ml-1">2 hours ago</span>
+                <Clock className="w-3.5 h-3.5 mr-1" /> Last deployed <span className="text-white ml-1">0 hours ago</span>
               </p>
             </div>
             <div className="bg-amber-500/10 p-2 rounded-lg">
@@ -304,9 +304,9 @@ export default function Dashboard() {
               <p className="text-zinc-400 text-xs font-medium uppercase tracking-wider flex items-center">
                 <PieChart className="w-3.5 h-3.5 mr-1 text-green-400" /> Success Rate
               </p>
-              <h3 className="text-white text-2xl font-bold mt-1">68.2%</h3>
+              <h3 className="text-white text-2xl font-bold mt-1">0%</h3>
               <p className="text-green-400 text-xs flex items-center mt-1">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" /> +4.3% <span className="text-zinc-500 ml-1">from previous</span>
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> +0% <span className="text-zinc-500 ml-1">from previous</span>
               </p>
             </div>
             <div className="bg-green-500/10 p-2 rounded-lg">
@@ -321,7 +321,7 @@ export default function Dashboard() {
               <p className="text-zinc-400 text-xs font-medium uppercase tracking-wider flex items-center">
                 <DollarSign className="w-3.5 h-3.5 mr-1 text-purple-400" /> Available Credits
               </p>
-              <h3 className="text-white text-2xl font-bold mt-1">15</h3>
+              <h3 className="text-white text-2xl font-bold mt-1">0</h3>
               <div className="flex items-center mt-1">
                 <button className="text-white text-xs bg-purple-600 rounded px-2 py-0.5 hover:bg-purple-500 transition-colors">
                   Buy More
