@@ -18,6 +18,7 @@ export default function Backtest() {
   // Form state
   const [symbol, setSymbol] = useState('');
   const [timeframe, setTimeframe] = useState('1D');
+  const [timeDuration, setTimeDuration] = useState('1W');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [initialCapital, setInitialCapital] = useState(1000000);
@@ -122,6 +123,7 @@ export default function Backtest() {
               const config = {
                 symbol,
                 timeframe,
+                timeDuration,
                 startDate,
                 endDate,
                 initialCapital,
@@ -140,7 +142,7 @@ export default function Backtest() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isBacktesting, countdownTime, pineScript, symbol, timeframe, startDate, endDate, initialCapital, quantity]);
+  }, [isBacktesting, countdownTime, pineScript, symbol, timeframe, timeDuration, startDate, endDate, initialCapital, quantity]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -328,30 +330,58 @@ export default function Backtest() {
 
   // Function to generate random backtest results
   const generateRandomResults = () => {
-    // Generate overall return between -170% and +27%
-    const overallReturn = Math.random() * 197 - 170;
+    // Generate results based on time duration
+    let overallReturn, winRate, profitFactor, maxDrawdown, sharpeRatio;
+
+    // Use the time duration to determine the range of results
+    switch (timeDuration) {
+      case '1W':
+        // Under 1 week: +27% to -49%
+        overallReturn = Math.random() * 76 - 49;
+        break;
+      case '1m':
+        // Under 1 month: +27% to -84%
+        overallReturn = Math.random() * 111 - 84;
+        break;
+      case '3m':
+        // Under 3 month: +27% to -146%
+        overallReturn = Math.random() * 173 - 146;
+        break;
+      case '6m':
+        // Under 6 months: +27% to -211%
+        overallReturn = Math.random() * 238 - 211;
+        break;
+      case '1y':
+      case '12m':
+        // Under 12 months: +27% to -276%
+        overallReturn = Math.random() * 303 - 276;
+        break;
+      default:
+        // Default case
+        overallReturn = Math.random() * 197 - 170;
+    }
 
     // Adjust other metrics based on the overall return
     const isPositive = overallReturn > 0;
 
     // Calculate win rate - positive returns have higher win rates
-    const winRate = isPositive
+    winRate = isPositive
       ? 45 + Math.random() * 25 // 45-70% for profitable strategies
       : 20 + Math.random() * 30; // 20-50% for losing strategies
 
     // Profit factor is correlated with performance
     // For negative returns, profit factor is < 1
-    const profitFactor = isPositive
+    profitFactor = isPositive
       ? 1 + Math.random() * 1.5 // 1.0-2.5 for profitable strategies
       : 0.2 + Math.random() * 0.7; // 0.2-0.9 for losing strategies
 
     // Max drawdown is typically worse for losing strategies
-    const maxDrawdown = isPositive
+    maxDrawdown = isPositive
       ? 5 + Math.random() * 25 // 5-30% for profitable strategies
       : 20 + Math.random() * 40; // 20-60% for losing strategies
 
     // Sharpe ratio - positive for profitable strategies, often negative for losing ones
-    const sharpeRatio = isPositive
+    sharpeRatio = isPositive
       ? 0.2 + Math.random() * 1.8 // 0.2-2.0 for profitable strategies
       : -2 + Math.random() * 2.2; // -2.0 to +0.2 for losing strategies
 
@@ -491,6 +521,7 @@ export default function Backtest() {
     const config = {
       symbol,
       timeframe,
+      timeDuration,
       startDate,
       endDate,
       initialCapital,
@@ -907,7 +938,25 @@ if (shortCondition)
                   />
                 </div>
 
-                {/* Toggle for using cached results */}
+                <div>
+                  <label htmlFor="timeduration" className="block text-sm font-medium mb-2 text-zinc-300">Time Duration</label>
+                  <div className="relative">
+                    <select
+                      id="timeduration"
+                      value={timeDuration}
+                      onChange={(e) => setTimeDuration(e.target.value)}
+                      className="appearance-none w-full px-4 py-3 pr-10 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                    >
+                      <option value="1W">Under 1 week</option>
+                      <option value="1m">Under 1 month</option>
+                      <option value="3m">Under 3 month</option>
+                      <option value="6m">Under 6 months</option>
+                      <option value="12m">Under 12 months</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-3.5 text-zinc-400 w-4 h-4 pointer-events-none" />
+                  </div>
+                </div>
+
                 <div className="flex flex-col w-full">
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-sm text-zinc-300">Use Cached Results</label>
@@ -937,35 +986,6 @@ if (shortCondition)
                   </p>
                 </div>
 
-                <div>
-                  <label htmlFor="startDate" className="block text-sm font-medium mb-2 text-zinc-300">Start Date</label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      id="startDate"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-4 py-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-                      required
-                    />
-                    <CalendarIcon className="absolute right-3 top-3 text-zinc-400 w-5 h-5 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="endDate" className="block text-sm font-medium mb-2 text-zinc-300">End Date</label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      id="endDate"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-4 py-3 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-                      required
-                    />
-                    <CalendarIcon className="absolute right-3 top-3 text-zinc-400 w-5 h-5 pointer-events-none" />
-                  </div>
-                </div>
               </div>
 
               <div className="bg-zinc-900/40 rounded-xl p-5 mb-6 border border-zinc-800/80">
@@ -1078,6 +1098,13 @@ if (shortCondition)
                   ></div>
                 </div>
                 <p className="text-zinc-500 text-sm">Analyzing {symbol} on {timeframe} timeframe from {startDate} to {endDate}</p>
+                <p className="text-zinc-500 text-sm mt-1">Time duration: {
+                  timeDuration === '1W' ? 'Under 1 week' :
+                    timeDuration === '1m' ? 'Under 1 month' :
+                      timeDuration === '3m' ? 'Under 3 month' :
+                        timeDuration === '6m' ? 'Under 6 months' :
+                          timeDuration === '12m' ? 'Under 12 months' : timeDuration
+                }</p>
               </div>
             ) : showResults ? (
               <div className="space-y-6">
@@ -1364,6 +1391,46 @@ if (shortCondition)
                     <Download className="w-4 h-4 mr-2" />
                     Export Data (CSV)
                   </button>
+                </div>
+
+                <div className="bg-zinc-800/70 rounded-xl p-6 shadow-lg border border-zinc-700/50 mb-6">
+                  <h3 className="text-lg font-medium mb-4 text-zinc-200 flex items-center">
+                    <BarChart2 className="w-5 h-5 text-indigo-500 mr-2" />
+                    Strategy Summary
+                  </h3>
+
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between">
+                      <div className="text-zinc-400 text-sm">Symbol</div>
+                      <div className="text-white font-medium">{symbol}</div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between">
+                      <div className="text-zinc-400 text-sm">Timeframe</div>
+                      <div className="text-white font-medium">{timeframe}</div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between">
+                      <div className="text-zinc-400 text-sm">Time Duration</div>
+                      <div className="text-white font-medium">
+                        {timeDuration === '1W' ? 'Under 1 week' :
+                          timeDuration === '1m' ? 'Under 1 month' :
+                            timeDuration === '3m' ? 'Under 3 month' :
+                              timeDuration === '6m' ? 'Under 6 months' :
+                                timeDuration === '12m' ? 'Under 12 months' : timeDuration}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between">
+                      <div className="text-zinc-400 text-sm">Date Range</div>
+                      <div className="text-white font-medium">{startDate} to {endDate}</div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between">
+                      <div className="text-zinc-400 text-sm">Initial Capital</div>
+                      <div className="text-white font-medium">${initialCapital.toLocaleString()}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
