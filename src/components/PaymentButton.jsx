@@ -92,12 +92,12 @@ export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now',
         if (onSuccess && typeof onSuccess === 'function') {
           onSuccess(verifyData);
         } else {
-          // Redirect to pricing page with payment status if no success handler
-          router.push(`/dashboard/pricing?order_id=${orderData.orderId}&status=success`);
+          // Redirect to payment success page if no success handler
+          router.push(`/dashboard/payment-status?order_id=${orderData.orderId}&status=success`);
         }
       } else {
         // Payment failed or pending
-        router.push(`/dashboard/pricing?order_id=${orderData.orderId}&status=pending`);
+        router.push(`/dashboard/payment-status?order_id=${orderData.orderId}&status=pending`);
       }
     } catch (error) {
       console.error('Payment processing error:', error);

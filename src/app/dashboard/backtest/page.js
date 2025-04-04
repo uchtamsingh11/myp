@@ -958,6 +958,26 @@ if (shortCondition)
                 </div>
 
                 <div className="flex flex-col w-full">
+                  <label className="text-sm text-zinc-300 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-900/70 rounded-lg border border-zinc-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white transition-colors"
+                  />
+                </div>
+
+                <div className="flex flex-col w-full">
+                  <label className="text-sm text-zinc-300 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-900/70 rounded-lg border border-zinc-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white transition-colors"
+                  />
+                </div>
+
+                <div className="flex flex-col w-full">
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-sm text-zinc-300">Use Cached Results</label>
                     <div className="relative inline-block w-10 mr-2 align-middle select-none">

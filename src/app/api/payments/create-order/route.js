@@ -140,7 +140,7 @@ export async function POST(request) {
                         order_currency: 'INR',
                         customer_details: customer,
                         order_meta: {
-                                return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/pricing?order_id={order_id}&status={status}`,
+                                return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/payment-status?order_id={order_id}&status={status}`,
                                 notify_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/cashfree-webhook`
                         },
                         order_note: description || 'Purchase coins'
