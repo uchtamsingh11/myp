@@ -27,7 +27,7 @@ export default function PaymentButton({ amount, orderId, buttonText = 'Pay Now',
           // Add customer details
           customerName: 'Test User',
           customerEmail: 'test@example.com',
-          customerPhone: '9999999999', // Add a default phone number
+          customerPhone: '9999999999'
         }),
       });
       
