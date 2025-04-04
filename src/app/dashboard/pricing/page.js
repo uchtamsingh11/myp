@@ -8,7 +8,6 @@ import Link from 'next/link';
 import { supabase } from '../../../utils/supabase';
 import PaymentButton from '../../../components/PaymentButton';
 import { BorderBeam } from '../../../components/ui/effects/BorderBeam';
-import { RainbowButton } from '../../../components/ui/buttons/RainbowButton';
 
 export default function PricingPage() {
   const searchParams = useSearchParams();
@@ -78,29 +77,69 @@ export default function PricingPage() {
     setPaymentStatus('loading');
 
     try {
-      // Fetch payment status from API
-      const response = await fetch(`/api/payments/verify-payment?order_id=${orderId}`);
-      const data = await response.json();
+      // Fetch payment status from API with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
+      const response = await fetch(`/api/payments/verify-payment?order_id=${orderId}`, {
+        signal: controller.signal
+      }).catch(error => {
+        if (error.name === 'AbortError') {
+          throw new Error('Request timed out');
+        }
+        throw error;
+      });
+
+      clearTimeout(timeoutId);
+
+      // Handle non-OK responses
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to verify payment');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to verify payment: ${response.status}`);
       }
 
+      // Parse response with error handling
+      const data = await response.json().catch(() => {
+        throw new Error('Invalid JSON response from server');
+      });
+
       // Set status based on API response
-      setPaymentStatus(data.isPaid ? 'success' : data.orderStatus?.toLowerCase() || 'pending');
+      if (data.isPaid) {
+        setPaymentStatus('success');
+      } else if (data.orderStatus) {
+        setPaymentStatus(data.orderStatus.toLowerCase());
+      } else {
+        setPaymentStatus('pending');
+      }
+
       setPaymentDetails({
         orderId,
         amount: data.orderAmount || searchParams.get('amount') || 'N/A',
-        status: data.orderStatus,
+        status: data.orderStatus || 'Unknown',
         timestamp: new Date().toLocaleString(),
-        // Use coins from API if available, otherwise calculate
         coins: data.coinsAdded || Math.floor(parseFloat(data.orderAmount || '0')),
-        newBalance: data.newBalance || null, // Track new balance if returned
-        coinBalanceUpdated: data.coinBalanceUpdated || false // Track if coins were added
+        newBalance: data.newBalance || null,
+        coinBalanceUpdated: data.coinBalanceUpdated || false
       });
     } catch (error) {
       console.error('Error checking payment status:', error);
-      setPaymentStatus('error');
+      // If there's a connection error, handle it gracefully
+      if (error.message.includes('fetch') ||
+        error.message.includes('network') ||
+        error.message.includes('timed out') ||
+        error.message.includes('WebSocket')) {
+        setPaymentStatus('pending'); // Assume pending if we can't verify
+        setPaymentDetails({
+          orderId,
+          amount: searchParams.get('amount') || 'N/A',
+          status: 'Connection Error',
+          timestamp: new Date().toLocaleString(),
+          coins: Math.floor(parseFloat(searchParams.get('amount') || '0')),
+          connectionError: true
+        });
+      } else {
+        setPaymentStatus('error');
+      }
     }
   };
 
@@ -290,18 +329,32 @@ export default function PricingPage() {
                 </svg>
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Payment Pending</h2>
-              <p className="text-zinc-400 mb-6">Your payment is being processed and will be confirmed shortly.</p>
+              <p className="text-zinc-400 mb-6">
+                {paymentDetails?.connectionError
+                  ? "We're having trouble connecting to our payment server. Your payment may have been processed."
+                  : "Your payment is being processed and will be confirmed shortly."}
+              </p>
 
               <div className="bg-zinc-800/40 rounded-lg p-4 mb-6">
                 <div className="flex justify-between">
                   <span className="text-zinc-400">Order ID:</span>
                   <span className="text-zinc-300 font-medium">{paymentDetails?.orderId}</span>
                 </div>
+                {paymentDetails?.amount && (
+                  <div className="flex justify-between mt-2">
+                    <span className="text-zinc-400">Amount:</span>
+                    <span className="text-zinc-300 font-medium">₹{paymentDetails.amount}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
-                  onClick={checkPaymentStatus}
+                  onClick={() => {
+                    // Added delay before checking payment status again
+                    setPaymentStatus('loading');
+                    setTimeout(checkPaymentStatus, 500);
+                  }}
                   className="bg-zinc-800 hover:bg-zinc-700 text-white py-3 px-6 rounded-md font-medium transition-colors"
                 >
                   Check Status
