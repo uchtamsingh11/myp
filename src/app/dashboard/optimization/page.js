@@ -9,8 +9,7 @@ export default function OptimizationPage() {
   const [pineScript, setPineScript] = useState('');
   const [symbol, setSymbol] = useState('');
   const [timeframe, setTimeframe] = useState('1D');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [timeDuration, setTimeDuration] = useState('1D');
   const [initialCapital, setInitialCapital] = useState(1000000);
   const [quantity, setQuantity] = useState(1);
   const [jsonData, setJsonData] = useState(null);
@@ -28,8 +27,7 @@ export default function OptimizationPage() {
     if (savedConfig) {
       setSymbol(savedConfig.symbol || '');
       setTimeframe(savedConfig.timeframe || '1D');
-      setStartDate(savedConfig.startDate || '');
-      setEndDate(savedConfig.endDate || '');
+      setTimeDuration(savedConfig.timeDuration || '1D');
       setInitialCapital(savedConfig.initialCapital || 1000000);
       setQuantity(savedConfig.quantity || 1);
     }
@@ -55,8 +53,7 @@ export default function OptimizationPage() {
                 const config = {
                   symbol,
                   timeframe,
-                  startDate,
-                  endDate,
+                  timeDuration,
                   initialCapital,
                   quantity
                 };
@@ -77,23 +74,13 @@ export default function OptimizationPage() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isLoading, countdownTime, pineScript, symbol, timeframe, startDate, endDate, initialCapital, quantity]);
+  }, [isLoading, countdownTime, pineScript, symbol, timeframe, timeDuration, initialCapital, quantity]);
 
   const handleTabChange = (tab) => {
-    // Validate when trying to navigate to configure tab
-    if (tab === 'configure' && !jsonData) {
-      alert('Please enter Pine Script code and convert it first');
-      return;
-    }
-
     // Validate when trying to navigate to results tab
     if (tab === 'results' && !isLoading && !results) {
       if (!symbol) {
         alert('Please enter a trading symbol');
-        return;
-      }
-      if (!startDate || !endDate) {
-        alert('Please select both start and end dates');
         return;
       }
       if (!initialCapital || initialCapital <= 0) {
@@ -318,11 +305,6 @@ export default function OptimizationPage() {
       return;
     }
 
-    if (!startDate || !endDate) {
-      alert('Please select both start and end dates');
-      return;
-    }
-
     // Start optimization process
     setIsLoading(true);
     setCountdownTime(60);
@@ -513,12 +495,12 @@ bb              = input_lookback`;
 
             {activeTab === 'configure' && (
               <button
-                className={`px-4 py-2 ${symbol && startDate && endDate && initialCapital > 0 && quantity > 0
+                className={`px-4 py-2 ${symbol && timeDuration && initialCapital > 0 && quantity > 0
                   ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
                   : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
                   } rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30`}
                 onClick={handleOptimize}
-                disabled={isLoading || !symbol || !startDate || !endDate || initialCapital <= 0 || quantity <= 0}
+                disabled={isLoading || !symbol || !timeDuration || initialCapital <= 0 || quantity <= 0}
               >
                 <BarChart2 className="w-4 h-4 mr-2" />
                 Run Optimization
@@ -792,26 +774,26 @@ if (shortCondition)
                   </div>
                 </div>
 
-                {/* Date range */}
-                <h3 className="text-md font-medium mb-3 text-zinc-300">Date Range</h3>
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Time Duration */}
+                <div className="space-y-4 mb-6">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-400 mb-2">Start Date</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-400 mb-2">End Date</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                    />
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">Time Duration</label>
+                    <select
+                      value={timeDuration}
+                      onChange={(e) => setTimeDuration(e.target.value)}
+                      className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
+                    >
+                      <option value="1W">1 week</option>
+                      <option value="1m">1 month</option>
+                      <option value="3m">3 months</option>
+                      <option value="6m">6 months</option>
+                      <option value="12m">12 months</option>
+                      <option value="24m">24 months</option>
+                      <option value="36m">36 months</option>
+                      <option value="48m">48 months</option>
+                      <option value="60m">60 months</option>
+                      <option value="120m">120 months</option>
+                    </select>
                   </div>
                 </div>
 
@@ -881,16 +863,17 @@ if (shortCondition)
                       <p className="mt-1 text-xs">Be careful of overfitting - optimal parameters on historical data may not perform well on future data.</p>
                     </div>
                   </div>
-
+                </div>
+                <div className="mt-6 pt-4 flex gap-2">
                   <button
                     className={`w-full mt-4 py-2.5 ${isLoading
                       ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                      : symbol && startDate && endDate && initialCapital > 0 && quantity > 0
+                      : symbol && timeDuration && initialCapital > 0 && quantity > 0
                         ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
                         : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
                       } rounded-lg flex items-center justify-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30`}
                     onClick={handleOptimize}
-                    disabled={isLoading || !symbol || !startDate || !endDate || initialCapital <= 0 || quantity <= 0}
+                    disabled={isLoading || !symbol || !timeDuration || initialCapital <= 0 || quantity <= 0}
                   >
                     {isLoading ? (
                       <>
@@ -900,7 +883,29 @@ if (shortCondition)
                     ) : (
                       <>
                         <Zap className="w-4 h-4 mr-2" />
-                        Run Optimization
+                        Non-Exhaustive Optimization
+                      </>
+                    )}
+                  </button>
+                   <button
+                    className={`w-full mt-4 py-2.5 ${isLoading
+                      ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
+                      : symbol && timeDuration && initialCapital > 0 && quantity > 0
+                        ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                        : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
+                      } rounded-lg flex items-center justify-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30`}
+                    onClick={handleOptimize}
+                    disabled={isLoading || !symbol || !timeDuration || initialCapital <= 0 || quantity <= 0}
+                  >
+                    {isLoading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Optimizing...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4 mr-2" />
+                        Exhaustive Optimization
                       </>
                     )}
                   </button>
