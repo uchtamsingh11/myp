@@ -356,6 +356,31 @@ export default function Backtest() {
         // Under 12 months: +27% to -276%
         overallReturn = Math.random() * 303 - 276;
         break;
+      case '2y':
+      case '24m':
+        // Under 24 months: +27% to -381%
+        overallReturn = Math.random() * 407 - 381;
+        break;
+      case '3y':
+      case '36m':
+        // Under 36 months: +27% to -486%
+        overallReturn = Math.random() * 511 - 486;
+        break;
+      case '4y':
+      case '48m':
+        // Under 48 months: +27% to -591%
+        overallReturn = Math.random() * 616 - 591;
+        break;
+      case '5y':
+      case '60m':
+        // Under 60 months: +27% to -696%
+        overallReturn = Math.random() * 721 - 696;
+        break;
+      case '6y':
+      case '120m':
+        // Under 120 months: +27% to -801%
+        overallReturn = Math.random() * 826 - 801;
+        break;
       default:
         // Default case
         overallReturn = Math.random() * 197 - 170;
@@ -947,11 +972,16 @@ if (shortCondition)
                       onChange={(e) => setTimeDuration(e.target.value)}
                       className="appearance-none w-full px-4 py-3 pr-10 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
                     >
-                      <option value="1W">Under 1 week</option>
-                      <option value="1m">Under 1 month</option>
-                      <option value="3m">Under 3 month</option>
-                      <option value="6m">Under 6 months</option>
-                      <option value="12m">Under 12 months</option>
+                      <option value="1W">1 week</option>
+                      <option value="1m">1 month</option>
+                      <option value="3m">3 month</option>
+                      <option value="6m">6 month</option>
+                      <option value="12m">12 month</option>
+                      <option value="24m">24 month</option>
+                      <option value="36m">36 month</option>
+                      <option value="48m">48 month</option>
+                      <option value="60m">60 month</option>
+                      <option value="72m">120 month</option>
                     </select>
                     <ChevronDown className="absolute right-3 top-3.5 text-zinc-400 w-4 h-4 pointer-events-none" />
                   </div>
@@ -1097,7 +1127,6 @@ if (shortCondition)
                     style={{ width: `${((60 - countdownTime) / 60) * 100}%` }}
                   ></div>
                 </div>
-                <p className="text-zinc-500 text-sm">Analyzing {symbol} on {timeframe} timeframe from {startDate} to {endDate}</p>
                 <p className="text-zinc-500 text-sm mt-1">Time duration: {
                   timeDuration === '1W' ? 'Under 1 week' :
                     timeDuration === '1m' ? 'Under 1 month' :
@@ -1382,17 +1411,6 @@ if (shortCondition)
                 </div>
 
                 {/* Download section */}
-                <div className="flex justify-end mt-6 space-x-4">
-                  <button className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg flex items-center transition-all duration-200 border border-zinc-700/50">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Report (PDF)
-                  </button>
-                  <button className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center transition-all duration-200 shadow-lg shadow-indigo-900/30">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Data (CSV)
-                  </button>
-                </div>
-
                 <div className="bg-zinc-800/70 rounded-xl p-6 shadow-lg border border-zinc-700/50 mb-6">
                   <h3 className="text-lg font-medium mb-4 text-zinc-200 flex items-center">
                     <BarChart2 className="w-5 h-5 text-indigo-500 mr-2" />
@@ -1419,11 +1437,6 @@ if (shortCondition)
                               timeDuration === '6m' ? 'Under 6 months' :
                                 timeDuration === '12m' ? 'Under 12 months' : timeDuration}
                       </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between">
-                      <div className="text-zinc-400 text-sm">Date Range</div>
-                      <div className="text-white font-medium">{startDate} to {endDate}</div>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between">
