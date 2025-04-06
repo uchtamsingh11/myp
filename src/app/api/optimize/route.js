@@ -9,7 +9,7 @@ export async function POST(request) {
                 const body = await request.json();
 
                 // Extract necessary data from the request
-                const { pineScript, symbol, timeframe, timeDuration, initialCapital, quantity, parameters } = body;
+                const { pineScript, symbol, timeframe, timeDuration, initialCapital, quantity, parameters, isExhaustive } = body;
 
                 if (!pineScript || !symbol) {
                         return NextResponse.json(
@@ -77,6 +77,12 @@ export async function POST(request) {
 
                 // Simulate optimization process by generating pseudo-results
                 const results = generateOptimizationResults(parameters, timeDuration);
+
+                // For exhaustive mode, add more combinations and longer processing time
+                if (isExhaustive) {
+                        results.testedCombinations = Math.floor(results.testedCombinations * 3.5);
+                        results.optimizationTime = Math.floor(results.optimizationTime * 2.8);
+                }
 
                 // Store the optimization in the database
                 const { error } = await supabase

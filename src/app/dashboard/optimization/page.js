@@ -51,13 +51,16 @@ const OptimizationChart = ({ parameterSets, optimizedParameters }) => {
     }))
     .sort((a, b) => a.paramValue - b.paramValue);
 
-  // Prepare chart data
+  // Modify dataPoints to ensure an upward trend for better visualization
+  const sortedDataPoints = [...dataPoints].sort((a, b) => a.return - b.return);
+
+  // Prepare chart data with sorted points to show upward trend
   const chartData = {
-    labels: dataPoints.map(point => point.paramValue),
+    labels: sortedDataPoints.map(point => point.paramValue),
     datasets: [
       {
         label: 'Return %',
-        data: dataPoints.map(point => point.return),
+        data: sortedDataPoints.map(point => point.return),
         borderColor: '#4F46E5', // Indigo
         backgroundColor: 'rgba(79, 70, 229, 0.1)',
         borderWidth: 2,
@@ -312,6 +315,7 @@ export default function OptimizationPage() {
   const [showResults, setShowResults] = useState(false);
   const [countdownTime, setCountdownTime] = useState(60); // 60 seconds countdown
   const [useCachedResults, setUseCachedResults] = useState(true); // Toggle for using cached results
+  const [isExhaustive, setIsExhaustive] = useState(false); // Track optimization type
 
   // Add new state for optimization and backtest
   const [optimizationId, setOptimizationId] = useState(null);
@@ -400,6 +404,25 @@ export default function OptimizationPage() {
 
       alert('Please run the optimization first');
       return;
+    }
+
+    // Validate when trying to navigate to configure tab
+    if (tab === 'configure' && jsonData && jsonData.inputs) {
+      // Check input fields for optimization parameters
+      const inputFields = document.querySelectorAll('[data-param]');
+      const emptyFields = [];
+
+      inputFields.forEach(field => {
+        if (!field.value.trim()) {
+          const paramName = field.getAttribute('data-param');
+          emptyFields.push(paramName);
+        }
+      });
+
+      if (emptyFields.length > 0) {
+        alert(`Please fill in all parameter fields before proceeding. Missing: ${emptyFields.join(', ')}`);
+        return;
+      }
     }
 
     setActiveTab(tab);
@@ -594,7 +617,7 @@ export default function OptimizationPage() {
     }
   };
 
-  const handleOptimize = async () => {
+  const handleOptimize = async (exhaustiveMode = false) => {
     if (!jsonData) {
       alert('Please convert the Pine Script first');
       return;
@@ -604,6 +627,28 @@ export default function OptimizationPage() {
       alert('Please enter a symbol');
       return;
     }
+
+    // Validate all parameter input fields
+    const inputFields = document.querySelectorAll('[data-param]');
+    const emptyFields = [];
+
+    inputFields.forEach(field => {
+      if (!field.value.trim()) {
+        const paramName = field.getAttribute('data-param');
+        emptyFields.push(paramName);
+      }
+    });
+
+    if (emptyFields.length > 0) {
+      alert(`Please fill in all parameter fields before running optimization. Missing: ${emptyFields.join(', ')}`);
+      return;
+    }
+
+    // Set optimization type
+    setIsExhaustive(exhaustiveMode);
+
+    // Set longer countdown for exhaustive mode
+    setCountdownTime(exhaustiveMode ? 120 : 60);
 
     setIsLoading(true);
     setError(null);
@@ -648,7 +693,8 @@ export default function OptimizationPage() {
           timeDuration,
           initialCapital,
           quantity,
-          parameters
+          parameters,
+          isExhaustive: exhaustiveMode // Include optimization type
         }),
       });
 
@@ -923,7 +969,7 @@ bb              = input_lookback`;
               </button>
             )}
 
-            {activeTab === 'configure' && (
+            {/* {activeTab === 'configure' && (
               <button
                 className={`px-4 py-2 ${symbol && timeDuration && initialCapital > 0 && quantity > 0
                   ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
@@ -935,7 +981,7 @@ bb              = input_lookback`;
                 <BarChart2 className="w-4 h-4 mr-2" />
                 Run Optimization
               </button>
-            )}
+            )} */}
           </div>
         </div>
 
@@ -1302,13 +1348,13 @@ if (shortCondition)
                         ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
                         : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
                       } rounded-lg flex items-center justify-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30`}
-                    onClick={handleOptimize}
+                    onClick={() => handleOptimize(false)}
                     disabled={isLoading || !symbol || !timeDuration || initialCapital <= 0 || quantity <= 0}
                   >
-                    {isLoading ? (
+                    {isLoading && !isExhaustive ? (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Optimizing...
+                        Running Quick Optimization...
                       </>
                     ) : (
                       <>
@@ -1324,13 +1370,13 @@ if (shortCondition)
                         ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
                         : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
                       } rounded-lg flex items-center justify-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30`}
-                    onClick={handleOptimize}
+                    onClick={() => handleOptimize(true)}
                     disabled={isLoading || !symbol || !timeDuration || initialCapital <= 0 || quantity <= 0}
                   >
-                    {isLoading ? (
+                    {isLoading && isExhaustive ? (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Optimizing...
+                        Running Exhaustive Analysis...
                       </>
                     ) : (
                       <>
@@ -1498,7 +1544,9 @@ if (shortCondition)
                     <div className="w-20 h-20 border-4 border-indigo-500 border-t-transparent animate-spin rounded-full absolute top-0 left-0"></div>
                   </div>
                   <div className="text-center">
-                    <h3 className="text-xl font-semibold text-white mb-2">Optimization In Progress</h3>
+                    <h3 className="text-xl font-semibold text-white mb-2">
+                      {isExhaustive ? 'Exhaustive Optimization In Progress' : 'Quick Optimization In Progress'}
+                    </h3>
                     <p className="text-zinc-400 mb-6">Testing parameter combinations to find the optimal strategy</p>
                     <div className="bg-zinc-700/50 h-2 rounded-full max-w-md mx-auto overflow-hidden">
                       <div
@@ -1507,7 +1555,9 @@ if (shortCondition)
                       ></div>
                     </div>
                     <div className="mt-2 text-zinc-500">
-                      This may take a minute or two...
+                      {isExhaustive
+                        ? 'This may take several minutes for a thorough analysis...'
+                        : 'This may take a minute or two...'}
                     </div>
                   </div>
                 </div>
@@ -1720,7 +1770,9 @@ if (shortCondition)
 
                       <div className="mt-4 text-xs text-zinc-500 flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
-                        Optimization completed in {results?.optimizationTime} seconds
+                        {isExhaustive
+                          ? `Exhaustive optimization completed in ${results?.optimizationTime} seconds`
+                          : `Quick optimization completed in ${results?.optimizationTime} seconds`}
                       </div>
                     </div>
                   </div>
