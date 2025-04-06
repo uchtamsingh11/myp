@@ -50,11 +50,18 @@ export function AuthProvider({ children }) {
   // Sign in with email and password
   const signIn = async ({ email, password }) => {
     let retryCount = 0;
-    const maxRetries = 2;
-    const initialBackoff = 1000; // 1 second
+    const maxRetries = 3;
+    const initialBackoff = 2000; // 2 seconds initial backoff
+    let isRateLimited = false;
 
     const attemptSignIn = async backoff => {
       try {
+        // If we've detected rate limiting, force a longer wait
+        if (isRateLimited) {
+          console.log(`Rate limiting detected, waiting ${backoff}ms before attempting login...`);
+          await new Promise(resolve => setTimeout(resolve, backoff));
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -65,20 +72,36 @@ export function AuthProvider({ children }) {
           if (
             error.status === 429 ||
             error.message?.includes('too many requests') ||
-            error.message?.includes('rate limit')
+            error.message?.includes('rate limit') ||
+            error.message?.includes('429')
           ) {
+            isRateLimited = true;
+            
             if (retryCount < maxRetries) {
               retryCount++;
               // Exponential backoff with jitter
-              const jitter = Math.random() * 500;
+              const jitter = Math.random() * 1000;
               const nextBackoff = backoff * 2 + jitter;
               console.log(`Rate limit hit, retrying in ${nextBackoff}ms (attempt ${retryCount})`);
 
-              // Wait for backoff period
-              await new Promise(resolve => setTimeout(resolve, nextBackoff));
+              // Show rate limit notification to user
+              if (typeof window !== 'undefined') {
+                // You can use your app's notification system here
+                console.warn("Rate limit reached. Please wait before trying again.");
+              }
 
-              // Retry the request
+              // Wait for backoff period
               return attemptSignIn(nextBackoff);
+            } else {
+              // Max retries exceeded
+              console.error('Max retries exceeded due to rate limiting');
+              return { 
+                data: null, 
+                error: {
+                  ...error,
+                  message: "Too many login attempts. Please wait a moment and try again."
+                } 
+              };
             }
           }
           throw error;

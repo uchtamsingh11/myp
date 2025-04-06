@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../contexts/AuthContext';
+import RateLimitNotice from '../../components/auth/RateLimitNotice';
 
 // Create a client component that uses useSearchParams
 const AuthContent = () => {
@@ -325,6 +326,8 @@ const AuthContent = () => {
 
           {/* Body */}
           <div className="p-6">
+            <RateLimitNotice />
+
             {/* Verification Success Message */}
             {verificationSuccess && (
               <motion.div

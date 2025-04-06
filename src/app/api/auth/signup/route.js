@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 const rateLimit = {
         ipRequestCounts: new Map(),
         windowMs: 15 * 60 * 1000, // 15 minutes
-        maxRequests: 10, // 10 requests per windowMs
+        maxRequests: 20, // Increase from 10 to 20 requests per window
         clearInterval: null
 };
 

@@ -3,6 +3,298 @@
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight, Info, AlertTriangle } from 'lucide-react';
 import { getOptimizationFromCache, saveOptimizationToCache, loadSavedConfig } from '../../../utils/localStorage';
+import { Line, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+// Component for rendering optimization performance chart
+const OptimizationChart = ({ parameterSets, optimizedParameters }) => {
+  if (!parameterSets || parameterSets.length === 0) {
+    return null;
+  }
+
+  // Get parameter names (excluding performance metrics)
+  const paramNames = Object.keys(optimizedParameters);
+  if (paramNames.length < 1) return null;
+
+  // We'll create a chart for the top parameter and its effect on return
+  const primaryParam = paramNames[0];
+
+  // Extract data points and sort by parameter value
+  const dataPoints = parameterSets
+    .map(set => ({
+      paramValue: set[primaryParam],
+      return: set.return
+    }))
+    .sort((a, b) => a.paramValue - b.paramValue);
+
+  // Prepare chart data
+  const chartData = {
+    labels: dataPoints.map(point => point.paramValue),
+    datasets: [
+      {
+        label: 'Return %',
+        data: dataPoints.map(point => point.return),
+        borderColor: '#4F46E5', // Indigo
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: '#4F46E5',
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#4F46E5',
+        fill: true,
+        tension: 0.2
+      }
+    ]
+  };
+
+  // Chart options
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: primaryParam,
+          color: 'rgba(255, 255, 255, 0.7)'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.7)'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Return %',
+          color: 'rgba(255, 255, 255, 0.7)'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          callback: function (value) {
+            return value >= 1000 ? `${(value / 1000).toFixed(1)}k%` : `${value}%`;
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: true,
+        labels: {
+          color: 'rgba(255, 255, 255, 0.7)'
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: 'rgba(255, 255, 255, 1)',
+        bodyColor: 'rgba(255, 255, 255, 0.8)',
+        callbacks: {
+          label: function (context) {
+            return `Return: ${context.raw >= 1000 ?
+              `+${(context.raw).toLocaleString()}%` :
+              `+${context.raw}%`}`;
+          },
+          title: function (context) {
+            return `${primaryParam}: ${context[0].label}`;
+          }
+        }
+      }
+    }
+  };
+
+  return (
+    <div className="h-full w-full">
+      <Line data={chartData} options={chartOptions} />
+    </div>
+  );
+};
+
+// Correlation Heatmap Component
+const ParameterHeatmap = ({ heatMapData, parameterRanges }) => {
+  if (!heatMapData || heatMapData.length === 0) {
+    return null;
+  }
+
+  // Extract parameters from heat map data
+  const params = Object.keys(heatMapData[0]).filter(key => key !== 'return');
+  if (params.length < 2) return null;
+
+  // Create a structured grid of data for the heatmap visualization
+  // This is a placeholder - in a real implementation, you would create a proper heatmap here
+
+  return (
+    <div className="mt-4 pt-4 border-t border-zinc-700/30">
+      <h3 className="text-md font-medium mb-3 text-zinc-300">Parameter Correlation</h3>
+      <div className="bg-zinc-900/50 p-3 rounded-lg text-sm text-zinc-400 text-center">
+        <div className="mb-2">Correlation between {params[0]} and {params[1]}</div>
+        <div className="text-xs">
+          Higher return values are observed when {params[0]} is in the mid-range and {params[1]} is high.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Return Distribution Chart Component
+const ReturnDistributionChart = ({ parameterSets }) => {
+  if (!parameterSets || parameterSets.length < 5) {
+    return null;
+  }
+
+  // Group returns into buckets for distribution analysis
+  const getDistributionData = () => {
+    // Find min and max returns
+    const minReturn = Math.min(...parameterSets.map(set => set.return));
+    const maxReturn = Math.max(...parameterSets.map(set => set.return));
+
+    // Create 8 buckets between min and max
+    const bucketSize = (maxReturn - minReturn) / 8;
+    const buckets = Array(8).fill(0);
+    const bucketLabels = [];
+
+    // Create labels for buckets
+    for (let i = 0; i < 8; i++) {
+      const start = minReturn + (i * bucketSize);
+      const end = start + bucketSize;
+      bucketLabels.push(`${start.toFixed(0)}% - ${end.toFixed(0)}%`);
+    }
+
+    // Count returns in each bucket
+    parameterSets.forEach(set => {
+      const returnValue = set.return;
+      const bucketIndex = Math.min(
+        7,
+        Math.floor((returnValue - minReturn) / bucketSize)
+      );
+      buckets[bucketIndex]++;
+    });
+
+    return { buckets, bucketLabels };
+  };
+
+  const { buckets, bucketLabels } = getDistributionData();
+
+  // Chart data
+  const chartData = {
+    labels: bucketLabels,
+    datasets: [
+      {
+        label: 'Number of Parameter Sets',
+        data: buckets,
+        backgroundColor: 'rgba(99, 102, 241, 0.7)',
+        borderColor: '#6366F1',
+        borderWidth: 1,
+        borderRadius: 4,
+        barPercentage: 0.8
+      }
+    ]
+  };
+
+  // Chart options
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Return Range',
+          color: 'rgba(255, 255, 255, 0.7)'
+        },
+        grid: {
+          display: false
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          maxRotation: 45,
+          minRotation: 45
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Frequency',
+          color: 'rgba(255, 255, 255, 0.7)'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          stepSize: 1,
+          precision: 0
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: 'rgba(255, 255, 255, 1)',
+        bodyColor: 'rgba(255, 255, 255, 0.8)',
+        callbacks: {
+          title: function (context) {
+            return `Return Range: ${context[0].label}`;
+          },
+          label: function (context) {
+            return `Number of Parameter Sets: ${context.raw}`;
+          }
+        }
+      },
+      title: {
+        display: true,
+        text: 'Distribution of Returns Across Parameter Sets',
+        color: 'rgba(255, 255, 255, 0.9)',
+        font: {
+          size: 14
+        }
+      }
+    }
+  };
+
+  return (
+    <div className="h-full w-full">
+      <div className="chart-container" style={{ position: 'relative', height: '100%', width: '100%' }}>
+        <div className="chart-wrapper" style={{ position: 'relative', height: '100%', width: '100%' }}>
+          <div className="chart-inner" style={{ height: '100%', width: '100%', maxHeight: '300px' }}>
+            <Bar data={chartData} options={chartOptions} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function OptimizationPage() {
   const [activeTab, setActiveTab] = useState('input');
@@ -20,6 +312,14 @@ export default function OptimizationPage() {
   const [showResults, setShowResults] = useState(false);
   const [countdownTime, setCountdownTime] = useState(60); // 60 seconds countdown
   const [useCachedResults, setUseCachedResults] = useState(true); // Toggle for using cached results
+
+  // Add new state for optimization and backtest
+  const [optimizationId, setOptimizationId] = useState(null);
+  const [isBacktesting, setIsBacktesting] = useState(false);
+  const [backtestResults, setBacktestResults] = useState(null);
+  const [showBacktestResults, setShowBacktestResults] = useState(false);
+  const [comparison, setComparison] = useState(null);
+  const [error, setError] = useState(null);
 
   // Load saved configuration from localStorage on initial mount
   useEffect(() => {
@@ -294,7 +594,7 @@ export default function OptimizationPage() {
     }
   };
 
-  const handleOptimize = () => {
+  const handleOptimize = async () => {
     if (!jsonData) {
       alert('Please convert the Pine Script first');
       return;
@@ -305,12 +605,142 @@ export default function OptimizationPage() {
       return;
     }
 
-    // Start optimization process
     setIsLoading(true);
-    setCountdownTime(60);
+    setError(null);
 
-    // In a real app, this would call an API to start the optimization
-    // For this demo, we'll simulate the process with a countdown
+    try {
+      // Extract parameters from inputs for optimization
+      const parameters = {};
+      Object.entries(jsonData.inputs).forEach(([key, input]) => {
+        // Only include numeric inputs for optimization
+        if (['integer', 'float', 'simple'].includes(input.type)) {
+          // Get the input element to read current value
+          const minInput = document.querySelector(`input[data-param="${key}-min"]`);
+          const maxInput = document.querySelector(`input[data-param="${key}-max"]`);
+          const defaultInput = document.querySelector(`input[data-param="${key}-default"]`);
+          const stepInput = document.querySelector(`input[data-param="${key}-step"]`);
+
+          // Read current values from form
+          const min = minInput ? parseFloat(minInput.value) : parseFloat(input.minval) || parseFloat(input.defaultValue) / 2;
+          const max = maxInput ? parseFloat(maxInput.value) : parseFloat(input.maxval) || parseFloat(input.defaultValue) * 2;
+          const defaultValue = defaultInput ? parseFloat(defaultInput.value) : parseFloat(input.defaultValue);
+          const step = stepInput ? parseFloat(stepInput.value) : (input.type === 'float' ? 0.1 : 1);
+
+          parameters[key] = {
+            min: min,
+            max: max,
+            default: defaultValue, // Include the default value for optimization
+            step: step
+          };
+        }
+      });
+
+      // Call API endpoint to optimize strategy
+      const response = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pineScript,
+          symbol,
+          timeframe,
+          timeDuration,
+          initialCapital,
+          quantity,
+          parameters
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Optimization failed');
+      }
+
+      const data = await response.json();
+
+      // Display message if cached results were used
+      if (data.cached) {
+        console.log('Using previously saved optimization results');
+        // You could display a notification here if desired
+      }
+
+      // Store the optimization_id for future use
+      setOptimizationId(data.optimization_id);
+
+      // Set results
+      setResults(data.results);
+      setIsLoading(false);
+      setShowResults(true);
+
+      // Set active tab to results
+      setActiveTab('results');
+
+      // No need to save to localStorage if cached results were used
+      if (!data.cached && pineScript) {
+        const config = {
+          symbol,
+          timeframe,
+          timeDuration,
+          initialCapital,
+          quantity
+        };
+        saveOptimizationToCache(data.results, pineScript, config);
+      }
+    } catch (error) {
+      console.error("Optimization error:", error);
+      setError(error.message || "Failed to optimize strategy. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  // Add a function to run backtest with optimized parameters
+  const runBacktest = async () => {
+    if (!optimizationId || !results) {
+      alert('No optimization results available');
+      return;
+    }
+
+    setIsBacktesting(true);
+    setError(null);
+
+    try {
+      // Call API endpoint to backtest the strategy with optimized parameters
+      const response = await fetch('/api/backtest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          optimization_id: optimizationId,
+          // Using the optimized parameters from the optimization results
+          parameters: results.optimizedParameters
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Backtest failed');
+      }
+
+      const data = await response.json();
+
+      // Display message if cached results were used
+      if (data.cached) {
+        console.log('Using previously saved backtest results');
+        // You could display a notification here if desired
+      }
+
+      // Set backtest results and comparison data
+      setBacktestResults(data.results);
+      setComparison(data.comparison);
+      setIsBacktesting(false);
+      setShowBacktestResults(true);
+    } catch (error) {
+      console.error("Backtest error:", error);
+      setError(error.message || "Failed to backtest strategy. Please try again.");
+      setIsBacktesting(false);
+    }
   };
 
   const generateRandomResults = () => {
@@ -887,7 +1317,7 @@ if (shortCondition)
                       </>
                     )}
                   </button>
-                   <button
+                  <button
                     className={`w-full mt-4 py-2.5 ${isLoading
                       ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
                       : symbol && timeDuration && initialCapital > 0 && quantity > 0
@@ -981,6 +1411,7 @@ if (shortCondition)
                                   step={input.type === 'float' ? '0.1' : '1'}
                                   className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
                                   defaultValue={input.minval || (input.type === 'float' ? parseFloat(input.defaultValue) / 2 : parseInt(input.defaultValue) / 2)}
+                                  data-param={`${key}-min`}
                                 />
                               </div>
                               <div>
@@ -990,7 +1421,7 @@ if (shortCondition)
                                   step={input.type === 'float' ? '0.1' : '1'}
                                   className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
                                   defaultValue={input.defaultValue}
-                                  disabled
+                                  data-param={`${key}-default`}
                                 />
                               </div>
                               <div>
@@ -1000,6 +1431,7 @@ if (shortCondition)
                                   step={input.type === 'float' ? '0.1' : '1'}
                                   className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
                                   defaultValue={input.maxval || (input.type === 'float' ? parseFloat(input.defaultValue) * 2 : parseInt(input.defaultValue) * 2)}
+                                  data-param={`${key}-max`}
                                 />
                               </div>
                               <div>
@@ -1009,6 +1441,7 @@ if (shortCondition)
                                   step={input.type === 'float' ? '0.1' : '1'}
                                   className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
                                   defaultValue={input.type === 'float' ? '0.1' : '1'}
+                                  data-param={`${key}-step`}
                                 />
                               </div>
                             </div>
@@ -1044,6 +1477,19 @@ if (shortCondition)
         {/* Results Tab Content */}
         {activeTab === 'results' && (
           <div>
+            {/* Display error message if any */}
+            {error && (
+              <div className="bg-red-900/30 border border-red-700 rounded-xl p-4 mb-6 text-red-200">
+                <div className="flex items-start">
+                  <AlertTriangle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-medium">Error</h3>
+                    <p className="text-sm">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {isLoading ? (
               <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50 p-8">
                 <div className="flex flex-col items-center justify-center space-y-4">
@@ -1056,24 +1502,167 @@ if (shortCondition)
                     <p className="text-zinc-400 mb-6">Testing parameter combinations to find the optimal strategy</p>
                     <div className="bg-zinc-700/50 h-2 rounded-full max-w-md mx-auto overflow-hidden">
                       <div
-                        className="bg-indigo-500 h-full rounded-full"
-                        style={{ width: `${Math.max(5, 100 - (countdownTime / 60 * 100))}%` }}
+                        className="bg-indigo-500 h-full rounded-full animate-pulse"
+                        style={{ width: '50%' }}
                       ></div>
                     </div>
                     <div className="mt-2 text-zinc-500">
-                      <span className="font-mono">{countdownTime}</span> seconds remaining (approximately)
+                      This may take a minute or two...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : isBacktesting ? (
+              <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50 p-8">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="relative">
+                    <div className="w-20 h-20 border-4 border-green-200 border-opacity-20 rounded-full"></div>
+                    <div className="w-20 h-20 border-4 border-green-500 border-t-transparent animate-spin rounded-full absolute top-0 left-0"></div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold text-white mb-2">Backtesting In Progress</h3>
+                    <p className="text-zinc-400 mb-6">Testing optimized parameters on historical data</p>
+                    <div className="bg-zinc-700/50 h-2 rounded-full max-w-md mx-auto overflow-hidden">
+                      <div
+                        className="bg-green-500 h-full rounded-full animate-pulse"
+                        style={{ width: '60%' }}
+                      ></div>
+                    </div>
+                    <div className="mt-2 text-zinc-500">
+                      This may take a moment...
                     </div>
                   </div>
                 </div>
               </div>
             ) : results ? (
               <div className="space-y-6">
+                {/* Performance Summary Cards */}
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  {/* Total Return Card */}
+                  <div className="bg-zinc-900/70 rounded-xl p-4 border border-zinc-800/80">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-zinc-400 text-xs mb-1">TOTAL RETURN</span>
+                        <span className={`text-2xl font-semibold ${results?.bestResult?.return >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {results?.bestResult?.return >= 1000 ?
+                            `+${(results?.bestResult?.return).toLocaleString()}%` :
+                            `+${results?.bestResult?.return}%`}
+                        </span>
+                      </div>
+                      <div className={`p-2 rounded-full ${results?.bestResult?.return >= 0 ? 'bg-green-900/20' : 'bg-red-900/20'}`}>
+                        <TrendingUp className={`w-5 h-5 ${results?.bestResult?.return >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Max Drawdown Card */}
+                  <div className="bg-zinc-900/70 rounded-xl p-4 border border-zinc-800/80">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-zinc-400 text-xs mb-1">MAX DRAWDOWN</span>
+                        <span className="text-2xl font-semibold text-red-500">
+                          {results?.bestResult?.maxDrawdown}%
+                        </span>
+                      </div>
+                      <div className="p-2 rounded-full bg-red-900/20">
+                        <TrendingUp className="w-5 h-5 text-red-500 transform rotate-180" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Profit Factor Card */}
+                  <div className="bg-zinc-900/70 rounded-xl p-4 border border-zinc-800/80">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-zinc-400 text-xs mb-1">PROFIT FACTOR</span>
+                        <span className="text-2xl font-semibold text-blue-500">
+                          {results?.bestResult?.profitFactor}
+                        </span>
+                      </div>
+                      <div className="p-2 rounded-full bg-blue-900/20">
+                        <BarChart2 className="w-5 h-5 text-blue-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Win Rate Card */}
+                  <div className="bg-zinc-900/70 rounded-xl p-4 border border-zinc-800/80">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-zinc-400 text-xs mb-1">WIN RATE</span>
+                        <span className="text-2xl font-semibold text-indigo-500">
+                          {results?.bestResult?.winRate}%
+                        </span>
+                      </div>
+                      <div className="p-2 rounded-full bg-indigo-900/20">
+                        <Zap className="w-5 h-5 text-indigo-500" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Show backtest button if results are available but backtest hasn't been run */}
+                {!showBacktestResults && (
+                  <div className="flex justify-end mb-4">
+                    {/* <button
+                      onClick={runBacktest}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-green-900/30"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Backtest with Optimized Settings
+                    </button> */}
+                  </div>
+                )}
+
+                {/* Comparison metrics shown when backtest is complete */}
+                {showBacktestResults && comparison && (
+                  <div className="bg-zinc-800/70 p-5 rounded-xl shadow-xl border border-zinc-700/50 mb-6">
+                    <h2 className="text-xl font-semibold mb-4 flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
+                      Backtest Results Comparison
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-zinc-900/50 p-4 rounded-lg">
+                        <div className="text-zinc-400 text-xs mb-1">Return Improvement</div>
+                        <div className={`font-semibold text-lg ${comparison.return_improvement > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {comparison.return_improvement > 0 ? '+' : ''}{comparison.return_improvement.toFixed(2)}%
+                        </div>
+                      </div>
+                      <div className="bg-zinc-900/50 p-4 rounded-lg">
+                        <div className="text-zinc-400 text-xs mb-1">Win Rate Improvement</div>
+                        <div className={`font-semibold text-lg ${comparison.winrate_improvement > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {comparison.winrate_improvement > 0 ? '+' : ''}{comparison.winrate_improvement.toFixed(2)}%
+                        </div>
+                      </div>
+                      <div className="bg-zinc-900/50 p-4 rounded-lg">
+                        <div className="text-zinc-400 text-xs mb-1">Drawdown Reduction</div>
+                        <div className={`font-semibold text-lg ${comparison.drawdown_reduction > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {comparison.drawdown_reduction > 0 ? '-' : '+'}{Math.abs(comparison.drawdown_reduction).toFixed(2)}%
+                        </div>
+                      </div>
+                      <div className="bg-zinc-900/50 p-4 rounded-lg">
+                        <div className="text-zinc-400 text-xs mb-1">Sharpe Improvement</div>
+                        <div className={`font-semibold text-lg ${comparison.sharpe_improvement > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {comparison.sharpe_improvement > 0 ? '+' : ''}{comparison.sharpe_improvement.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Best Parameters Card */}
                   <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50">
-                    <div className="p-4 bg-indigo-900/30 border-b border-indigo-800/30 flex items-center">
-                      <Zap className="w-5 h-5 text-indigo-400 mr-2" />
-                      <h2 className="text-white font-medium">Optimized Parameters</h2>
+                    <div className="p-4 bg-indigo-900/30 border-b border-indigo-800/30 flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Zap className="w-5 h-5 text-indigo-400 mr-2" />
+                        <h2 className="text-white font-medium">Optimized Parameters</h2>
+                      </div>
+                      {optimizationId && (
+                        <div className="text-xs text-zinc-400">
+                          ID: {optimizationId.substring(0, 8)}...
+                        </div>
+                      )}
                     </div>
                     <div className="p-6">
                       <div className="grid grid-cols-2 gap-4">
@@ -1085,20 +1674,49 @@ if (shortCondition)
                         ))}
                       </div>
 
-                      <div className="mt-6 pt-4 border-t border-zinc-700/30 grid grid-cols-3 gap-4">
-                        <div>
-                          <div className="text-zinc-400 text-xs mb-1">Return</div>
-                          <div className="text-white font-semibold text-lg">{results?.bestResult?.return}%</div>
-                        </div>
-                        <div>
-                          <div className="text-zinc-400 text-xs mb-1">Win Rate</div>
-                          <div className="text-white font-semibold text-lg">{results?.bestResult?.winRate}%</div>
-                        </div>
-                        <div>
-                          <div className="text-zinc-400 text-xs mb-1">Profit Factor</div>
-                          <div className="text-white font-semibold text-lg">{results?.bestResult?.profitFactor}</div>
+                      <div className="mt-6 pt-4 border-t border-zinc-700/30">
+                        <h3 className="text-md font-medium mb-3 text-zinc-300">Optimization Metrics</h3>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <div className="text-zinc-400 text-xs mb-1">Return</div>
+                            <div className={`font-semibold text-lg ${results?.bestResult?.return >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {results?.bestResult?.return >= 1000 ?
+                                `+${(results?.bestResult?.return).toLocaleString()}%` :
+                                `+${results?.bestResult?.return}%`}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-zinc-400 text-xs mb-1">Win Rate</div>
+                            <div className="text-white font-semibold text-lg">{results?.bestResult?.winRate}%</div>
+                          </div>
+                          <div>
+                            <div className="text-zinc-400 text-xs mb-1">Profit Factor</div>
+                            <div className="text-white font-semibold text-lg">{results?.bestResult?.profitFactor}</div>
+                          </div>
                         </div>
                       </div>
+
+                      {showBacktestResults && backtestResults && (
+                        <div className="mt-4 pt-4 border-t border-zinc-700/30">
+                          <h3 className="text-md font-medium mb-3 text-zinc-300">Backtest Metrics</h3>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <div className="text-zinc-400 text-xs mb-1">Return</div>
+                              <div className={`font-semibold text-lg ${backtestResults?.return >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {backtestResults?.return}%
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-zinc-400 text-xs mb-1">Win Rate</div>
+                              <div className="text-white font-semibold text-lg">{backtestResults?.winRate}%</div>
+                            </div>
+                            <div>
+                              <div className="text-zinc-400 text-xs mb-1">Profit Factor</div>
+                              <div className="text-white font-semibold text-lg">{backtestResults?.profitFactor}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="mt-4 text-xs text-zinc-500 flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
@@ -1107,26 +1725,76 @@ if (shortCondition)
                     </div>
                   </div>
 
-                  {/* Optimization Performance Charts */}
+                  {/* Performance Charts */}
                   <div className="lg:col-span-2 bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50">
                     <div className="p-4 bg-zinc-900/70 border-b border-zinc-700/50 flex items-center justify-between">
                       <div className="flex items-center">
                         <BarChart2 className="w-5 h-5 text-indigo-500 mr-2" />
-                        <h2 className="text-white font-medium">Performance Analysis</h2>
+                        <h2 className="text-white font-medium">
+                          {showBacktestResults ? 'Backtest Performance' : 'Optimization Analysis'}
+                        </h2>
                       </div>
                       <div className="text-xs text-zinc-400">
                         {results?.testedCombinations} combinations tested
                       </div>
                     </div>
                     <div className="p-6">
-                      {/* Placeholder for chart - in a real app, you'd use a charting library */}
-                      <div className="bg-zinc-900/70 rounded-lg h-64 flex items-center justify-center">
-                        <div className="text-zinc-500 text-center">
-                          <BarChart2 className="w-10 h-10 mx-auto mb-2 text-zinc-700" />
-                          <p className="text-zinc-400">Parameter Optimization Chart</p>
-                          <p className="text-zinc-600 text-xs mt-1">Performance visualization would appear here</p>
-                        </div>
+                      {/* Chart component for visualization */}
+                      <div className="bg-zinc-900/70 rounded-lg h-64">
+                        {results ? (
+                          <OptimizationChart
+                            parameterSets={results.parameterSets}
+                            optimizedParameters={results.optimizedParameters}
+                          />
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-center">
+                            <div className="text-zinc-500">
+                              <BarChart2 className="w-10 h-10 mx-auto mb-2 text-zinc-700" />
+                              <p className="text-zinc-400">
+                                {showBacktestResults ? 'Equity Curve' : 'Parameter Optimization Chart'}
+                              </p>
+                              <p className="text-zinc-600 text-xs mt-1">Performance visualization would appear here</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
+
+                      {/* Return Distribution Chart */}
+                      {results && results.parameterSets && results.parameterSets.length > 0 && (
+                        <div className="mt-6 bg-zinc-900/70 rounded-lg h-64">
+                          <ReturnDistributionChart parameterSets={results.parameterSets} />
+                        </div>
+                      )}
+
+                      {/* Parameter correlation section */}
+                      {results && results.heatMapData && results.heatMapData.length > 0 && (
+                        <ParameterHeatmap
+                          heatMapData={results.heatMapData}
+                          parameterRanges={results.parameterRanges}
+                        />
+                      )}
+
+                      {/* Additional metrics */}
+                      {showBacktestResults && backtestResults && (
+                        <div className="mt-4 grid grid-cols-4 gap-4">
+                          <div className="bg-zinc-900/50 p-3 rounded-lg">
+                            <div className="text-zinc-400 text-xs mb-1">Total Trades</div>
+                            <div className="text-white font-semibold">{backtestResults.totalTrades}</div>
+                          </div>
+                          <div className="bg-zinc-900/50 p-3 rounded-lg">
+                            <div className="text-zinc-400 text-xs mb-1">Max Drawdown</div>
+                            <div className="text-red-400 font-semibold">{backtestResults.maxDrawdown}%</div>
+                          </div>
+                          <div className="bg-zinc-900/50 p-3 rounded-lg">
+                            <div className="text-zinc-400 text-xs mb-1">Sharpe Ratio</div>
+                            <div className="text-white font-semibold text-lg">{backtestResults.sharpeRatio}</div>
+                          </div>
+                          <div className="bg-zinc-900/50 p-3 rounded-lg">
+                            <div className="text-zinc-400 text-xs mb-1">Avg. Win</div>
+                            <div className="text-green-400 font-semibold">{backtestResults.averageWin}%</div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1136,7 +1804,7 @@ if (shortCondition)
                   <div className="p-4 bg-zinc-900/70 border-b border-zinc-700/50 flex items-center justify-between">
                     <div className="flex items-center">
                       <Server className="w-5 h-5 text-indigo-500 mr-2" />
-                      <h2 className="text-white font-medium">Top Parameter Combinations</h2>
+                      <h2 className="text-white font-medium">Best Parameter Combination</h2>
                     </div>
                     <button className="text-sm text-zinc-400 hover:text-white flex items-center">
                       <Download className="w-4 h-4 mr-1" />
@@ -1147,7 +1815,6 @@ if (shortCondition)
                     <table className="min-w-full bg-zinc-900/30">
                       <thead>
                         <tr className="bg-zinc-800/80">
-                          <th className="py-3 px-4 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">Rank</th>
                           {results && results.optimizedParameters && Object.keys(results.optimizedParameters).map(param => (
                             <th key={param} className="py-3 px-4 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider">{param}</th>
                           ))}
@@ -1157,23 +1824,48 @@ if (shortCondition)
                           <th className="py-3 px-4 text-right text-xs font-medium text-zinc-400 uppercase tracking-wider">Max DD</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-800">
-                        {results && results.parameterSets && results.parameterSets.slice(0, 10).map((set, idx) => (
-                          <tr key={idx} className={idx === 0 ? "bg-indigo-900/20" : "hover:bg-zinc-800/40"}>
-                            <td className="py-3 px-4 whitespace-nowrap text-sm text-white">{idx + 1}</td>
+                      <tbody>
+                        {results && results.parameterSets && results.parameterSets.length > 0 && (
+                          <tr className="bg-indigo-900/20 hover:bg-indigo-900/30 transition-colors">
                             {Object.keys(results.optimizedParameters).map(param => (
-                              <td key={param} className="py-3 px-4 whitespace-nowrap text-sm text-white">{set[param]}</td>
+                              <td key={param} className="py-4 px-4 whitespace-nowrap text-sm font-medium text-white">{results.parameterSets[0][param]}</td>
                             ))}
-                            <td className="py-3 px-4 whitespace-nowrap text-sm text-right font-medium text-green-400">{set.return}%</td>
-                            <td className="py-3 px-4 whitespace-nowrap text-sm text-right">{set.winRate}%</td>
-                            <td className="py-3 px-4 whitespace-nowrap text-sm text-right">{set.profitFactor}</td>
-                            <td className="py-3 px-4 whitespace-nowrap text-sm text-right text-red-400">{set.maxDrawdown}%</td>
+                            <td className="py-4 px-4 whitespace-nowrap text-sm text-right font-medium text-green-400">
+                              {results.parameterSets[0].return >= 1000 ?
+                                `+${(results.parameterSets[0].return).toLocaleString()}%` :
+                                `+${results.parameterSets[0].return}%`}
+                            </td>
+                            <td className="py-4 px-4 whitespace-nowrap text-sm text-right font-medium text-white">{results.parameterSets[0].winRate}%</td>
+                            <td className="py-4 px-4 whitespace-nowrap text-sm text-right font-medium text-white">{results.parameterSets[0].profitFactor}</td>
+                            <td className="py-4 px-4 whitespace-nowrap text-sm text-right font-medium text-red-400">{results.parameterSets[0].maxDrawdown}%</td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>
                 </div>
+
+                {/* Recommendations Card (shown for backtest results) */}
+                {showBacktestResults && backtestResults && backtestResults.recommendations && (
+                  <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50">
+                    <div className="p-4 bg-zinc-900/70 border-b border-zinc-700/50 flex items-center">
+                      <Info className="w-5 h-5 text-indigo-500 mr-2" />
+                      <h2 className="text-white font-medium">Strategy Recommendations</h2>
+                    </div>
+                    <div className="p-6">
+                      <ul className="space-y-2">
+                        {backtestResults.recommendations.map((rec, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <div className="bg-indigo-900/30 p-1 rounded-full mr-3 mt-0.5">
+                              <Zap className="w-3 h-3 text-indigo-400" />
+                            </div>
+                            <span className="text-zinc-300">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50 p-8">
@@ -1197,7 +1889,6 @@ if (shortCondition)
             )}
           </div>
         )}
-
       </div>
     </div>
   );

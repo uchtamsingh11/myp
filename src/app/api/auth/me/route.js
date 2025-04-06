@@ -19,9 +19,11 @@ export async function GET() {
                 }
 
                 if (!session) {
+                        // Return a 200 status but with authenticated: false
+                        // This is better than a 401 which might trigger unwanted redirects
                         return NextResponse.json(
                                 { error: 'Not authenticated', authenticated: false },
-                                { status: 401 }
+                                { status: 200 }
                         );
                 }
 
@@ -35,6 +37,10 @@ export async function GET() {
                         .eq('id', user.id)
                         .single();
 
+                if (profileError && profileError.code !== 'PGRST116') {
+                        console.warn('Profile fetch warning:', profileError);
+                }
+
                 // Return minimal user profile with authenticated flag
                 return NextResponse.json({
                         authenticated: true,
@@ -46,9 +52,11 @@ export async function GET() {
                 });
         } catch (error) {
                 console.error('Error fetching user:', error);
+                // Return 200 with authenticated:false instead of an error status
+                // to prevent triggering unwanted error handling
                 return NextResponse.json(
                         { error: 'Failed to get user data', authenticated: false, details: error.message },
-                        { status: 500 }
+                        { status: 200 }
                 );
         }
 } 
