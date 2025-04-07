@@ -16,13 +16,9 @@ const DashboardHeader = ({ userEmail }) => {
   // Effect to fetch coin balance when user changes
   useEffect(() => {
     // Initialize coin balance from profile if available
-    // Check both possible column names
     if (profile?.coins !== undefined) {
       setCoinBalance(profile.coins);
       previousBalance.current = profile.coins;
-    } else if (profile?.coin_balance !== undefined) {
-      setCoinBalance(profile.coin_balance);
-      previousBalance.current = profile.coin_balance;
     }
 
     const fetchCoinBalance = async () => {
@@ -32,10 +28,9 @@ const DashboardHeader = ({ userEmail }) => {
       setError(null);
 
       try {
-        // Fetch both possible column names from the profiles table
         const { data, error } = await supabase
           .from('profiles')
-          .select('coins, coin_balance')
+          .select('coins')
           .eq('id', user.id)
           .single();
 
@@ -43,12 +38,10 @@ const DashboardHeader = ({ userEmail }) => {
           throw error;
         }
 
-        // Use coins column if available, fall back to coin_balance, default to 0
-        const balance = data?.coins !== undefined && data?.coins !== null
+        // Use coins column, default to 0 if null
+        const balance = data?.coins !== null && data?.coins !== undefined
           ? data.coins
-          : (data?.coin_balance !== undefined && data?.coin_balance !== null
-            ? data.coin_balance
-            : 0);
+          : 0;
 
         // Check if balance changed and show animation if it increased
         if (balance > previousBalance.current) {
@@ -82,13 +75,7 @@ const DashboardHeader = ({ userEmail }) => {
           filter: `id=eq.${user.id}`,
         }, payload => {
           if (payload.new) {
-            // Check both possible column names
-            let newBalance = 0;
-            if (payload.new.coins !== undefined) {
-              newBalance = payload.new.coins;
-            } else if (payload.new.coin_balance !== undefined) {
-              newBalance = payload.new.coin_balance;
-            }
+            const newBalance = payload.new.coins ?? 0;
 
             // Check if balance increased to show animation
             if (newBalance > previousBalance.current) {

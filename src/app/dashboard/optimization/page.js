@@ -16,6 +16,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import OptimizationButtons from '../../../components/OptimizationButtons';
 
 // Register Chart.js components
 ChartJS.register(
@@ -1341,50 +1342,10 @@ if (shortCondition)
                   </div>
                 </div>
                 <div className="mt-6 pt-4 flex gap-2">
-                  <button
-                    className={`w-full mt-4 py-2.5 ${isLoading
-                      ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                      : symbol && timeDuration && initialCapital > 0 && quantity > 0
-                        ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                        : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                      } rounded-lg flex items-center justify-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30`}
-                    onClick={() => handleOptimize(false)}
-                    disabled={isLoading || !symbol || !timeDuration || initialCapital <= 0 || quantity <= 0}
-                  >
-                    {isLoading && !isExhaustive ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Running Quick Optimization...
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4 mr-2" />
-                        Non-Exhaustive Optimization
-                      </>
-                    )}
-                  </button>
-                  <button
-                    className={`w-full mt-4 py-2.5 ${isLoading
-                      ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                      : symbol && timeDuration && initialCapital > 0 && quantity > 0
-                        ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                        : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                      } rounded-lg flex items-center justify-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30`}
-                    onClick={() => handleOptimize(true)}
-                    disabled={isLoading || !symbol || !timeDuration || initialCapital <= 0 || quantity <= 0}
-                  >
-                    {isLoading && isExhaustive ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Running Exhaustive Analysis...
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4 mr-2" />
-                        Exhaustive Optimization
-                      </>
-                    )}
-                  </button>
+                  <OptimizationButtons
+                    onNonExhaustiveClick={() => handleOptimize(false)}
+                    onExhaustiveClick={() => handleOptimize(true)}
+                  />
                 </div>
               </div>
             </div>
