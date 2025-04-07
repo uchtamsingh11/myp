@@ -10,6 +10,7 @@ import Pricing from '../components/features/home/Pricing';
 import FAQ from '../components/features/home/FAQ';
 import Footer from '../components/layout/Footer';
 import BrokerLogos from '../components/features/home/BrokerLogos';
+import Contact from '../components/features/home/Contact';
 
 export default function Home() {
   return (
@@ -22,6 +23,7 @@ export default function Home() {
       <Testimonials />
       <Pricing />
       <FAQ />
+      <Contact />
       <Footer />
     </main>
   );
