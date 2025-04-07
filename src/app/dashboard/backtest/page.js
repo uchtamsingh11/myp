@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, BarChart2, TrendingUp, TrendingDown, Zap, ChevronDown, AlertTriangle, Info, Download, Code, Server, ArrowRight } from 'lucide-react';
 import { saveBacktestToCache, getBacktestFromCache, loadSavedConfig } from '../../../utils/localStorage';
+import BacktestButton from '../../../components/BacktestButton';
 
 export default function Backtest() {
         const [activeTab, setActiveTab] = useState('input');
@@ -537,105 +538,129 @@ export default function Backtest() {
                 result[dataPoints - 1].equity = 100 + parseFloat(overallReturn.toFixed(2));
 
                 return result;
+
+
         };
 
-        const runBacktest = async () => {
-                if (!symbol || !startDate || !endDate || !pineScript) {
-                        alert('Please fill in all required fields');
+        const handleBacktest = () => {
+                // Validate required fields
+                const requiredFields = [];
+
+                if (!symbol) requiredFields.push('Trading Symbol');
+                if (!timeframe) requiredFields.push('Timeframe');
+                if (!timeDuration) requiredFields.push('Time Duration');
+                if (!initialCapital || initialCapital <= 0) requiredFields.push('Initial Capital');
+                if (!quantity || quantity <= 0) requiredFields.push('Quantity');
+                if (!pineScript) requiredFields.push('Strategy Script');
+
+                if (requiredFields.length > 0) {
+                        alert(`Please fill in the following required fields: ${requiredFields.join(', ')}`);
                         return;
                 }
 
-                // First check if there are any existing optimizations in the database with same script and parameters
+                // If all validations pass, proceed with backtest
                 setIsBacktesting(true);
                 setActiveTab('results');
-
-                try {
-                        // Extract parameters from inputs for optimization check
-                        const parameters = {};
-                        if (jsonData && jsonData.inputs) {
-                                Object.entries(jsonData.inputs).forEach(([key, input]) => {
-                                        // Only include numeric inputs for optimization
-                                        if (['integer', 'float', 'simple'].includes(input.type)) {
-                                                parameters[key] = {
-                                                        min: parseFloat(input.minval) || parseFloat(input.defaultValue) / 2,
-                                                        max: parseFloat(input.maxval) || parseFloat(input.defaultValue) * 2,
-                                                        step: input.type === 'float' ? 0.1 : 1
-                                                };
-                                        }
-                                });
-                        }
-
-                        // Check database for existing optimization with same script and parameters
-                        const response = await fetch('/api/optimize', {
-                                method: 'POST',
-                                headers: {
-                                        'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                        pineScript,
-                                        symbol,
-                                        timeframe,
-                                        timeDuration,
-                                        initialCapital,
-                                        quantity,
-                                        parameters
-                                }),
-                        });
-
-                        if (!response.ok) {
-                                throw new Error('Failed to check for existing optimizations');
-                        }
-
-                        const data = await response.json();
-
-                        if (data.cached) {
-                                console.log('Found existing optimization, using those results');
-
-                                // Transform optimization results into backtest format for display
-                                const optimizedBacktestResults = transformOptimizationToBacktest(data.results, true);
-
-                                setBacktestResults(optimizedBacktestResults);
-                                setIsBacktesting(false);
-                                setShowResults(true);
-                                return;
-                        }
-
-                        // If no cached results found, fall back to the regular backtest generation
-                        console.log('No existing optimization found, generating backtest results');
-
-                        // Create config object for localStorage caching
-                        const config = {
-                                symbol,
-                                timeframe,
-                                timeDuration,
-                                startDate,
-                                endDate,
-                                initialCapital,
-                                quantity
-                        };
-
-                        // Check if we have cached results in localStorage for this configuration
-                        if (useCachedResults) {
-                                const cachedBacktest = getBacktestFromCache(pineScript, config);
-
-                                if (cachedBacktest) {
-                                        console.log('Using cached backtest results from localStorage');
-                                        setBacktestResults(cachedBacktest.results);
-                                        setIsBacktesting(false);
-                                        setShowResults(true);
-                                        return;
-                                }
-                        }
-
-                        // Reset countdown time
-                        setCountdownTime(60);
-
-                } catch (error) {
-                        console.error('Error checking for optimizations:', error);
-                        // Still continue with regular backtest
-                        setCountdownTime(60);
-                }
+                setCountdownTime(60);
         };
+
+        // const runBacktest = async () => {
+        //         if (!symbol || !startDate || !endDate || !pineScript) {
+        //                 alert('Please fill in all required fields');
+        //                 return;
+        //         }
+
+        //         // First check if there are any existing optimizations in the database with same script and parameters
+        //         setIsBacktesting(true);
+        //         setActiveTab('results');
+
+        //         try {
+        //                 // Extract parameters from inputs for optimization check
+        //                 const parameters = {};
+        //                 if (jsonData && jsonData.inputs) {
+        //                         Object.entries(jsonData.inputs).forEach(([key, input]) => {
+        //                                 // Only include numeric inputs for optimization
+        //                                 if (['integer', 'float', 'simple'].includes(input.type)) {
+        //                                         parameters[key] = {
+        //                                                 min: parseFloat(input.minval) || parseFloat(input.defaultValue) / 2,
+        //                                                 max: parseFloat(input.maxval) || parseFloat(input.defaultValue) * 2,
+        //                                                 step: input.type === 'float' ? 0.1 : 1
+        //                                         };
+        //                                 }
+        //                         });
+        //                 }
+
+        //                 // Check database for existing optimization with same script and parameters
+        //                 const response = await fetch('/api/optimize', {
+        //                         method: 'POST',
+        //                         headers: {
+        //                                 'Content-Type': 'application/json',
+        //                         },
+        //                         body: JSON.stringify({
+        //                                 pineScript,
+        //                                 symbol,
+        //                                 timeframe,
+        //                                 timeDuration,
+        //                                 initialCapital,
+        //                                 quantity,
+        //                                 parameters
+        //                         }),
+        //                 });
+
+        //                 if (!response.ok) {
+        //                         throw new Error('Failed to check for existing optimizations');
+        //                 }
+
+        //                 const data = await response.json();
+
+        //                 if (data.cached) {
+        //                         console.log('Found existing optimization, using those results');
+
+        //                         // Transform optimization results into backtest format for display
+        //                         const optimizedBacktestResults = transformOptimizationToBacktest(data.results, true);
+
+        //                         setBacktestResults(optimizedBacktestResults);
+        //                         setIsBacktesting(false);
+        //                         setShowResults(true);
+        //                         return;
+        //                 }
+
+        //                 // If no cached results found, fall back to the regular backtest generation
+        //                 console.log('No existing optimization found, generating backtest results');
+
+        //                 // Create config object for localStorage caching
+        //                 const config = {
+        //                         symbol,
+        //                         timeframe,
+        //                         timeDuration,
+        //                         startDate,
+        //                         endDate,
+        //                         initialCapital,
+        //                         quantity
+        //                 };
+
+        //                 // Check if we have cached results in localStorage for this configuration
+        //                 if (useCachedResults) {
+        //                         const cachedBacktest = getBacktestFromCache(pineScript, config);
+
+        //                         if (cachedBacktest) {
+        //                                 console.log('Using cached backtest results from localStorage');
+        //                                 setBacktestResults(cachedBacktest.results);
+        //                                 setIsBacktesting(false);
+        //                                 setShowResults(true);
+        //                                 return;
+        //                         }
+        //                 }
+
+        //                 // Reset countdown time
+        //                 setCountdownTime(60);
+
+        //         } catch (error) {
+        //                 console.error('Error checking for optimizations:', error);
+        //                 // Still continue with regular backtest
+        //                 setCountdownTime(60);
+        //         }
+        // };
 
         // New function to transform optimization results to backtest format
         const transformOptimizationToBacktest = (optimizationResults, makePositive = false) => {
@@ -733,27 +758,6 @@ if (shortCondition and input_retest)
                                                 <p className="text-zinc-400 mt-1">Test your trading strategies with historical data and analyze performance</p>
                                         </div>
 
-                                        <div className="flex space-x-3">
-                                                {activeTab === 'input' && (
-                                                        <button
-                                                                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg flex items-center text-sm transition-all duration-200 border border-zinc-700"
-                                                                onClick={addSampleCode}
-                                                        >
-                                                                <Code className="w-4 h-4 mr-2" />
-                                                                Load Sample
-                                                        </button>
-                                                )}
-
-                                                {activeTab === 'configure' && symbol && startDate && endDate && (
-                                                        <button
-                                                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30"
-                                                                onClick={runBacktest}
-                                                        >
-                                                                <BarChart2 className="w-4 h-4 mr-2" />
-                                                                Run Backtest
-                                                        </button>
-                                                )}
-                                        </div>
                                 </div>
 
                                 {/* Tabs */}
@@ -1195,17 +1199,22 @@ if (shortCondition)
                                                                         )}
                                                                 </div>
 
-                                                                <button
-                                                                        onClick={runBacktest}
-                                                                        disabled={!symbol || !startDate || !endDate || !jsonData}
-                                                                        className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center ${symbol && startDate && endDate && jsonData
-                                                                                ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/30'
-                                                                                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                                                                                }`}
-                                                                >
-                                                                        <BarChart2 className="w-4 h-4 mr-2" />
-                                                                        Run Backtest
-                                                                </button>
+                                                                <BacktestButton
+                                                                        symbol={symbol}
+                                                                        pineScript={pineScript}
+                                                                        timeframe={timeframe}
+                                                                        timeDuration={timeDuration}
+                                                                        initialCapital={initialCapital}
+                                                                        quantity={quantity}
+                                                                        jsonData={jsonData}
+                                                                        setIsBacktesting={setIsBacktesting}
+                                                                        setActiveTab={setActiveTab}
+                                                                        setBacktestResults={setBacktestResults}
+                                                                        setShowResults={setShowResults}
+                                                                        useCachedResults={useCachedResults}
+                                                                        setCountdownTime={setCountdownTime}
+                                                                        onBacktestClick={handleBacktest}
+                                                                />
                                                         </div>
                                                 </div>
                                         </div>

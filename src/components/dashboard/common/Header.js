@@ -6,94 +6,117 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../utils/supabase';
 
 const DashboardHeader = ({ userEmail }) => {
-  const [coinBalance, setCoinBalance] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [coinBalance, setCoinBalance] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
-  const previousBalance = useRef(0);
+  const previousBalance = useRef(null);
   const { user, profile } = useAuth();
+  const subscriptionRef = useRef(null);
 
   // Effect to fetch coin balance when user changes
   useEffect(() => {
-    // Initialize coin balance from profile if available
-    if (profile?.coins !== undefined) {
-      setCoinBalance(profile.coins);
-      previousBalance.current = profile.coins;
-    }
+    let isMounted = true;
+
+    const initializeCoinBalance = () => {
+      // Initialize from profile if available
+      if (profile?.coins !== undefined && profile?.coins !== null) {
+        setCoinBalance(profile.coins);
+        previousBalance.current = profile.coins;
+        setIsLoading(false);
+      }
+    };
 
     const fetchCoinBalance = async () => {
-      if (!user) return;
-
-      setIsLoading(true);
-      setError(null);
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from('profiles')
           .select('coins')
           .eq('id', user.id)
           .single();
 
-        if (error) {
-          throw error;
-        }
+        if (fetchError) throw fetchError;
 
-        // Use coins column, default to 0 if null
-        const balance = data?.coins !== null && data?.coins !== undefined
-          ? data.coins
-          : 0;
+        if (!isMounted) return;
 
-        // Check if balance changed and show animation if it increased
-        if (balance > previousBalance.current) {
+        const newBalance = data?.coins ?? 0;
+
+        if (previousBalance.current !== null && newBalance > previousBalance.current) {
           setBalanceUpdated(true);
-          // Reset animation state after 2 seconds
-          setTimeout(() => setBalanceUpdated(false), 2000);
+          setTimeout(() => {
+            if (isMounted) setBalanceUpdated(false);
+          }, 2000);
         }
 
-        previousBalance.current = balance;
-        setCoinBalance(balance);
+        previousBalance.current = newBalance;
+        setCoinBalance(newBalance);
+        setError(null);
       } catch (err) {
         console.error('Error fetching coin balance:', err);
-        setError(err.message);
-        // Don't reset the coin balance if there's an error, keep the previous value
+        if (isMounted) {
+          setError('Failed to fetch coin balance');
+          // Keep the previous balance if there's an error
+          if (previousBalance.current !== null) {
+            setCoinBalance(previousBalance.current);
+          }
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
-    fetchCoinBalance();
+    const setupRealtimeSubscription = () => {
+      if (!user?.id) return;
 
-    // Set up realtime subscription to coin balance changes
-    let subscription;
-    if (user) {
-      subscription = supabase
-        .channel('profile-changes')
+      // Clean up existing subscription if any
+      subscriptionRef.current?.unsubscribe();
+
+      subscriptionRef.current = supabase
+        .channel(`profile-changes-${user.id}`)
         .on('postgres_changes', {
           event: 'UPDATE',
           schema: 'public',
           table: 'profiles',
           filter: `id=eq.${user.id}`,
         }, payload => {
-          if (payload.new) {
-            const newBalance = payload.new.coins ?? 0;
+          if (!isMounted) return;
 
-            // Check if balance increased to show animation
-            if (newBalance > previousBalance.current) {
-              setBalanceUpdated(true);
-              // Reset animation state after 2 seconds
-              setTimeout(() => setBalanceUpdated(false), 2000);
-            }
+          const newBalance = payload.new?.coins ?? 0;
 
-            previousBalance.current = newBalance;
-            setCoinBalance(newBalance);
+          if (previousBalance.current !== null && newBalance > previousBalance.current) {
+            setBalanceUpdated(true);
+            setTimeout(() => {
+              if (isMounted) setBalanceUpdated(false);
+            }, 2000);
           }
-        })
-        .subscribe();
-    }
 
-    // Clean up subscription when component unmounts or user changes
+          previousBalance.current = newBalance;
+          setCoinBalance(newBalance);
+        })
+        .subscribe((status) => {
+          if (status !== 'SUBSCRIBED' && isMounted) {
+            console.error('Failed to subscribe to coin balance updates');
+          }
+        });
+    };
+
+    // Initialize from profile first
+    initializeCoinBalance();
+
+    // Then fetch latest data
+    fetchCoinBalance();
+
+    // Setup realtime subscription
+    setupRealtimeSubscription();
+
     return () => {
-      subscription?.unsubscribe();
+      isMounted = false;
+      subscriptionRef.current?.unsubscribe();
     };
   }, [user, profile]);
 
