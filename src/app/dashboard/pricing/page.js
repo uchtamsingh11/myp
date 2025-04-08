@@ -32,13 +32,16 @@ export default function PricingPage() {
           setUserId(user.id);
           // Fetch purchase history when user is logged in
           const { data: history, error } = await supabase
-            .from('purchases')
+            .from('payment_orders')
             .select('*')
             .eq('user_id', user.id)
+            .eq('status', 'FULFILLED')
             .order('created_at', { ascending: false });
 
           if (!error && history) {
             setPurchaseHistory(history);
+          } else if (error) {
+            console.error('Error fetching purchase history:', error);
           }
         }
       } catch (error) {
@@ -187,7 +190,7 @@ export default function PricingPage() {
                           <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-semibold text-lg">
-                                {purchase.plan_name}
+                                {purchase.order_id ? purchase.order_id.split('-')[1] || 'Purchase' : 'Purchase'}
                               </h3>
                               <p className="text-zinc-400 text-sm">
                                 {new Date(purchase.created_at).toLocaleDateString('en-US', {
@@ -199,7 +202,7 @@ export default function PricingPage() {
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-bold">
-                                {purchase.coins} Z Coins
+                                {purchase.coins_added} Z Coins
                               </div>
                               <div className="text-zinc-400">₹{purchase.amount}</div>
                             </div>
