@@ -85,7 +85,7 @@ export async function PUT(request) {
       message: `Successfully ${operation}d ${coinBalance} coins for user`,
       updatedUser: {
         ...userProfile,
-        coin_balance: updatedCoinBalance,
+        coins: updatedCoinBalance,
       },
     });
   } catch (error) {

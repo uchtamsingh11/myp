@@ -73,36 +73,52 @@ const DashboardHeader = ({ userEmail }) => {
     const setupRealtimeSubscription = () => {
       if (!user?.id) return;
 
-      // Clean up existing subscription if any
-      subscriptionRef.current?.unsubscribe();
+      try {
+        // Clean up existing subscription if any
+        if (subscriptionRef.current) {
+          console.log('Cleaning up previous subscription');
+          subscriptionRef.current.unsubscribe();
+          subscriptionRef.current = null;
+        }
 
-      subscriptionRef.current = supabase
-        .channel(`profile-changes-${user.id}`)
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`,
-        }, payload => {
-          if (!isMounted) return;
+        console.log(`Setting up realtime subscription for user ${user.id}`);
 
-          const newBalance = payload.new?.coins ?? 0;
+        // Create a new channel for user profile changes
+        subscriptionRef.current = supabase
+          .channel(`profile-changes-${user.id}`)
+          .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${user.id}`,
+          }, payload => {
+            if (!isMounted) return;
 
-          if (previousBalance.current !== null && newBalance > previousBalance.current) {
-            setBalanceUpdated(true);
-            setTimeout(() => {
-              if (isMounted) setBalanceUpdated(false);
-            }, 2000);
-          }
+            console.log('Profile update received:', payload);
+            const newBalance = payload.new?.coins ?? 0;
 
-          previousBalance.current = newBalance;
-          setCoinBalance(newBalance);
-        })
-        .subscribe((status) => {
-          if (status !== 'SUBSCRIBED' && isMounted) {
-            console.error('Failed to subscribe to coin balance updates');
-          }
-        });
+            if (previousBalance.current !== null && newBalance > previousBalance.current) {
+              setBalanceUpdated(true);
+              setTimeout(() => {
+                if (isMounted) setBalanceUpdated(false);
+              }, 2000);
+            }
+
+            previousBalance.current = newBalance;
+            setCoinBalance(newBalance);
+          })
+          .subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('Successfully subscribed to profile changes');
+            } else if (status === 'CHANNEL_ERROR' || !isMounted) {
+              console.error('Subscription error:', status, err);
+            } else {
+              console.error('Failed to subscribe to coin balance updates:', status, err);
+            }
+          });
+      } catch (error) {
+        console.error('Error setting up realtime subscription:', error);
+      }
     };
 
     // Initialize from profile first
@@ -116,7 +132,17 @@ const DashboardHeader = ({ userEmail }) => {
 
     return () => {
       isMounted = false;
-      subscriptionRef.current?.unsubscribe();
+
+      // Ensure we properly clean up the subscription
+      if (subscriptionRef.current) {
+        console.log('Unmounting: Cleaning up subscription');
+        try {
+          subscriptionRef.current.unsubscribe();
+        } catch (err) {
+          console.error('Error unsubscribing:', err);
+        }
+        subscriptionRef.current = null;
+      }
     };
   }, [user, profile]);
 

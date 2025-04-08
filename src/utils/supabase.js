@@ -57,15 +57,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     params: {
       eventsPerSecond: 10,
     },
+    timeout: 30000, // 30 seconds
+    reconnect: true,
+    retryInterval: 5000, // 5 seconds
+    maxRetries: 10,
+    heartbeatIntervalMs: 10000 // 10 seconds
   },
   // Add HTTP specific options
   fetch: (url, options) => {
     // Increase timeout for auth operations
     const timeoutMs = url.includes('/auth/') ? 15000 : 10000; // 15 seconds for auth, 10 for others
-    
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
+
     return fetch(url, {
       ...options,
       signal: controller.signal,
@@ -110,7 +115,7 @@ export const createServerClient = () => {
 // Manually refreshes the session if needed
 export const refreshSession = async () => {
   if (!isClient) return;
-  
+
   try {
     const { data, error } = await supabase.auth.refreshSession();
     if (error) {
@@ -127,35 +132,35 @@ export const refreshSession = async () => {
 // Helper function to implement retry with exponential backoff for rate limits
 export const retryWithBackoff = async (fn, maxRetries = rateLimitConfig.maxRetries) => {
   let retries = 0;
-  
+
   while (retries <= maxRetries) {
     try {
       return await fn();
     } catch (error) {
       retries++;
-      
+
       // If this is the last retry, throw the error
       if (retries > maxRetries) {
         throw error;
       }
-      
+
       // Check if error is rate limit related
-      const isRateLimit = 
-        error.status === 429 || 
+      const isRateLimit =
+        error.status === 429 ||
         (error.error?.status === 429) ||
-        (typeof error.message === 'string' && 
-          (error.message.includes('rate limit') || 
-           error.message.includes('too many requests')));
-      
+        (typeof error.message === 'string' &&
+          (error.message.includes('rate limit') ||
+            error.message.includes('too many requests')));
+
       // Only retry on rate limit errors
       if (!isRateLimit) {
         throw error;
       }
-      
+
       // Calculate backoff time
       const backoffTime = backoffWithJitter(retries);
       console.log(`Rate limit reached. Retrying in ${Math.round(backoffTime / 1000)}s... (attempt ${retries}/${maxRetries})`);
-      
+
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, backoffTime));
     }
