@@ -114,11 +114,31 @@ export async function GET(request) {
                                         // Calculate coins (1 INR = 1 coin)
                                         coinsAdded = Math.floor(amount);
 
-                                        // Import the coin management functions
-                                        const { addCoins } = await import('../../../../lib/services/coin-management');
+                                        // Get current coin balance
+                                        const { data: profileData, error: profileError } = await adminSupabase
+                                                .from('profiles')
+                                                .select('coins')
+                                                .eq('id', userId)
+                                                .single();
 
-                                        // Add coins to user's balance
-                                        newBalance = await addCoins(userId, coinsAdded);
+                                        if (profileError) {
+                                                console.error(`Error fetching profile for user ${userId}:`, profileError);
+                                                throw new Error(`Failed to fetch profile: ${profileError.message}`);
+                                        }
+
+                                        const currentCoins = profileData?.coins || 0;
+                                        newBalance = currentCoins + coinsAdded;
+
+                                        // Update user's coin balance directly with admin privileges
+                                        const { error: coinUpdateError } = await adminSupabase
+                                                .from('profiles')
+                                                .update({ coins: newBalance })
+                                                .eq('id', userId);
+
+                                        if (coinUpdateError) {
+                                                console.error(`Error updating coins for user ${userId}:`, coinUpdateError);
+                                                throw new Error(`Failed to update coins: ${coinUpdateError.message}`);
+                                        }
 
                                         // Update order with fulfillment details
                                         await adminSupabase

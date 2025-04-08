@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../../utils/supabase';
 
 // Force dynamic to ensure every webhook request is processed as new
 export const dynamic = 'force-dynamic';
 
 // Create a Supabase client with Admin privileges for webhook processing
-const supabase = createClient(
+const supabaseAdmin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        {
+                auth: {
+                        autoRefreshToken: false,
+                        persistSession: false
+                }
+        }
 );
 
 /**
@@ -418,13 +425,25 @@ async function processPaymentWebhook(webhookData, orderId, orderStatus, paymentI
                                         };
                                 }
 
-                                // Import the coin management service
-                                const { addCoins } = await import('../../../../lib/services/coin-management');
+                                // Add coins to the user's balance - direct implementation instead of import
+                                const currentCoins = await getUserCoinsBalance(userId);
+                                const newBalance = currentCoins + coinsToAdd;
 
-                                // Add coins to the user's balance
-                                const newBalance = await addCoins(userId, coinsToAdd);
+                                // Update the profile with admin privileges
+                                const { data: profileData, error: profileError } = await supabaseAdmin
+                                        .from('profiles')
+                                        .update({ coins: newBalance })
+                                        .eq('id', userId)
+                                        .select('coins')
+                                        .single();
 
-                                console.log(`Added ${coinsToAdd} coins to user ${userId}. New balance: ${newBalance}`);
+                                if (profileError) {
+                                        console.error(`Error updating coins for user ${userId}:`, profileError);
+                                        throw new Error(`Failed to update coins: ${profileError.message}`);
+                                }
+
+                                const updatedCoins = profileData?.coins || newBalance;
+                                console.log(`Added ${coinsToAdd} coins to user ${userId}. New balance: ${updatedCoins}`);
 
                                 // Update the order with fulfillment details
                                 await supabase
@@ -474,5 +493,22 @@ async function processPaymentWebhook(webhookData, orderId, orderStatus, paymentI
                         details: error.message,
                         timestamp: new Date().toISOString()
                 };
+        }
+}
+
+// Helper function to get user coins
+async function getUserCoinsBalance(userId) {
+        try {
+                const { data, error } = await supabaseAdmin
+                        .from('profiles')
+                        .select('coins')
+                        .eq('id', userId)
+                        .single();
+
+                if (error) throw error;
+                return data?.coins || 0;
+        } catch (error) {
+                console.error(`Error getting coins for user ${userId}:`, error);
+                return 0;
         }
 }
