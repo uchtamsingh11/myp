@@ -256,7 +256,7 @@ export default function AdminUserData() {
       // Update the local users array with the updated coin balance
       setUsers(prevUsers =>
         prevUsers.map(user =>
-          user.id === userId ? { ...user, coin_balance: updatedBalance } : user
+          user.id === userId ? { ...user, coins: updatedBalance } : user
         )
       );
 
@@ -447,7 +447,7 @@ export default function AdminUserData() {
             <div className="mb-4">
               <p className="text-sm text-gray-400 mb-2">
                 Current coin balance:{' '}
-                <span className="text-white font-bold">{selectedUser.coin_balance || 0}</span>
+                <span className="text-white font-bold">{selectedUser.coins || 0}</span>
               </p>
 
               <label className="block text-sm font-medium text-gray-400 mb-1">Coin Amount</label>
@@ -624,7 +624,7 @@ export default function AdminUserData() {
                   {user.referral_used || 'None'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-bold">
-                  {user.coin_balance || 0}
+                  {user.coins || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}

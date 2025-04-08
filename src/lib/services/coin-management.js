@@ -11,13 +11,13 @@ export const getUserCoinBalance = async userId => {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('coin_balance')
+      .select('coins')
       .eq('id', userId)
       .single();
 
     if (error) throw error;
 
-    return data.coin_balance || 0;
+    return data.coins || 0;
   } catch (error) {
     console.error('Error getting user coin balance:', error);
     throw error;
@@ -42,14 +42,14 @@ export const addCoins = async (userId, amount) => {
     // Update balance in database
     const { data, error } = await supabase
       .from('profiles')
-      .update({ coin_balance: newBalance })
+      .update({ coins: newBalance })
       .eq('id', userId)
       .select()
       .single();
 
     if (error) throw error;
 
-    return data.coin_balance;
+    return data.coins || newBalance;
   } catch (error) {
     console.error('Error adding coins:', error);
     throw error;
@@ -88,7 +88,7 @@ export const subtractCoins = async (userId, amount, allowNegative = false) => {
     // Update balance in database
     const { data, error } = await supabase
       .from('profiles')
-      .update({ coin_balance: newBalance })
+      .update({ coins: newBalance })
       .eq('id', userId)
       .select()
       .single();
@@ -97,7 +97,7 @@ export const subtractCoins = async (userId, amount, allowNegative = false) => {
 
     return {
       success: true,
-      newBalance: data.coin_balance,
+      newBalance: data.coins || newBalance,
     };
   } catch (error) {
     console.error('Error subtracting coins from user:', error);
@@ -120,14 +120,14 @@ export const setCoins = async (userId, amount) => {
     // Update balance in database
     const { data, error } = await supabase
       .from('profiles')
-      .update({ coin_balance: amount })
+      .update({ coins: amount })
       .eq('id', userId)
       .select()
       .single();
 
     if (error) throw error;
 
-    return data.coin_balance;
+    return data.coins || amount;
   } catch (error) {
     console.error('Error setting coins:', error);
     throw error;

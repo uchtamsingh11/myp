@@ -455,33 +455,24 @@ async function processPaymentWebhook(webhookData, orderId, orderStatus, paymentI
                                         timestamp: new Date().toISOString()
                                 };
                         }
-                } else if (orderStatus === 'FAILED') {
-                        console.log(`Payment failed for order ${orderId}`);
-                        // Handle failed payment
-
-                        return {
-                                success: false,
-                                message: 'Payment failed',
-                                orderId,
-                                orderStatus,
-                                paymentId,
-                                timestamp: new Date().toISOString()
-                        };
-                } else {
-                        // Handle other statuses
-                        console.log(`Order ${orderId} status updated to ${orderStatus}`);
-
-                        return {
-                                success: true,
-                                message: 'Order status updated',
-                                orderId,
-                                orderStatus,
-                                paymentId,
-                                timestamp: new Date().toISOString()
-                        };
                 }
+
+                // For other statuses, just return a success message
+                return {
+                        success: true,
+                        message: `Order status updated to ${orderStatus}`,
+                        orderId,
+                        orderStatus,
+                        paymentId,
+                        timestamp: new Date().toISOString()
+                };
         } catch (error) {
-                console.error(`Error processing payment webhook for order ${orderId}:`, error);
-                throw error; // Let the caller handle this
+                console.error(`Error processing webhook:`, error);
+                return {
+                        success: false,
+                        error: 'General processing error',
+                        details: error.message,
+                        timestamp: new Date().toISOString()
+                };
         }
 }
