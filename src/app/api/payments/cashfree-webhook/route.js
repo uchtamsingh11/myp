@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { supabase } from '../../../utils/supabase';
 
 // Force dynamic to ensure every webhook request is processed as new
 export const dynamic = 'force-dynamic';
@@ -16,6 +15,12 @@ const supabaseAdmin = createClient(
                         persistSession: false
                 }
         }
+);
+
+// Create a regular Supabase client for normal operations
+const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 /**
