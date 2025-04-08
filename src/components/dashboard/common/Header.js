@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../utils/supabase';
@@ -10,22 +10,11 @@ const DashboardHeader = ({ userEmail }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
-  const previousBalance = useRef(null);
   const { user, profile } = useAuth();
-  const subscriptionRef = useRef(null);
 
   // Effect to fetch coin balance when user changes
   useEffect(() => {
     let isMounted = true;
-
-    const initializeCoinBalance = () => {
-      // Initialize from profile if available
-      if (profile?.coins !== undefined && profile?.coins !== null) {
-        setCoinBalance(profile.coins);
-        previousBalance.current = profile.coins;
-        setIsLoading(false);
-      }
-    };
 
     const fetchCoinBalance = async () => {
       if (!user?.id) {
@@ -46,23 +35,21 @@ const DashboardHeader = ({ userEmail }) => {
 
         const newBalance = data?.coins ?? 0;
 
-        if (previousBalance.current !== null && newBalance > previousBalance.current) {
-          setBalanceUpdated(true);
-          setTimeout(() => {
-            if (isMounted) setBalanceUpdated(false);
-          }, 2000);
+        // If profile exists and has coins value, use it
+        if (profile?.coins !== undefined && profile.coins !== newBalance) {
+          setCoinBalance(profile.coins);
+        } else {
+          setCoinBalance(newBalance);
         }
 
-        previousBalance.current = newBalance;
-        setCoinBalance(newBalance);
         setError(null);
       } catch (err) {
         console.error('Error fetching coin balance:', err);
         if (isMounted) {
           setError('Failed to fetch coin balance');
-          // Keep the previous balance if there's an error
-          if (previousBalance.current !== null) {
-            setCoinBalance(previousBalance.current);
+          // Use profile data as fallback
+          if (profile?.coins !== undefined && profile?.coins !== null) {
+            setCoinBalance(profile.coins);
           }
         }
       } finally {
@@ -70,79 +57,25 @@ const DashboardHeader = ({ userEmail }) => {
       }
     };
 
-    const setupRealtimeSubscription = () => {
-      if (!user?.id) return;
-
-      try {
-        // Clean up existing subscription if any
-        if (subscriptionRef.current) {
-          console.log('Cleaning up previous subscription');
-          subscriptionRef.current.unsubscribe();
-          subscriptionRef.current = null;
-        }
-
-        console.log(`Setting up realtime subscription for user ${user.id}`);
-
-        // Create a new channel for user profile changes
-        subscriptionRef.current = supabase
-          .channel(`profile-changes-${user.id}`)
-          .on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'profiles',
-            filter: `id=eq.${user.id}`,
-          }, payload => {
-            if (!isMounted) return;
-
-            console.log('Profile update received:', payload);
-            const newBalance = payload.new?.coins ?? 0;
-
-            if (previousBalance.current !== null && newBalance > previousBalance.current) {
-              setBalanceUpdated(true);
-              setTimeout(() => {
-                if (isMounted) setBalanceUpdated(false);
-              }, 2000);
-            }
-
-            previousBalance.current = newBalance;
-            setCoinBalance(newBalance);
-          })
-          .subscribe((status, err) => {
-            if (status === 'SUBSCRIBED') {
-              console.log('Successfully subscribed to profile changes');
-            } else if (status === 'CHANNEL_ERROR' || !isMounted) {
-              console.error('Subscription error:', status, err);
-            } else {
-              console.error('Failed to subscribe to coin balance updates:', status, err);
-            }
-          });
-      } catch (error) {
-        console.error('Error setting up realtime subscription:', error);
-      }
-    };
-
-    // Initialize from profile first
-    initializeCoinBalance();
+    // Initialize from profile first if available
+    if (profile?.coins !== undefined && profile?.coins !== null) {
+      setCoinBalance(profile.coins);
+      setIsLoading(false);
+    }
 
     // Then fetch latest data
     fetchCoinBalance();
 
-    // Setup realtime subscription
-    setupRealtimeSubscription();
+    // Set up interval to periodically refresh coin balance
+    const refreshInterval = setInterval(() => {
+      if (user?.id) {
+        fetchCoinBalance();
+      }
+    }, 30000); // Refresh every 30 seconds
 
     return () => {
       isMounted = false;
-
-      // Ensure we properly clean up the subscription
-      if (subscriptionRef.current) {
-        console.log('Unmounting: Cleaning up subscription');
-        try {
-          subscriptionRef.current.unsubscribe();
-        } catch (err) {
-          console.error('Error unsubscribing:', err);
-        }
-        subscriptionRef.current = null;
-      }
+      clearInterval(refreshInterval);
     };
   }, [user, profile]);
 
