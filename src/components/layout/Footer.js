@@ -14,7 +14,7 @@ const Footer = () => {
   };
 
   return (
-    <footer id="footer" className="bg-zinc-950 border-t border-zinc-900 pt-10 sm:pt-16 pb-8">
+    <footer id="footer" className="border-t border-zinc-900 pt-10 sm:pt-16 pb-8">
       <div className="container-custom">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8 sm:mb-12">
           <div>

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
 import Link from 'next/link';
-import { BorderBeam } from '../ui/effects/BorderBeam';
 import { RainbowButton } from '../ui/buttons/RainbowButton';
 
 const Header = () => {
@@ -49,7 +48,7 @@ const Header = () => {
   const navLinks = [
     { label: 'Home', href: '/#' },
     { label: 'Features', href: '/#features' },
-    { label: 'How it Works', href: '/#how-it-works' },
+    { label: 'Working', href: '/#how-it-works' },
     { label: 'Pricing', href: '/#pricing' },
     { label: 'FAQ', href: '/#faq' },
   ];
@@ -121,7 +120,7 @@ const Header = () => {
           )}
           {user && (
             <Link href={getDestination()}>
-              <button className="btn-primary">{user ? 'Dashboard' : 'Get Started'}</button>
+              <RainbowButton>{user ? 'Dashboard' : 'Get Started'}</RainbowButton>
             </Link>
           )}
         </motion.div>

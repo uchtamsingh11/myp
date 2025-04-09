@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { RainbowButton } from '../../ui/buttons/RainbowButton';
+import IntroducingBadge from '../../ui/badges/IntroducingBadge';
+import GradientText from '../../ui/effects/GradientText';
 
 const steps = [
   {
@@ -93,7 +95,7 @@ const HowItWorks = () => {
   });
 
   return (
-    <section id="how-it-works" className="py-16 sm:py-24 bg-zinc-950 relative overflow-hidden">
+    <section id="how-it-works" className="py-16 sm:py-24 relative overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-40 left-0 w-96 h-96 bg-indigo-900/10 rounded-full filter blur-3xl opacity-50"></div>
       <div className="absolute bottom-40 right-0 w-96 h-96 bg-indigo-900/10 rounded-full filter blur-3xl opacity-50"></div>
@@ -108,7 +110,19 @@ const HowItWorks = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-16"
         >
-          <h2 className="section-title">How AlgoZ Works</h2>
+           <div className="inline-block relative mb-6">
+            <IntroducingBadge>
+              HOW IT WORKS
+            </IntroducingBadge>
+          </div>
+          <h2 className="section-title">
+            <GradientText
+              gradient="purple"
+              className="inline"
+            >
+              How AlgoZ Works
+            </GradientText>
+          </h2>
           <p className="section-subtitle max-w-3xl mx-auto">
             Getting started with algorithmic trading has never been easier. Follow these simple
             steps to begin your journey.
@@ -177,35 +191,6 @@ const HowItWorks = () => {
             })}
           </div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-16 md:mt-24 text-center"
-        >
-          <a href="/auth" className="inline-block">
-            <RainbowButton>
-              <span className="flex items-center">
-                Start Your Trading Journey
-                <svg
-                  className="w-5 h-5 ml-2 transform transition-transform hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-              </span>
-            </RainbowButton>
-          </a>
-          <p className="mt-4 text-zinc-500 text-sm">No credit card required to get started</p>
-        </motion.div>
       </div>
     </section>
   );

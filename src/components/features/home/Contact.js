@@ -6,6 +6,8 @@ import { useInView } from 'react-intersection-observer';
 import GradientText from '../../ui/effects/GradientText';
 import BeamEffect from '../../ui/effects/BeamEffect';
 import IntroducingBadge from '../../ui/badges/IntroducingBadge';
+import { RainbowButton } from '../../ui/buttons/RainbowButton';
+import { BorderBeam } from '../../ui/effects/BorderBeam';
 
 const Contact = () => {
         const [formData, setFormData] = useState({
@@ -87,7 +89,7 @@ const Contact = () => {
                                                 </IntroducingBadge>
                                         </div>
 
-                                        <h2 className="text-3xl md:text-5xl font-bold mb-6">
+                                        <h2 className="section-title">
                                                 <GradientText
                                                         gradient="purple"
                                                         className="inline"
@@ -96,7 +98,7 @@ const Contact = () => {
                                                 </GradientText>
                                         </h2>
 
-                                        <p className="text-zinc-400 text-lg max-w-3xl mx-auto">
+                                        <p className="section-subtitle max-w-3xl mx-auto">
                                                 Have questions or need assistance? Reach out to our team and we'll get back to you as soon as possible.
                                         </p>
                                 </motion.div>
@@ -110,7 +112,16 @@ const Contact = () => {
                                                         animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                                                         transition={{ duration: 0.5, delay: 0.2 }}
                                                 >
+
                                                         <div className="bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-6 md:p-8">
+
+                                                                <BorderBeam
+                                                                        colorFrom="#8B5CF6"
+                                                                        colorTo="#6366F1"
+                                                                        size={70}
+                                                                        duration={6}
+                                                                        delay={0}
+                                                                />
                                                                 <h3 className="text-xl font-semibold mb-6 text-white">Connect With Us</h3>
 
                                                                 <div className="space-y-6">
@@ -199,6 +210,13 @@ const Contact = () => {
                                                         transition={{ duration: 0.5, delay: 0.2 }}
                                                 >
                                                         <div className="bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-6 md:p-8">
+                                                                {/* <BorderBeam
+                                                                        colorFrom="#8B5CF6"
+                                                                        colorTo="#6366F1"
+                                                                        size={70}
+                                                                        duration={6}
+                                                                        delay={0}
+                                                                /> */}
                                                                 <form onSubmit={handleSubmit}>
                                                                         <div className="grid grid-cols-1 gap-6">
                                                                                 <div>
@@ -250,12 +268,10 @@ const Contact = () => {
                                                                                 </div>
 
                                                                                 <div>
-                                                                                        <button
+                                                                                        <RainbowButton
                                                                                                 type="submit"
                                                                                                 disabled={isSubmitting}
-                                                                                                className={`w-full py-3 px-6 rounded-lg text-white font-medium transition-all 
-                          ${isSubmitting ? 'bg-violet-700 cursor-not-allowed' : 'bg-violet-600 hover:bg-violet-700'} 
-                          focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-zinc-900`}
+                                                                                                className="w-full"
                                                                                         >
                                                                                                 {isSubmitting ? (
                                                                                                         <span className="flex items-center justify-center">
@@ -266,7 +282,7 @@ const Contact = () => {
                                                                                                                 Sending...
                                                                                                         </span>
                                                                                                 ) : 'Send Message'}
-                                                                                        </button>
+                                                                                        </RainbowButton>
                                                                                 </div>
 
                                                                                 {submitStatus === 'success' && (

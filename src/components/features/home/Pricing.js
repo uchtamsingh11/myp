@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { BorderBeam } from '../../ui/effects/BorderBeam';
 import { RainbowButton } from '../../ui/buttons/RainbowButton';
+import IntroducingBadge from '../../ui/badges/IntroducingBadge';
+import GradientText from '../../ui/effects/GradientText';
 
 const pricingPlans = [
   {
@@ -19,7 +21,6 @@ const pricingPlans = [
     price: 2249,
     cta: 'Buy Now',
     popular: true,
-    tag: 'Best Value',
   },
   {
     name: 'Premium',
@@ -48,7 +49,19 @@ const Pricing = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-16"
         >
-          <h2 className="section-title">Pricing Plans</h2>
+           <div className="inline-block relative mb-6">
+            <IntroducingBadge>
+              PRICING
+            </IntroducingBadge>
+          </div>
+          <h2 className="section-title ">
+          <GradientText
+              gradient="purple"
+              className="inline"
+            >
+              Pricing Plans
+            </GradientText>
+          </h2>
           <p className="section-subtitle max-w-2xl mx-auto">
             Choose the plan that fits your trading needs. All plans include access to our platform
             with different levels of features.
@@ -82,13 +95,7 @@ const Pricing = () => {
                   delay={0}
                 />
 
-                {plan.popular && (
-                  <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                    <span className="bg-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
-                      {plan.tag || 'Most Popular'}
-                    </span>
-                  </div>
-                )}
+        
 
                 <div className="p-5 sm:p-6 md:p-8">
                   <h3 className="text-xl md:text-2xl font-bold mb-2 text-center">{plan.name}</h3>
@@ -105,7 +112,11 @@ const Pricing = () => {
 
                   <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent my-6"></div>
 
-                  <RainbowButton className="w-full">
+                  <RainbowButton className="w-full"
+                    onClick={() => {
+                      window.location.href = '/auth';
+                    }}
+                  >
                     {plan.cta}
                   </RainbowButton>
                 </div>

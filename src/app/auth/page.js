@@ -7,6 +7,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../contexts/AuthContext';
 import RateLimitNotice from '../../components/auth/RateLimitNotice';
+import { BorderBeam } from '../../components/ui/effects/BorderBeam';
+import { RainbowButton } from '../../components/ui/buttons/RainbowButton';
 
 // Create a client component that uses useSearchParams
 const AuthContent = () => {
@@ -272,38 +274,6 @@ const AuthContent = () => {
         progressClassName="bg-gradient-to-r from-blue-500 to-purple-500"
       />
 
-      {/* Background elements */}
-      <div className="fixed inset-0 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-black to-zinc-900"></div>
-
-        {/* Animated gradient blobs */}
-        <motion.div
-          className="absolute w-[500px] h-[500px] rounded-full bg-purple-900/10 blur-[100px]"
-          animate={{
-            x: ['-20%', '30%', '-20%'],
-            y: ['0%', '40%', '0%'],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-        <motion.div
-          className="absolute w-[600px] h-[600px] rounded-full bg-blue-900/10 blur-[100px]"
-          animate={{
-            x: ['60%', '10%', '60%'],
-            y: ['10%', '40%', '10%'],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-      </div>
-
       {/* Content */}
       <div className="flex-1 flex items-center justify-center p-4 relative z-10">
         <motion.div
@@ -312,6 +282,13 @@ const AuthContent = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
+          <BorderBeam
+            colorFrom="#8B5CF6"
+            colorTo="#6366F1"
+            size={70}
+            duration={6}
+            delay={0}
+          />
           {/* Header */}
           <div className="p-6 border-b border-zinc-800">
             <motion.h2
@@ -497,12 +474,17 @@ const AuthContent = () => {
                   </div>
                 )}
 
-                <motion.button
+                {/* <motion.button
                   type="submit"
                   className="w-full bg-gradient-to-r from-zinc-800 to-black hover:from-zinc-700 hover:to-zinc-900 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   disabled={loading}
+                > */}
+                <RainbowButton
+                  className="w-full"
+                  disabled={loading}
+                  type="submit"
                 >
                   {isLogin
                     ? isMagicLink
@@ -515,7 +497,8 @@ const AuthContent = () => {
                     : loading
                       ? 'Creating Account...'
                       : 'Create Account'}
-                </motion.button>
+                </RainbowButton>
+                {/* </motion.button> */}
               </motion.div>
             </form>
 

@@ -9,6 +9,7 @@ import Tooltip from '../../ui/tooltips/Tooltip';
 import Badge from '../../ui/badges/Badge';
 import BeamEffect from '../../ui/effects/BeamEffect';
 import IntroducingBadge from '../../ui/badges/IntroducingBadge';
+import { BorderBeam } from '../../ui/effects/BorderBeam';
 
 const faqs = [
   {
@@ -78,18 +79,6 @@ const FAQItem = ({ faq, index }) => {
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      {/* Highlight badge for important FAQs */}
-      {faq.highlight && (
-        <Badge
-          variant="premium"
-          className="absolute right-0 top-6 z-10"
-          animated={false}
-          size="sm"
-          style={{ backgroundColor: 'rgba(124, 58, 237, 0.2)', borderColor: 'rgba(124, 58, 237, 0.3)' }}
-        >
-          Popular
-        </Badge>
-      )}
 
       <button
         className="py-5 w-full flex justify-between items-center text-left"
@@ -201,7 +190,7 @@ const FAQ = () => {
             </IntroducingBadge>
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
+          <h2 className="section-title">
             <GradientText
               gradient="purple"
               className="inline"
@@ -210,7 +199,7 @@ const FAQ = () => {
             </GradientText>
           </h2>
 
-          <p className="text-zinc-400 text-lg max-w-3xl mx-auto">
+          <p className="section-subtitle max-w-3xl mx-auto">
             Find answers to common questions about our platform. If you need further assistance,
             our support team is always ready to help.
           </p>
@@ -233,13 +222,23 @@ const FAQ = () => {
           ))}
         </div>
 
+
         <div className="max-w-4xl mx-auto bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-6 md:p-8">
           <div className="space-y-1">
+            <BorderBeam
+              colorFrom="#8B5CF6"
+              colorTo="#6366F1"
+              size={70}
+              duration={10}
+              delay={0}
+            />
             {filteredFaqs.map((faq, index) => (
               <FAQItem key={index} faq={faq} index={index} />
             ))}
           </div>
         </div>
+
+
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

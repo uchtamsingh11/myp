@@ -1,7 +1,8 @@
 'use client';
 
 import { cn } from "@/lib/utils.js";
-import { RainbowButton } from "../../ui/buttons/RainbowButton";
+import IntroducingBadge from "../../ui/badges/IntroducingBadge";
+import GradientText from "../../ui/effects/GradientText";
 
 // Create the Marquee component since it's missing
 const Marquee = ({
@@ -161,17 +162,25 @@ const ReviewCard = function (props) {
 
 const Testimonials = () => {
   return (
-    <section className="py-20 sm:py-28 bg-zinc-950 relative overflow-hidden">
+    <section className="py-20 sm:py-28 relative overflow-hidden">
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,_var(--tw-gradient-stops))] from-transparent via-zinc-900/20 to-transparent"></div>
-
-      {/* Decorative elements */}
-      <div className="absolute top-1/4 left-10 w-72 h-72 bg-indigo-600/10 rounded-full filter blur-3xl"></div>
-      <div className="absolute bottom-1/4 right-10 w-72 h-72 bg-indigo-500/5 rounded-full filter blur-3xl"></div>
 
       <div className="container-custom relative z-10">
         <div className="text-center mb-12 md:mb-20">
-          <h2 className="section-title text-3xl md:text-4xl">What Our Traders Say</h2>
-          <p className="section-subtitle text-base md:text-lg max-w-3xl mx-auto mt-4">
+          <div className="inline-block relative mb-6">
+            <IntroducingBadge>
+              TESTIMONIALS
+            </IntroducingBadge>
+          </div>
+          <h2 className="section-title">
+            <GradientText
+              gradient="purple"
+              className="inline"
+            >
+              What Our Traders Say
+            </GradientText>
+          </h2>
+          <p className="section-subtitle max-w-3xl mx-auto mt-4">
             Join thousands of satisfied traders who have elevated their trading with AlgoZ.
           </p>
         </div>
@@ -189,24 +198,6 @@ const Testimonials = () => {
           </Marquee>
           <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-zinc-950 to-transparent"></div>
           <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-zinc-950 to-transparent"></div>
-        </div>
-
-        <div className="mt-10 text-center">
-          <a href="#pricing">
-            <RainbowButton>
-              <span className="flex items-center">
-                Join Our Traders
-                <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-              </span>
-            </RainbowButton>
-          </a>
         </div>
       </div>
     </section>
