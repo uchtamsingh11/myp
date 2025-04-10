@@ -10,25 +10,39 @@ import {
 } from '../../../components/ui/badges/hover-card';
 import { Coins, Zap, ShieldCheck } from 'lucide-react';
 
-const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
-  const [isLoading, setIsLoading] = useState(false);
+const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick, setActiveTab }) => {
+  // Track loading state separately for each button
+  const [quickLoading, setQuickLoading] = useState(false);
+  const [exhaustiveLoading, setExhaustiveLoading] = useState(false);
   const { user } = useAuth();
 
   const handleNonExhaustiveClick = async () => {
-    await handleCoinDeduction(500, onNonExhaustiveClick);
+    // Only proceed if not already loading
+    if (quickLoading || exhaustiveLoading) return;
+    
+    // Immediately switch to the Results tab
+    if (setActiveTab) setActiveTab('results');
+    
+    await handleCoinDeduction(500, onNonExhaustiveClick, setQuickLoading);
   };
 
   const handleExhaustiveClick = async () => {
-    await handleCoinDeduction(1000, onExhaustiveClick);
+    // Only proceed if not already loading
+    if (quickLoading || exhaustiveLoading) return;
+    
+    // Immediately switch to the Results tab
+    if (setActiveTab) setActiveTab('results');
+    
+    await handleCoinDeduction(1000, onExhaustiveClick, setExhaustiveLoading);
   };
 
-  const handleCoinDeduction = async (amount, callback) => {
+  const handleCoinDeduction = async (amount, callback, setLoadingFn) => {
     if (!user) {
       alert('You must be logged in to perform this action.');
       return;
     }
 
-    setIsLoading(true);
+    setLoadingFn(true);
 
     try {
       // Get current coin balance
@@ -45,7 +59,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
       // Check if user has enough coins
       if (currentCoins < amount) {
         alert(`Not enough coins. You need ${amount} coins but have ${currentCoins}.`);
-        setIsLoading(false);
+        setLoadingFn(false);
         return;
       }
 
@@ -64,7 +78,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
       console.error('Error deducting coins:', error);
       alert('Failed to deduct coins. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoadingFn(false);
     }
   };
 
@@ -74,10 +88,10 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
         <HoverCardTrigger asChild>
           <button
             onClick={handleNonExhaustiveClick}
-            disabled={isLoading}
-            className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors"
+            disabled={quickLoading || exhaustiveLoading}
+            className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? (
+            {quickLoading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             ) : (
               <Zap className="w-5 h-5 mr-2" />
@@ -106,10 +120,10 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
         <HoverCardTrigger asChild>
           <button
             onClick={handleExhaustiveClick}
-            disabled={isLoading}
-            className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors"
+            disabled={quickLoading || exhaustiveLoading}
+            className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? (
+            {exhaustiveLoading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             ) : (
               <ShieldCheck className="w-5 h-5 mr-2" />
@@ -119,7 +133,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
         </HoverCardTrigger>
         <HoverCardContent 
           className="bg-zinc-800 border border-zinc-700 text-white w-64 p-3" 
-          // align="center"
+          // align="start"
           // sideOffset={5}
         >
           <div className="flex flex-col gap-2">

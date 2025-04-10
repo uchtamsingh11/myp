@@ -357,10 +357,16 @@ export default function OptimizationPage() {
             clearInterval(timer);
             // Generate and show results when countdown reaches zero
             try {
+              // Generate random results if we're not getting them from an API
               const randomResults = generateRandomResults();
+
+              // Update the state with the generated results
               setResults(randomResults);
               setIsLoading(false);
               setShowResults(true);
+
+              // No need to set active tab here as it's already set by OptimizationButtons
+              // and also in handleOptimize function after API call completes
 
               // Save results to localStorage for future use
               if (pineScript) {
@@ -373,6 +379,8 @@ export default function OptimizationPage() {
                 };
                 saveOptimizationToCache(randomResults, pineScript, config);
               }
+
+              console.log("Optimization complete, results generated:", randomResults);
             } catch (error) {
               console.error("Error generating or saving optimization results:", error);
               setIsLoading(false);
@@ -730,8 +738,7 @@ export default function OptimizationPage() {
       setIsLoading(false);
       setShowResults(true);
 
-      // Set active tab to results
-      setActiveTab('results');
+      // No need to set active tab here as it's already set by OptimizationButtons component
 
       // No need to save to localStorage if cached results were used
       if (!data.cached && pineScript) {
@@ -1527,6 +1534,7 @@ if (shortCondition)
                 <OptimizationButtons
                   onNonExhaustiveClick={() => handleOptimize(false)}
                   onExhaustiveClick={() => handleOptimize(true)}
+                  setActiveTab={setActiveTab}
                 />
               </div>
             </div>
