@@ -161,9 +161,6 @@ const ParameterHeatmap = ({ heatMapData, parameterRanges }) => {
   const params = Object.keys(heatMapData[0]).filter(key => key !== 'return');
   if (params.length < 2) return null;
 
-  // Create a structured grid of data for the heatmap visualization
-  // This is a placeholder - in a real implementation, you would create a proper heatmap here
-
   return (
     <div className="mt-4 pt-4 border-t border-zinc-700/30">
       <h3 className="text-md font-medium mb-3 text-zinc-300">Parameter Correlation</h3>
@@ -297,14 +294,8 @@ const ReturnDistributionChart = ({ parameterSets }) => {
   };
 
   return (
-    <div className="h-full w-full">
-      <div className="chart-container" style={{ position: 'relative', height: '100%', width: '100%' }}>
-        <div className="chart-wrapper" style={{ position: 'relative', height: '100%', width: '100%' }}>
-          <div className="chart-inner" style={{ height: '100%', width: '100%', maxHeight: '300px' }}>
-            <Bar data={chartData} options={chartOptions} />
-          </div>
-        </div>
-      </div>
+    <div className="h-full w-full" style={{ maxHeight: '300px' }}>
+      <Bar data={chartData} options={chartOptions} />
     </div>
   );
 };
@@ -324,8 +315,8 @@ export default function OptimizationPage() {
   const [isConverting, setIsConverting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [countdownTime, setCountdownTime] = useState(60); // 60 seconds countdown
-  const [useCachedResults, setUseCachedResults] = useState(true); // Toggle for using cached results
-  const [isExhaustive, setIsExhaustive] = useState(false); // Track optimization type
+  const [useCachedResults, setUseCachedResults] = useState(true);
+  const [isExhaustive, setIsExhaustive] = useState(false);
 
   // Add new state for optimization and backtest
   const [optimizationId, setOptimizationId] = useState(null);
@@ -365,9 +356,6 @@ export default function OptimizationPage() {
               setIsLoading(false);
               setShowResults(true);
 
-              // No need to set active tab here as it's already set by OptimizationButtons
-              // and also in handleOptimize function after API call completes
-
               // Save results to localStorage for future use
               if (pineScript) {
                 const config = {
@@ -399,10 +387,7 @@ export default function OptimizationPage() {
   }, [isLoading, countdownTime, pineScript, symbol, timeframe, timeDuration, initialCapital, quantity]);
 
   const handleTabChange = (tab) => {
-    // Simply set the active tab without restrictions
     setActiveTab(tab);
-
-    // Optional: Add analytics tracking
     console.log(`Tab changed to: ${tab}`);
   };
 
@@ -727,7 +712,6 @@ export default function OptimizationPage() {
       // Display message if cached results were used
       if (data.cached) {
         console.log('Using previously saved optimization results');
-        // You could display a notification here if desired
       }
 
       // Store the optimization_id for future use
@@ -737,8 +721,6 @@ export default function OptimizationPage() {
       setResults(data.results);
       setIsLoading(false);
       setShowResults(true);
-
-      // No need to set active tab here as it's already set by OptimizationButtons component
 
       // No need to save to localStorage if cached results were used
       if (!data.cached && pineScript) {
@@ -792,7 +774,6 @@ export default function OptimizationPage() {
       // Display message if cached results were used
       if (data.cached) {
         console.log('Using previously saved backtest results');
-        // You could display a notification here if desired
       }
 
       // Set backtest results and comparison data
@@ -808,8 +789,7 @@ export default function OptimizationPage() {
   };
 
   const generateRandomResults = () => {
-    // Generate random optimization results
-    // In a real app, this would come from the backend
+    // Generate random optimization results for demonstration purposes
 
     // Generate a random number of parameters to optimize
     const numParams = Math.floor(Math.random() * 3) + 2; // 2-4 parameters
@@ -927,19 +907,6 @@ export default function OptimizationPage() {
     };
   };
 
-  const timeframeOptions = [
-    { value: 'tick', label: 'Tick Data' },
-    { value: '1m', label: '1 Minute' },
-    { value: '5m', label: '5 Minutes' },
-    { value: '15m', label: '15 Minutes' },
-    { value: '30m', label: '30 Minutes' },
-    { value: '1h', label: '1 Hour' },
-    { value: '4h', label: '4 Hours' },
-    { value: '1D', label: '1 Day' },
-    { value: '1W', label: '1 Week' },
-  ];
-
-  // Add a test function to help debug with sample Pine Script code
   const addSampleCode = () => {
     const samplePineScript = `// Sample Pine Script with multiple input formats
 input_lookback  = input.int(defval = 20, title = 'Lookback Range', minval = 1, tooltip = 'How many bars for a pivot event to occur.', group = g_sr)
@@ -966,6 +933,18 @@ bb              = input_lookback`;
     setJsonOutput('');
     setJsonData(null);
   };
+
+  const timeframeOptions = [
+    { value: 'tick', label: 'Tick Data' },
+    { value: '1m', label: '1 Minute' },
+    { value: '5m', label: '5 Minutes' },
+    { value: '15m', label: '15 Minutes' },
+    { value: '30m', label: '30 Minutes' },
+    { value: '1h', label: '1 Hour' },
+    { value: '4h', label: '4 Hours' },
+    { value: '1D', label: '1 Day' },
+    { value: '1W', label: '1 Week' },
+  ];
 
   return (
     <div className="min-h-screen text-white bg-zinc-950">
@@ -1076,7 +1055,6 @@ if (shortCondition)
                     <span className="inline-flex items-center">
                       <Info className="w-3.5 h-3.5 mr-1 text-indigo-400" />
                       Need help with Pine Script? <a href="#" className="text-indigo-400 ml-1 hover:underline">View Documentation</a>
-
                     </span>
                   </div>
                   <div className="flex space-x-2">
@@ -1208,10 +1186,6 @@ if (shortCondition)
         {/* Configure Test Tab Content */}
         {activeTab === 'configure' && (
           <div className="space-y-6">
-            {/* Debug log to check jsonData */}
-            {console.log("Configure Tab - jsonData:", jsonData)}
-            {console.log("Configure Tab - inputs:", jsonData?.inputs ? Object.keys(jsonData.inputs).length : 0)}
-
             {/* Test Configuration Panel */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
@@ -1307,7 +1281,6 @@ if (shortCondition)
               </div>
 
               {/* Input Condition Panel - Full Width */}
-
               {jsonData && Object.keys(jsonData?.inputs || {}).length > 0 ? (
                 <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
                   <h2 className="text-xl font-semibold mb-4 flex items-center">
@@ -1423,7 +1396,6 @@ if (shortCondition)
                                   />
                                 </div>
                               </div>
-
                             </div>
                           ) : input.type === 'color' ? (
                             <div className="mt-3">
@@ -1475,9 +1447,6 @@ if (shortCondition)
                   </div>
                 </div>
               )}
-
-              {/* Optimization Settings Panel */}
-
             </div>
             <div className="w-full bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
@@ -1674,19 +1643,6 @@ if (shortCondition)
                     </div>
                   </div>
                 </div>
-
-                {/* Show backtest button if results are available but backtest hasn't been run */}
-                {!showBacktestResults && (
-                  <div className="flex justify-end mb-4">
-                    {/* <button
-                      onClick={runBacktest}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-green-900/30"
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Backtest with Optimized Settings
-                    </button> */}
-                  </div>
-                )}
 
                 {/* Comparison metrics shown when backtest is complete */}
                 {showBacktestResults && comparison && (

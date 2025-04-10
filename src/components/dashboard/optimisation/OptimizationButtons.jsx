@@ -101,8 +101,8 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick, setActiv
         </HoverCardTrigger>
         <HoverCardContent 
           className="bg-zinc-800 border border-zinc-700 text-white w-64 p-3" 
-          // align="center"
-          // sideOffset={5}
+          align="center"
+          sideOffset={5}
         >
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium flex items-center">
@@ -133,8 +133,8 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick, setActiv
         </HoverCardTrigger>
         <HoverCardContent 
           className="bg-zinc-800 border border-zinc-700 text-white w-64 p-3" 
-          // align="start"
-          // sideOffset={5}
+          align="center"
+          sideOffset={5}
         >
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium flex items-center">
