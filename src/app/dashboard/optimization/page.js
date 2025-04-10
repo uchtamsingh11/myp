@@ -525,6 +525,25 @@ export default function OptimizationPage() {
 
             if (defaultValue) {
               inputInfo.defaultValue = defaultValue;
+
+              // Try to convert to number if possible for numeric types
+              if (['integer', 'float', 'simple'].includes(inputInfo.type)) {
+                try {
+                  if (inputInfo.type === 'float' || defaultValue.includes('.')) {
+                    const parsed = parseFloat(defaultValue.replace(/['"`]/g, ''));
+                    if (!isNaN(parsed)) {
+                      inputInfo.defaultValue = parsed.toString();
+                    }
+                  } else {
+                    const parsed = parseInt(defaultValue.replace(/['"`]/g, ''), 10);
+                    if (!isNaN(parsed)) {
+                      inputInfo.defaultValue = parsed.toString();
+                    }
+                  }
+                } catch (e) {
+                  console.warn(`Failed to parse numeric value for ${varName}:`, e);
+                }
+              }
             }
 
             // Extract title - be more permissive with the pattern
@@ -616,9 +635,17 @@ export default function OptimizationPage() {
 
       // Auto-advance to configure tab if we have inputs
       if (Object.keys(jsonResult.inputs).length > 0) {
+        // Give UI time to update with the new jsonData
         setTimeout(() => {
-          handleTabChange('configure');
-        }, 1000);
+          console.log("Auto-advancing to configure tab with inputs:", Object.keys(jsonResult.inputs).length);
+          if (jsonResult && jsonResult.inputs && Object.keys(jsonResult.inputs).length > 0) {
+            handleTabChange('configure');
+          } else {
+            alert('No input parameters were detected in your Pine Script. Please add input parameters to your strategy for optimization.');
+          }
+        }, 500);
+      } else {
+        alert('No input parameters were detected in your Pine Script. Please add input parameters to your strategy for optimization.');
       }
     } catch (error) {
       console.error('Error converting to JSON:', error);
@@ -1200,6 +1227,10 @@ if (shortCondition)
         {/* Configure Test Tab Content */}
         {activeTab === 'configure' && (
           <div className="space-y-6">
+            {/* Debug log to check jsonData */}
+            {console.log("Configure Tab - jsonData:", jsonData)}
+            {console.log("Configure Tab - inputs:", jsonData?.inputs ? Object.keys(jsonData.inputs).length : 0)}
+
             {/* Test Configuration Panel */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
@@ -1296,17 +1327,31 @@ if (shortCondition)
 
               {/* Input Condition Panel - Full Width */}
 
-              {jsonData && Object.keys(jsonData.inputs).length > 0 && (
+              {jsonData && Object.keys(jsonData?.inputs || {}).length > 0 ? (
                 <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
                   <h2 className="text-xl font-semibold mb-4 flex items-center">
                     <Zap className="w-5 h-5 mr-2 text-indigo-500" />
-                    Input Conditions
+                    Input Conditions ({Object.keys(jsonData.inputs).length})
                   </h2>
 
                   <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                     {Object.entries(jsonData.inputs).map(([key, input]) => {
                       // Skip boolean and string inputs with options as they don't need min/max
                       const isRangeType = ['integer', 'float', 'simple'].includes(input.type);
+
+                      // Ensure defaultValue is properly handled for numeric types
+                      const defaultValue = isRangeType
+                        ? (input.type === 'float'
+                          ? parseFloat(input.defaultValue || '0')
+                          : parseInt(input.defaultValue || '0', 10))
+                        : input.defaultValue;
+
+                      // Calculate min/max values safely
+                      const minVal = input.minval ? parseFloat(input.minval) :
+                        (input.type === 'float' ? parseFloat(defaultValue || 0) / 2 : parseInt(defaultValue || 0, 10) / 2);
+
+                      const maxVal = input.maxval ? parseFloat(input.maxval) :
+                        (input.type === 'float' ? parseFloat(defaultValue || 0) * 2 : parseInt(defaultValue || 0, 10) * 2);
 
                       return (
                         <div key={key} className="bg-zinc-900/60 p-4 rounded-lg border border-zinc-800">
@@ -1359,30 +1404,30 @@ if (shortCondition)
                                 <div>
                                   <label className="block text-sm font-medium text-zinc-400 mb-1">Min Value</label>
                                   <input
-                                    type={input.type === 'float' ? 'number' : 'number'}
+                                    type="number"
                                     step={input.type === 'float' ? '0.1' : '1'}
                                     className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                                    defaultValue={input.minval || (input.type === 'float' ? parseFloat(input.defaultValue) / 2 : parseInt(input.defaultValue) / 2)}
+                                    defaultValue={minVal}
                                     data-param={`${key}-min`}
                                   />
                                 </div>
                                 <div>
                                   <label className="block text-sm font-medium text-zinc-400 mb-1">Default</label>
                                   <input
-                                    type={input.type === 'float' ? 'number' : 'number'}
+                                    type="number"
                                     step={input.type === 'float' ? '0.1' : '1'}
                                     className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                                    defaultValue={input.defaultValue}
+                                    defaultValue={defaultValue || 0}
                                     data-param={`${key}-default`}
                                   />
                                 </div>
                                 <div>
                                   <label className="block text-sm font-medium text-zinc-400 mb-1">Max Value</label>
                                   <input
-                                    type={input.type === 'float' ? 'number' : 'number'}
+                                    type="number"
                                     step={input.type === 'float' ? '0.1' : '1'}
                                     className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                                    defaultValue={input.maxval || (input.type === 'float' ? parseFloat(input.defaultValue) * 2 : parseInt(input.defaultValue) * 2)}
+                                    defaultValue={maxVal}
                                     data-param={`${key}-max`}
                                   />
                                 </div>
@@ -1420,6 +1465,32 @@ if (shortCondition)
                         <p>Setting wide parameter ranges will significantly increase the optimization time. Consider narrowing ranges for faster results.</p>
                       </div>
                     </div>
+                  </div>
+                </div>
+              ) : (
+                // Fallback when no input parameters are detected
+                <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
+                  <h2 className="text-xl font-semibold mb-4 flex items-center">
+                    <Zap className="w-5 h-5 mr-2 text-indigo-500" />
+                    Input Conditions
+                  </h2>
+
+                  <div className="bg-zinc-900/60 p-6 rounded-lg border border-zinc-800 text-center">
+                    <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+                    <p className="text-zinc-300 mb-2">No input parameters detected in your strategy code</p>
+                    <p className="text-zinc-500 text-sm">
+                      Your Pine Script should contain input variables like:
+                      <code className="block mt-2 text-xs bg-zinc-800 p-2 rounded text-green-400 text-left mx-auto max-w-md">
+                        length = input.int(14, title="SMA Length")<br />
+                        threshold = input.float(1.5, title="Threshold")
+                      </code>
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('input')}
+                      className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-colors"
+                    >
+                      Return to Strategy Input
+                    </button>
                   </div>
                 </div>
               )}
