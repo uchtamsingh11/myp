@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight, Info, AlertTriangle } from 'lucide-react';
-import { getOptimizationFromCache, saveOptimizationToCache, loadSavedConfig } from '../../../utils/localStorage';
+import { saveOptimizationToCache, loadSavedConfig } from '../../../utils/localStorage';
 import { Line, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -16,7 +16,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import OptimizationButtons from '../../../components/dashboard/coins/OptimizationButtons';
+import OptimizationButtons from '../../../components/dashboard/optimisation/OptimizationButtons';
 import GradientText from '../../../components/ui/effects/GradientText';
 import TradeSymbolSelector from '../../../components/dashboard/common/TradeSymbolSelector';
 import {

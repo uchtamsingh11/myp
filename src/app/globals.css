@@ -98,3 +98,23 @@
     transform: translateX(0);
   }
 }
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(24, 24, 27); /* zinc-900 */
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(63, 63, 70); /* zinc-700 */
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(113, 113, 122); /* zinc-500 */
+}

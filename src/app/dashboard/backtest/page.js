@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, BarChart2, TrendingUp, TrendingDown, Zap, ChevronDown, AlertTriangle, Info, Download, Code, Server, ArrowRight } from 'lucide-react';
 import { saveBacktestToCache, getBacktestFromCache, loadSavedConfig } from '../../../utils/localStorage';
-import BacktestButton from '../../../components/dashboard/coins/BacktestButton';
+import BacktestButton from '../../../components/dashboard/backtest/BacktestButton';
 import GradientText from '../../../components/ui/effects/GradientText';
 import TradeSymbolSelector from '../../../components/dashboard/common/TradeSymbolSelector';
 import {

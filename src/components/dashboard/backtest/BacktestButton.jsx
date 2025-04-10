@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { 
+  HoverCard, 
+  HoverCardTrigger, 
+  HoverCardContent 
+} from '../../../components/ui/badges/hover-card';
+import { Coins, PlayCircle, History } from 'lucide-react';
 
 const BacktestButton = ({ 
   onBacktestClick,
@@ -22,7 +28,6 @@ const BacktestButton = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const [showTooltip, setShowTooltip] = useState(false);
   const BACKTEST_COST = 250;
 
   const getBacktestFromCache = (pineScript, config) => {
@@ -161,42 +166,40 @@ const BacktestButton = ({
   };
 
   return (
-    <div className="relative inline-block">
-      <button
-        onClick={handleBacktestClick}
-        disabled={isLoading}
-        className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] disabled:bg-gray-400"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <button
+          onClick={handleBacktestClick}
+          disabled={isLoading}
+          className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] disabled:bg-gray-400"
+        >
+          {isLoading ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          ) : (
+            <PlayCircle className="w-5 h-5 mr-2" />
+          )}
+          Run Backtest
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent 
+        className="bg-zinc-800 border border-zinc-700 text-white w-64 p-3" 
+        // align="center"
+        // sideOffset={5}
       >
-        {isLoading ? (
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-        ) : (
-          <svg 
-            className="w-5 h-5 mr-2" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-            />
-          </svg>
-        )}
-        Run Backtest
-      </button>
-      
-      {showTooltip && (
-        <div className="absolute left-0 bottom-full mb-2 bg-black/80 text-white text-xs rounded p-2 w-48 backdrop-blur-sm z-50">
-          <p>Will cost {BACKTEST_COST} Coins</p>
-          <div className="absolute left-4 bottom-[-6px] w-3 h-3 bg-black/80 transform rotate-45"></div>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-medium flex items-center">
+            <Coins className="w-4 h-4 mr-2 text-amber-400" />
+            Cost: {BACKTEST_COST} Coins
+          </p>
+          <div className="flex items-start gap-2 mt-1">
+            <History className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-zinc-400">
+              Tests your strategy against historical market data to analyze performance
+            </p>
+          </div>
         </div>
-      )}
-    </div>
+      </HoverCardContent>
+    </HoverCard>
   );
 };
 
