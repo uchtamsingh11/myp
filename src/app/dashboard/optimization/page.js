@@ -391,51 +391,11 @@ export default function OptimizationPage() {
   }, [isLoading, countdownTime, pineScript, symbol, timeframe, timeDuration, initialCapital, quantity]);
 
   const handleTabChange = (tab) => {
-    // Validate when trying to navigate to results tab
-    if (tab === 'results' && !isLoading && !results) {
-      if (!symbol) {
-        alert('Please enter a trading symbol');
-        return;
-      }
-      if (!initialCapital || initialCapital <= 0) {
-        alert('Please enter a valid initial capital amount');
-        return;
-      }
-      if (!quantity || quantity <= 0) {
-        alert('Please enter a valid contract size');
-        return;
-      }
-
-      // Check if jsonData exists and has inputs
-      if (!jsonData || !jsonData.inputs || Object.keys(jsonData.inputs).length === 0) {
-        alert('Please configure optimization parameters first');
-        return;
-      }
-
-      alert('Please run the optimization first');
-      return;
-    }
-
-    // Validate when trying to navigate to configure tab
-    if (tab === 'configure' && jsonData && jsonData.inputs) {
-      // Check input fields for optimization parameters
-      const inputFields = document.querySelectorAll('[data-param]');
-      const emptyFields = [];
-
-      inputFields.forEach(field => {
-        if (!field.value.trim()) {
-          const paramName = field.getAttribute('data-param');
-          emptyFields.push(paramName);
-        }
-      });
-
-      if (emptyFields.length > 0) {
-        alert(`Please fill in all parameter fields before proceeding. Missing: ${emptyFields.join(', ')}`);
-        return;
-      }
-    }
-
+    // Simply set the active tab without restrictions
     setActiveTab(tab);
+
+    // Optional: Add analytics tracking
+    console.log(`Tab changed to: ${tab}`);
   };
 
   const handleConvert = () => {
@@ -655,17 +615,29 @@ export default function OptimizationPage() {
   };
 
   const handleOptimize = async (exhaustiveMode = false) => {
+    // Validation checks but without restricting tab navigation
     if (!jsonData) {
-      alert('Please convert the Pine Script first');
+      setError('Missing strategy: Please convert your Pine Script first');
+      setActiveTab('input');
       return;
     }
 
     if (!symbol) {
-      alert('Please enter a symbol');
+      setError('Missing symbol: Please select a trading symbol');
       return;
     }
 
-    // Validate all parameter input fields
+    if (!initialCapital || initialCapital <= 0) {
+      setError('Invalid initial capital: Please enter a positive value');
+      return;
+    }
+
+    if (!quantity || quantity <= 0) {
+      setError('Invalid quantity: Please enter a positive value');
+      return;
+    }
+
+    // Validate parameter input fields without preventing optimization
     const inputFields = document.querySelectorAll('[data-param]');
     const emptyFields = [];
 
@@ -677,9 +649,12 @@ export default function OptimizationPage() {
     });
 
     if (emptyFields.length > 0) {
-      alert(`Please fill in all parameter fields before running optimization. Missing: ${emptyFields.join(', ')}`);
+      setError(`Missing parameters: Please fill in all parameter fields (${emptyFields.join(', ')})`);
       return;
     }
+
+    // Clear any previous errors
+    setError(null);
 
     // Set optimization type
     setIsExhaustive(exhaustiveMode);
@@ -688,7 +663,6 @@ export default function OptimizationPage() {
     setCountdownTime(exhaustiveMode ? 120 : 60);
 
     setIsLoading(true);
-    setError(null);
 
     try {
       // Extract parameters from inputs for optimization
@@ -1576,6 +1550,7 @@ if (shortCondition)
             )}
 
             {isLoading ? (
+              // Loading state UI
               <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50 p-8">
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <div className="relative">
@@ -1602,6 +1577,7 @@ if (shortCondition)
                 </div>
               </div>
             ) : isBacktesting ? (
+              // Backtesting state UI
               <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50 p-8">
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <div className="relative">
@@ -1624,6 +1600,7 @@ if (shortCondition)
                 </div>
               </div>
             ) : results ? (
+              // Results display UI
               <div className="space-y-6">
                 {/* Performance Summary Cards */}
                 <div className="grid grid-cols-4 gap-4 mb-6">
@@ -1959,23 +1936,17 @@ if (shortCondition)
                 )}
               </div>
             ) : (
-              <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50 p-8">
-                <div className="flex flex-col items-center justify-center space-y-4 py-8">
-                  <BarChart2 className="w-16 h-16 text-zinc-700" />
-                  <div className="text-center">
-                    <h3 className="text-xl font-semibold text-white mb-2">No Results Available</h3>
-                    <p className="text-zinc-400 max-w-md mx-auto">
-                      Complete the strategy input and configuration steps, then run the optimization to see results.
-                    </p>
-                    <button
-                      onClick={() => handleTabChange('input')}
-                      className="mt-6 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30 mx-auto"
-                    >
-                      <Code className="w-4 h-4 mr-2" />
-                      Start with Strategy Input
-                    </button>
-                  </div>
-                </div>
+              // No results placeholder
+              <div className="bg-zinc-800/70 rounded-xl p-10 shadow-xl text-center border border-zinc-700/50">
+                <Clock className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+                <h3 className="text-white text-xl font-medium mb-2">No Optimization Results Yet</h3>
+                <p className="text-zinc-400 mb-6">Configure and run an optimization to see your strategy performance</p>
+                <button
+                  onClick={() => setActiveTab('configure')}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white rounded-lg transition-colors shadow-lg shadow-indigo-900/30 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df]"
+                >
+                  Go to Configuration
+                </button>
               </div>
             )}
           </div>
