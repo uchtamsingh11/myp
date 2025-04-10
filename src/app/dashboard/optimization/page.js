@@ -17,6 +17,7 @@ import {
   Filler
 } from 'chart.js';
 import OptimizationButtons from '../../../components/OptimizationButtons';
+import GradientText from '../../../components/ui/effects/GradientText';
 
 // Register Chart.js components
 ChartJS.register(
@@ -955,34 +956,15 @@ bb              = input_lookback`;
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-indigo-600 text-transparent bg-clip-text">Strategy Optimization</h1>
+            <h1 className="text-3xl font-bold bg-clip-text">
+              <GradientText
+                gradient="purple"
+                className="inline"
+              >
+                Strategy Optimization
+              </GradientText>
+            </h1>
             <p className="text-zinc-400 mt-1">Fine-tune your trading strategies with advanced optimization tools</p>
-          </div>
-
-          <div className="flex space-x-3">
-            {activeTab === 'input' && (
-              <button
-                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg flex items-center text-sm transition-all duration-200 border border-zinc-700"
-                onClick={addSampleCode}
-              >
-                <Code className="w-4 h-4 mr-2" />
-                Load Sample
-              </button>
-            )}
-
-            {/* {activeTab === 'configure' && (
-              <button
-                className={`px-4 py-2 ${symbol && timeDuration && initialCapital > 0 && quantity > 0
-                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                  : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                  } rounded-lg flex items-center text-sm transition-all duration-200 shadow-lg shadow-indigo-900/30`}
-                onClick={handleOptimize}
-                disabled={isLoading || !symbol || !timeDuration || initialCapital <= 0 || quantity <= 0}
-              >
-                <BarChart2 className="w-4 h-4 mr-2" />
-                Run Optimization
-              </button>
-            )} */}
           </div>
         </div>
 
@@ -990,7 +972,7 @@ bb              = input_lookback`;
         <div className="flex mb-6 bg-zinc-900/50 p-1 rounded-lg">
           <button
             className={`px-5 py-3 font-medium rounded-md transition-all ${activeTab === 'input'
-              ? 'bg-indigo-600 text-white shadow-lg'
+              ? 'bg-zinc-800 text-white shadow-lg'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
               }`}
             onClick={() => handleTabChange('input')}
@@ -1002,7 +984,7 @@ bb              = input_lookback`;
           </button>
           <button
             className={`px-5 py-3 font-medium rounded-md transition-all ${activeTab === 'configure'
-              ? 'bg-indigo-600 text-white shadow-lg'
+              ? 'bg-zinc-800 text-white shadow-lg'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
               }`}
             onClick={() => handleTabChange('configure')}
@@ -1014,7 +996,7 @@ bb              = input_lookback`;
           </button>
           <button
             className={`px-5 py-3 font-medium rounded-md transition-all ${activeTab === 'results'
-              ? 'bg-indigo-600 text-white shadow-lg'
+              ? 'bg-zinc-800 text-white shadow-lg'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
               }`}
             onClick={() => handleTabChange('results')}
@@ -1036,19 +1018,16 @@ bb              = input_lookback`;
                     <Code className="w-5 h-5 text-indigo-500 mr-2" />
                     <h2 className="text-white font-medium">Pine Script Input</h2>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex justify-center items-center space-x-2">
                     <div className="flex space-x-2">
                       <span className="text-xs text-zinc-500">{pineScript.split('\n').length} lines</span>
-                      <span className="text-xs px-2 py-0.5 bg-zinc-800 rounded-full text-zinc-400">Pine Script v5</span>
                     </div>
                     <button
                       className="p-1.5 bg-zinc-700 hover:bg-zinc-600 rounded text-xs text-zinc-300 transition-colors"
                       onClick={clearCode}
                       title="Clear code"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      clear
                     </button>
                   </div>
                 </div>
@@ -1075,8 +1054,16 @@ if (shortCondition)
     strategy.entry(&quot;Short&quot;, strategy.short)"
                     style={{ resize: 'none' }}
                   ></textarea>
+                </div>
+                <div className="p-3 border-t border-zinc-700/50 flex justify-between items-center bg-zinc-900/30">
+                  <div className="text-zinc-400 text-xs">
+                    <span className="inline-flex items-center">
+                      <Info className="w-3.5 h-3.5 mr-1 text-indigo-400" />
+                      Need help with Pine Script? <a href="#" className="text-indigo-400 ml-1 hover:underline">View Documentation</a>
 
-                  <div className="absolute right-3 bottom-3 flex space-x-2">
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
                     {!pineScript && (
                       <button
                         className="bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shadow-sm flex items-center"
@@ -1092,7 +1079,7 @@ if (shortCondition)
                         disabled={isConverting || !pineScript.trim()}
                         className={`${isConverting || !pineScript.trim()
                           ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                          : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                          : 'bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white'
                           } text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shadow-lg shadow-indigo-900/30 flex items-center`}
                       >
                         {isConverting ? (
@@ -1108,14 +1095,6 @@ if (shortCondition)
                         )}
                       </button>
                     )}
-                  </div>
-                </div>
-                <div className="p-3 border-t border-zinc-700/50 flex justify-between items-center bg-zinc-900/30">
-                  <div className="text-zinc-400 text-xs">
-                    <span className="inline-flex items-center">
-                      <Info className="w-3.5 h-3.5 mr-1 text-indigo-400" />
-                      Need help with Pine Script? <a href="#" className="text-indigo-400 ml-1 hover:underline">View Documentation</a>
-                    </span>
                   </div>
                 </div>
               </div>
@@ -1299,185 +1278,187 @@ if (shortCondition)
                 </div>
               </div>
 
-              {/* Optimization Settings Panel */}
-              <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
-                <h2 className="text-xl font-semibold mb-4 flex items-center">
-                  <Zap className="w-5 h-5 mr-2 text-indigo-500" />
-                  Optimization Settings
-                </h2>
+              {/* Input Condition Panel - Full Width */}
 
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Optimization Algorithm</label>
-                    <select
-                      className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
-                    >
-                      <option value="brute-force">Brute Force</option>
-                      <option value="genetic">Genetic Algorithm</option>
-                      <option value="grid">Grid Search</option>
-                      <option value="random">Random Search</option>
-                    </select>
-                    <p className="text-xs text-zinc-500 mt-1">Brute force tests all combinations for maximum accuracy but can take longer.</p>
+              {jsonData && Object.keys(jsonData.inputs).length > 0 && (
+                <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
+                  <h2 className="text-xl font-semibold mb-4 flex items-center">
+                    <Zap className="w-5 h-5 mr-2 text-indigo-500" />
+                    Input Conditions
+                  </h2>
+
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    {Object.entries(jsonData.inputs).map(([key, input]) => {
+                      // Skip boolean and string inputs with options as they don't need min/max
+                      const isRangeType = ['integer', 'float', 'simple'].includes(input.type);
+
+                      return (
+                        <div key={key} className="bg-zinc-900/60 p-4 rounded-lg border border-zinc-800">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-md font-medium text-white">
+                              {input.title || key}
+                              <span className="ml-2 text-xs bg-zinc-700/70 px-1.5 py-0.5 rounded-full text-zinc-300">
+                                {input.type}
+                              </span>
+                            </h3>
+                          </div>
+
+                          {input.tooltip && (
+                            <p className="text-xs text-zinc-400 mt-1 mb-3">
+                              <Info className="w-3 h-3 inline mr-1" />
+                              {input.tooltip}
+                            </p>
+                          )}
+
+                          {input.type === 'boolean' ? (
+                            <div className="mt-3">
+                              <label className="inline-flex items-center text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="form-checkbox rounded bg-zinc-800 border-zinc-700 text-indigo-500 mr-2"
+                                  defaultChecked={input.defaultValue === 'true'}
+                                />
+                                Use in optimization
+                              </label>
+                            </div>
+                          ) : input.type === 'string' && input.options && input.options.length > 0 ? (
+                            <div className="mt-3">
+                              <label className="block text-sm font-medium text-zinc-400 mb-2">Optimization Values</label>
+                              <div className="flex flex-wrap gap-2">
+                                {input.options.map((option, index) => (
+                                  <label key={index} className="inline-flex items-center text-zinc-300">
+                                    <input
+                                      type="checkbox"
+                                      className="form-checkbox rounded bg-zinc-800 border-zinc-700 text-indigo-500 mr-1"
+                                      defaultChecked={option === input.defaultValue}
+                                    />
+                                    <span className="text-sm">{option.replace(/['"]/g, '')}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ) : isRangeType ? (
+                            <div className="mt-3 space-y-3">
+                              <div className="grid grid-cols-4 gap-3">
+                                <div>
+                                  <label className="block text-sm font-medium text-zinc-400 mb-1">Min Value</label>
+                                  <input
+                                    type={input.type === 'float' ? 'number' : 'number'}
+                                    step={input.type === 'float' ? '0.1' : '1'}
+                                    className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
+                                    defaultValue={input.minval || (input.type === 'float' ? parseFloat(input.defaultValue) / 2 : parseInt(input.defaultValue) / 2)}
+                                    data-param={`${key}-min`}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-zinc-400 mb-1">Default</label>
+                                  <input
+                                    type={input.type === 'float' ? 'number' : 'number'}
+                                    step={input.type === 'float' ? '0.1' : '1'}
+                                    className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
+                                    defaultValue={input.defaultValue}
+                                    data-param={`${key}-default`}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-zinc-400 mb-1">Max Value</label>
+                                  <input
+                                    type={input.type === 'float' ? 'number' : 'number'}
+                                    step={input.type === 'float' ? '0.1' : '1'}
+                                    className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
+                                    defaultValue={input.maxval || (input.type === 'float' ? parseFloat(input.defaultValue) * 2 : parseInt(input.defaultValue) * 2)}
+                                    data-param={`${key}-max`}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-zinc-400 mb-1">Step Size</label>
+                                  <input
+                                    type="number"
+                                    step={input.type === 'float' ? '0.1' : '1'}
+                                    className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
+                                    defaultValue={input.type === 'float' ? '0.1' : '1'}
+                                    data-param={`${key}-step`}
+                                  />
+                                </div>
+                              </div>
+
+                            </div>
+                          ) : input.type === 'color' ? (
+                            <div className="mt-3">
+                              <p className="text-sm text-zinc-400">Color parameters are not included in optimization</p>
+                            </div>
+                          ) : (
+                            <div className="mt-3">
+                              <p className="text-sm text-zinc-400">This parameter type is not supported for optimization</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Optimization Target</label>
-                    <select
-                      className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
-                    >
-                      <option value="return">Net Return (%)</option>
-                      <option value="sharpe">Sharpe Ratio</option>
-                      <option value="sortino">Sortino Ratio</option>
-                      <option value="profit-factor">Profit Factor</option>
-                      <option value="max-drawdown">Minimize Max Drawdown</option>
-                    </select>
-                  </div>
-
-                  <div className="bg-amber-900/20 border border-amber-900/40 rounded-lg p-3 flex text-amber-400">
-                    <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
-                    <div className="text-sm">
-                      <p>Optimization may take a long time depending on the number of parameters and combinations.</p>
-                      <p className="mt-1 text-xs">Be careful of overfitting - optimal parameters on historical data may not perform well on future data.</p>
+                  <div className="mt-6 pt-4 border-t border-zinc-700/30">
+                    <div className="bg-amber-900/20 border border-amber-900/40 rounded-lg p-3 flex text-amber-400">
+                      <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                      <div className="text-xs">
+                        <p>Setting wide parameter ranges will significantly increase the optimization time. Consider narrowing ranges for faster results.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="mt-6 pt-4 flex gap-2">
-                  <OptimizationButtons
-                    onNonExhaustiveClick={() => handleOptimize(false)}
-                    onExhaustiveClick={() => handleOptimize(true)}
-                  />
+              )}
+
+              {/* Optimization Settings Panel */}
+
+            </div>
+            <div className="w-full bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Zap className="w-5 h-5 mr-2 text-indigo-500" />
+                Optimization Settings
+              </h2>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">Optimization Algorithm</label>
+                  <select
+                    className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
+                  >
+                    <option value="brute-force">Brute Force</option>
+                    <option value="genetic">Genetic Algorithm</option>
+                    <option value="grid">Grid Search</option>
+                    <option value="random">Random Search</option>
+                  </select>
+                  <p className="text-xs text-zinc-500 mt-1">Brute force tests all combinations for maximum accuracy but can take longer.</p>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">Optimization Target</label>
+                  <select
+                    className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
+                  >
+                    <option value="return">Net Return (%)</option>
+                    <option value="sharpe">Sharpe Ratio</option>
+                    <option value="sortino">Sortino Ratio</option>
+                    <option value="profit-factor">Profit Factor</option>
+                    <option value="max-drawdown">Minimize Max Drawdown</option>
+                  </select>
+                </div>
+
+                <div className="bg-amber-900/20 border border-amber-900/40 rounded-lg p-3 flex text-amber-400">
+                  <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p>Optimization may take a long time depending on the number of parameters and combinations.</p>
+                    <p className="mt-1 text-xs">Be careful of overfitting - optimal parameters on historical data may not perform well on future data.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 pt-4 flex gap-2">
+                <OptimizationButtons
+                  onNonExhaustiveClick={() => handleOptimize(false)}
+                  onExhaustiveClick={() => handleOptimize(true)}
+                />
               </div>
             </div>
-
-            {/* Input Condition Panel - Full Width */}
-            {jsonData && Object.keys(jsonData.inputs).length > 0 && (
-              <div className="bg-zinc-800/70 p-6 rounded-xl shadow-xl border border-zinc-700/50">
-                <h2 className="text-xl font-semibold mb-4 flex items-center">
-                  <Zap className="w-5 h-5 mr-2 text-indigo-500" />
-                  Input Conditions
-                </h2>
-
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                  {Object.entries(jsonData.inputs).map(([key, input]) => {
-                    // Skip boolean and string inputs with options as they don't need min/max
-                    const isRangeType = ['integer', 'float', 'simple'].includes(input.type);
-
-                    return (
-                      <div key={key} className="bg-zinc-900/60 p-4 rounded-lg border border-zinc-800">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-md font-medium text-white">
-                            {input.title || key}
-                            <span className="ml-2 text-xs bg-zinc-700/70 px-1.5 py-0.5 rounded-full text-zinc-300">
-                              {input.type}
-                            </span>
-                          </h3>
-                        </div>
-
-                        {input.tooltip && (
-                          <p className="text-xs text-zinc-400 mt-1 mb-3">
-                            <Info className="w-3 h-3 inline mr-1" />
-                            {input.tooltip}
-                          </p>
-                        )}
-
-                        {input.type === 'boolean' ? (
-                          <div className="mt-3">
-                            <label className="inline-flex items-center text-zinc-300">
-                              <input
-                                type="checkbox"
-                                className="form-checkbox rounded bg-zinc-800 border-zinc-700 text-indigo-500 mr-2"
-                                defaultChecked={input.defaultValue === 'true'}
-                              />
-                              Use in optimization
-                            </label>
-                          </div>
-                        ) : input.type === 'string' && input.options && input.options.length > 0 ? (
-                          <div className="mt-3">
-                            <label className="block text-sm font-medium text-zinc-400 mb-2">Optimization Values</label>
-                            <div className="flex flex-wrap gap-2">
-                              {input.options.map((option, index) => (
-                                <label key={index} className="inline-flex items-center text-zinc-300">
-                                  <input
-                                    type="checkbox"
-                                    className="form-checkbox rounded bg-zinc-800 border-zinc-700 text-indigo-500 mr-1"
-                                    defaultChecked={option === input.defaultValue}
-                                  />
-                                  <span className="text-sm">{option.replace(/['"]/g, '')}</span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        ) : isRangeType ? (
-                          <div className="mt-3 space-y-3">
-                            <div className="grid grid-cols-4 gap-3">
-                              <div>
-                                <label className="block text-sm font-medium text-zinc-400 mb-1">Min Value</label>
-                                <input
-                                  type={input.type === 'float' ? 'number' : 'number'}
-                                  step={input.type === 'float' ? '0.1' : '1'}
-                                  className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                                  defaultValue={input.minval || (input.type === 'float' ? parseFloat(input.defaultValue) / 2 : parseInt(input.defaultValue) / 2)}
-                                  data-param={`${key}-min`}
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-zinc-400 mb-1">Default</label>
-                                <input
-                                  type={input.type === 'float' ? 'number' : 'number'}
-                                  step={input.type === 'float' ? '0.1' : '1'}
-                                  className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                                  defaultValue={input.defaultValue}
-                                  data-param={`${key}-default`}
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-zinc-400 mb-1">Max Value</label>
-                                <input
-                                  type={input.type === 'float' ? 'number' : 'number'}
-                                  step={input.type === 'float' ? '0.1' : '1'}
-                                  className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                                  defaultValue={input.maxval || (input.type === 'float' ? parseFloat(input.defaultValue) * 2 : parseInt(input.defaultValue) * 2)}
-                                  data-param={`${key}-max`}
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-zinc-400 mb-1">Step Size</label>
-                                <input
-                                  type="number"
-                                  step={input.type === 'float' ? '0.1' : '1'}
-                                  className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                                  defaultValue={input.type === 'float' ? '0.1' : '1'}
-                                  data-param={`${key}-step`}
-                                />
-                              </div>
-                            </div>
-
-                          </div>
-                        ) : input.type === 'color' ? (
-                          <div className="mt-3">
-                            <p className="text-sm text-zinc-400">Color parameters are not included in optimization</p>
-                          </div>
-                        ) : (
-                          <div className="mt-3">
-                            <p className="text-sm text-zinc-400">This parameter type is not supported for optimization</p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-zinc-700/30">
-                  <div className="bg-amber-900/20 border border-amber-900/40 rounded-lg p-3 flex text-amber-400">
-                    <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
-                    <div className="text-xs">
-                      <p>Setting wide parameter ranges will significantly increase the optimization time. Consider narrowing ranges for faster results.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

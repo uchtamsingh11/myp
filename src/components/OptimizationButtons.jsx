@@ -70,7 +70,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
         <button
           onClick={handleNonExhaustiveClick}
           disabled={isLoading}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors"
+          className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors"
           onMouseEnter={() => setShowNonExhaustiveTooltip(true)}
           onMouseLeave={() => setShowNonExhaustiveTooltip(false)}
         >
@@ -95,7 +95,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
         <button
           onClick={handleExhaustiveClick}
           disabled={isLoading}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors"
+          className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors"
           onMouseEnter={() => setShowExhaustiveTooltip(true)}
           onMouseLeave={() => setShowExhaustiveTooltip(false)}
         >

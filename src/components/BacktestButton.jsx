@@ -165,7 +165,7 @@ const BacktestButton = ({
       <button
         onClick={handleBacktestClick}
         disabled={isLoading}
-        className="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors disabled:bg-gray-400"
+        className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] disabled:bg-gray-400"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >

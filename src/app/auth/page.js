@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import RateLimitNotice from '../../components/auth/RateLimitNotice';
 import { BorderBeam } from '../../components/ui/effects/BorderBeam';
 import { RainbowButton } from '../../components/ui/buttons/RainbowButton';
+import GradientText from '../../components/ui/effects/GradientText';
 
 // Create a client component that uses useSearchParams
 const AuthContent = () => {
@@ -297,7 +298,12 @@ const AuthContent = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
             >
-              Welcome to AlgoZ
+              <GradientText
+                gradient='purple'
+                className='inline'
+              >
+                Welcome to AlgoZ
+              </GradientText>
             </motion.h2>
           </div>
 
@@ -474,17 +480,12 @@ const AuthContent = () => {
                   </div>
                 )}
 
-                {/* <motion.button
+                <motion.button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-zinc-800 to-black hover:from-zinc-700 hover:to-zinc-900 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  className="w-full bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white font-medium py-3 px-4 rounded-lg transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df]"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   disabled={loading}
-                > */}
-                <RainbowButton
-                  className="w-full"
-                  disabled={loading}
-                  type="submit"
                 >
                   {isLogin
                     ? isMagicLink
@@ -497,8 +498,8 @@ const AuthContent = () => {
                     : loading
                       ? 'Creating Account...'
                       : 'Create Account'}
-                </RainbowButton>
-                {/* </motion.button> */}
+
+                </motion.button>
               </motion.div>
             </form>
 
