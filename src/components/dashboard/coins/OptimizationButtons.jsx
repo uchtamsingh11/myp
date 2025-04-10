@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '../utils/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../../../utils/supabase';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
   const [isLoading, setIsLoading] = useState(false);

@@ -3,8 +3,16 @@
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, BarChart2, TrendingUp, TrendingDown, Zap, ChevronDown, AlertTriangle, Info, Download, Code, Server, ArrowRight } from 'lucide-react';
 import { saveBacktestToCache, getBacktestFromCache, loadSavedConfig } from '../../../utils/localStorage';
-import BacktestButton from '../../../components/BacktestButton';
+import BacktestButton from '../../../components/dashboard/coins/BacktestButton';
 import GradientText from '../../../components/ui/effects/GradientText';
+import TradeSymbolSelector from '../../../components/dashboard/common/TradeSymbolSelector';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../../components/ui/tooltips/select';
 
 export default function Backtest() {
   const [activeTab, setActiveTab] = useState('input');
@@ -1003,50 +1011,35 @@ if (shortCondition)
 
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div>
-                  <label htmlFor="symbol" className="block text-sm font-medium mb-2 text-zinc-300">Trading Symbol</label>
-                  <div className="relative">
-                    <select
-                      id="symbol"
-                      value={symbol}
-                      onChange={(e) => setSymbol(e.target.value)}
-                      className="appearance-none w-full px-4 py-3 pr-10 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-                      required
-                    >
-                      <option value="">Select a symbol</option>
-                      <option value="AAPL">AAPL (Apple Inc.)</option>
-                      <option value="MSFT">MSFT (Microsoft Corp.)</option>
-                      <option value="GOOGL">GOOGL (Alphabet Inc.)</option>
-                      <option value="AMZN">AMZN (Amazon.com Inc.)</option>
-                      <option value="TSLA">TSLA (Tesla Inc.)</option>
-                      <option value="BTCUSD">BTCUSD (Bitcoin)</option>
-                      <option value="ETHUSD">ETHUSD (Ethereum)</option>
-                      <option value="EURUSD">EURUSD (Euro/USD)</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-3.5 text-zinc-400 w-4 h-4 pointer-events-none" />
-                  </div>
-                </div>
+                <TradeSymbolSelector
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                  required={true}
+                />
 
                 <div>
                   <label htmlFor="timeframe" className="block text-sm font-medium mb-2 text-zinc-300">Timeframe</label>
-                  <div className="relative">
-                    <select
+                  <Select
+                    value={timeframe}
+                    onValueChange={(value) => setTimeframe(value)}
+                  >
+                    <SelectTrigger
                       id="timeframe"
-                      value={timeframe}
-                      onChange={(e) => setTimeframe(e.target.value)}
-                      className="appearance-none w-full px-4 py-3 pr-10 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                      className="px-4 py-3 h-auto bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
                     >
-                      <option value="tick">Tick Data</option>
-                      <option value="1m">1 Minute</option>
-                      <option value="5m">5 Minutes</option>
-                      <option value="15m">15 Minutes</option>
-                      <option value="1h">1 Hour</option>
-                      <option value="4h">4 Hours</option>
-                      <option value="1D">1 Day</option>
-                      <option value="1W">1 Week</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-3.5 text-zinc-400 w-4 h-4 pointer-events-none" />
-                  </div>
+                      <SelectValue placeholder="Select timeframe" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border border-zinc-700 text-white">
+                      <SelectItem value="tick" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Tick Data</SelectItem>
+                      <SelectItem value="1m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 Minute</SelectItem>
+                      <SelectItem value="5m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">5 Minutes</SelectItem>
+                      <SelectItem value="15m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">15 Minutes</SelectItem>
+                      <SelectItem value="1h" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 Hour</SelectItem>
+                      <SelectItem value="4h" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">4 Hours</SelectItem>
+                      <SelectItem value="1D" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 Day</SelectItem>
+                      <SelectItem value="1W" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 Week</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex flex-col w-full">
@@ -1075,26 +1068,29 @@ if (shortCondition)
 
                 <div>
                   <label htmlFor="timeduration" className="block text-sm font-medium mb-2 text-zinc-300">Time Duration</label>
-                  <div className="relative">
-                    <select
+                  <Select
+                    value={timeDuration}
+                    onValueChange={(value) => setTimeDuration(value)}
+                  >
+                    <SelectTrigger
                       id="timeduration"
-                      value={timeDuration}
-                      onChange={(e) => setTimeDuration(e.target.value)}
-                      className="appearance-none w-full px-4 py-3 pr-10 bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                      className="px-4 py-3 h-auto bg-zinc-800/80 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
                     >
-                      <option value="1W">1 week</option>
-                      <option value="1m">1 month</option>
-                      <option value="3m">3 month</option>
-                      <option value="6m">6 month</option>
-                      <option value="12m">12 month</option>
-                      <option value="24m">24 month</option>
-                      <option value="36m">36 month</option>
-                      <option value="48m">48 month</option>
-                      <option value="60m">60 month</option>
-                      <option value="72m">120 month</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-3.5 text-zinc-400 w-4 h-4 pointer-events-none" />
-                  </div>
+                      <SelectValue placeholder="Select time duration" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border border-zinc-700 text-white">
+                      <SelectItem value="1W" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 week</SelectItem>
+                      <SelectItem value="1m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 month</SelectItem>
+                      <SelectItem value="3m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">3 month</SelectItem>
+                      <SelectItem value="6m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">6 month</SelectItem>
+                      <SelectItem value="12m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">12 month</SelectItem>
+                      <SelectItem value="24m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">24 month</SelectItem>
+                      <SelectItem value="36m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">36 month</SelectItem>
+                      <SelectItem value="48m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">48 month</SelectItem>
+                      <SelectItem value="60m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">60 month</SelectItem>
+                      <SelectItem value="72m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">120 month</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* <div className="flex flex-col justify-center w-full">

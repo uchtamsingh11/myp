@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { supabase } from '../../../utils/supabase';
-import PaymentButton from '../../../components/PaymentButton';
+import PaymentButton from '../../../components/dashboard/payment/PaymentButton';
 import { BorderBeam } from '../../../components/ui/effects/BorderBeam';
-import { RainbowButton } from '../../../components/ui/buttons/RainbowButton';
 
 export default function PricingPage() {
   const [userId, setUserId] = useState(null);
@@ -67,7 +66,6 @@ export default function PricingPage() {
       coins: 2500,
       price: '₹2249',
       highlighted: true,
-      tag: 'Best Value',
     },
     {
       id: 'premium',
@@ -276,13 +274,13 @@ export default function PricingPage() {
                   delay={0}
                 />
 
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-0 right-0 flex justify-center">
+                {/* {plan.highlighted && (
+                  <div className="absolute -top- left-0 right-0 flex justify-center">
                     <span className="bg-indigo-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
                       {plan.tag || 'Most Popular'}
                     </span>
                   </div>
-                )}
+                )} */}
 
                 <div className="p-8 flex flex-col items-center">
                   <h3 className="text-xl md:text-2xl font-bold mb-2 text-center">{plan.name}</h3>

@@ -16,8 +16,16 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import OptimizationButtons from '../../../components/OptimizationButtons';
+import OptimizationButtons from '../../../components/dashboard/coins/OptimizationButtons';
 import GradientText from '../../../components/ui/effects/GradientText';
+import TradeSymbolSelector from '../../../components/dashboard/common/TradeSymbolSelector';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../../components/ui/tooltips/select';
 
 // Register Chart.js components
 ChartJS.register(
@@ -1201,32 +1209,34 @@ if (shortCondition)
                 </h2>
                 {/* Symbol selection */}
                 <div className="space-y-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Symbol</label>
-                    <input
-                      type="text"
-                      value={symbol}
-                      onChange={(e) => setSymbol(e.target.value)}
-                      placeholder="Enter trading symbol (e.g. AAPL, BTCUSD)"
-                      className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
-                    />
-                  </div>
+                  <TradeSymbolSelector
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value)}
+                    required={true}
+                    className="mb-4"
+                  />
 
                   <div>
                     <label className="block text-sm font-medium text-zinc-300 mb-2">Timeframe</label>
-                    <select
+                    <Select
                       value={timeframe}
-                      onChange={(e) => setTimeframe(e.target.value)}
-                      className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
+                      onValueChange={(value) => setTimeframe(value)}
                     >
-                      <option value="1m">1 Minute</option>
-                      <option value="5m">5 Minutes</option>
-                      <option value="15m">15 Minutes</option>
-                      <option value="1h">1 Hour</option>
-                      <option value="4h">4 Hours</option>
-                      <option value="1D">1 Day</option>
-                      <option value="1W">1 Week</option>
-                    </select>
+                      <SelectTrigger
+                        className="px-4 py-3 h-auto bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
+                      >
+                        <SelectValue placeholder="Select timeframe" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border border-zinc-700 text-white">
+                        <SelectItem value="1m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 Minute</SelectItem>
+                        <SelectItem value="5m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">5 Minutes</SelectItem>
+                        <SelectItem value="15m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">15 Minutes</SelectItem>
+                        <SelectItem value="1h" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 Hour</SelectItem>
+                        <SelectItem value="4h" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">4 Hours</SelectItem>
+                        <SelectItem value="1D" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 Day</SelectItem>
+                        <SelectItem value="1W" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 Week</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -1234,22 +1244,28 @@ if (shortCondition)
                 <div className="space-y-4 mb-6">
                   <div>
                     <label className="block text-sm font-medium text-zinc-300 mb-2">Time Duration</label>
-                    <select
+                    <Select
                       value={timeDuration}
-                      onChange={(e) => setTimeDuration(e.target.value)}
-                      className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
+                      onValueChange={(value) => setTimeDuration(value)}
                     >
-                      <option value="1W">1 week</option>
-                      <option value="1m">1 month</option>
-                      <option value="3m">3 months</option>
-                      <option value="6m">6 months</option>
-                      <option value="12m">12 months</option>
-                      <option value="24m">24 months</option>
-                      <option value="36m">36 months</option>
-                      <option value="48m">48 months</option>
-                      <option value="60m">60 months</option>
-                      <option value="120m">120 months</option>
-                    </select>
+                      <SelectTrigger
+                        className="px-4 py-3 h-auto bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
+                      >
+                        <SelectValue placeholder="Select time duration" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border border-zinc-700 text-white">
+                        <SelectItem value="1W" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 week</SelectItem>
+                        <SelectItem value="1m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">1 month</SelectItem>
+                        <SelectItem value="3m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">3 months</SelectItem>
+                        <SelectItem value="6m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">6 months</SelectItem>
+                        <SelectItem value="12m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">12 months</SelectItem>
+                        <SelectItem value="24m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">24 months</SelectItem>
+                        <SelectItem value="36m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">36 months</SelectItem>
+                        <SelectItem value="48m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">48 months</SelectItem>
+                        <SelectItem value="60m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">60 months</SelectItem>
+                        <SelectItem value="120m" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">120 months</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -1420,28 +1436,38 @@ if (shortCondition)
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-2">Optimization Algorithm</label>
-                  <select
-                    className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
-                  >
-                    <option value="brute-force">Brute Force</option>
-                    <option value="genetic">Genetic Algorithm</option>
-                    <option value="grid">Grid Search</option>
-                    <option value="random">Random Search</option>
-                  </select>
+                  <Select defaultValue="brute-force">
+                    <SelectTrigger
+                      className="px-4 py-3 h-auto bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <SelectValue placeholder="Select algorithm" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border border-zinc-700 text-white">
+                      <SelectItem value="brute-force" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Brute Force</SelectItem>
+                      <SelectItem value="genetic" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Genetic Algorithm</SelectItem>
+                      <SelectItem value="grid" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Grid Search</SelectItem>
+                      <SelectItem value="random" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Random Search</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-zinc-500 mt-1">Brute force tests all combinations for maximum accuracy but can take longer.</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-2">Optimization Target</label>
-                  <select
-                    className="w-full p-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500 appearance-none"
-                  >
-                    <option value="return">Net Return (%)</option>
-                    <option value="sharpe">Sharpe Ratio</option>
-                    <option value="sortino">Sortino Ratio</option>
-                    <option value="profit-factor">Profit Factor</option>
-                    <option value="max-drawdown">Minimize Max Drawdown</option>
-                  </select>
+                  <Select defaultValue="return">
+                    <SelectTrigger
+                      className="px-4 py-3 h-auto bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <SelectValue placeholder="Select target" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border border-zinc-700 text-white">
+                      <SelectItem value="return" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Net Return (%)</SelectItem>
+                      <SelectItem value="sharpe" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Sharpe Ratio</SelectItem>
+                      <SelectItem value="sortino" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Sortino Ratio</SelectItem>
+                      <SelectItem value="profit-factor" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Profit Factor</SelectItem>
+                      <SelectItem value="max-drawdown" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Minimize Max Drawdown</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="bg-amber-900/20 border border-amber-900/40 rounded-lg p-3 flex text-amber-400">
