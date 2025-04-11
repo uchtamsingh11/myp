@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight, Info, AlertTriangle } from 'lucide-react';
-import { saveOptimizationToCache, getOptimizationFromCache } from '../../../utils/localStorage';
 import { Line, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -303,22 +302,17 @@ const ReturnDistributionChart = ({ parameterSets }) => {
 export default function OptimizationPage() {
   const [activeTab, setActiveTab] = useState('input');
   const [pineScript, setPineScript] = useState('');
+  const [isConverting, setIsConverting] = useState(false);
+  const [jsonData, setJsonData] = useState(null);
   const [symbol, setSymbol] = useState('');
   const [timeframe, setTimeframe] = useState('1D');
-  const [timeDuration, setTimeDuration] = useState('1D');
+  const [timeDuration, setTimeDuration] = useState('1m');
   const [initialCapital, setInitialCapital] = useState(1000000);
   const [quantity, setQuantity] = useState(1);
-  const [jsonData, setJsonData] = useState(null);
-  const [jsonOutput, setJsonOutput] = useState('');
-  const [results, setResults] = useState(null);
+  const [exhaustiveMode, setIsExhaustive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
+  const [results, setResults] = useState(null);
   const [showResults, setShowResults] = useState(false);
-  const [countdownTime, setCountdownTime] = useState(60); // 60 seconds countdown
-  const [useCachedResults, setUseCachedResults] = useState(true);
-  const [isExhaustive, setIsExhaustive] = useState(false);
-
-  // Add new state for optimization and backtest
   const [optimizationId, setOptimizationId] = useState(null);
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [backtestResults, setBacktestResults] = useState(null);
@@ -345,61 +339,6 @@ export default function OptimizationPage() {
       }
     }
   }, []);
-
-  // Countdown effect
-  useEffect(() => {
-    let timer;
-    if (isLoading && countdownTime > 0) {
-      timer = setInterval(() => {
-        setCountdownTime(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            // Generate and show results when countdown reaches zero
-            try {
-              // Generate random results if we're not getting them from an API
-              const randomResults = generateRandomResults();
-
-              // Update the state with the generated results
-              setResults(randomResults);
-              setIsLoading(false);
-              setShowResults(true);
-
-              // Generate a fallback optimization ID
-              const fallbackId = `fallback-${Date.now()}`;
-              setOptimizationId(fallbackId);
-
-              // Note: No need to switch tab here as we're already on the results tab
-
-              // Save results to localStorage for future use
-              if (pineScript) {
-                const config = {
-                  symbol,
-                  timeframe,
-                  timeDuration,
-                  initialCapital,
-                  quantity
-                };
-                saveOptimizationToCache(randomResults, pineScript, config);
-              }
-
-              console.log("Optimization complete, results generated:", randomResults);
-            } catch (error) {
-              console.error("Error generating or saving optimization results:", error);
-              setIsLoading(false);
-              setError("There was an error during optimization. Please try again.");
-              // Don't use alert as it's not a good UX practice
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [isLoading, countdownTime, pineScript, symbol, timeframe, timeDuration, initialCapital, quantity]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -598,7 +537,6 @@ export default function OptimizationPage() {
       console.log("Detected inputs:", Object.keys(jsonResult.inputs).length, jsonResult.inputs);
 
       setJsonData(jsonResult);
-      setJsonOutput(JSON.stringify(jsonResult, null, 2));
       setIsConverting(false);
 
       // Auto-advance to configure tab if we have inputs
@@ -622,8 +560,9 @@ export default function OptimizationPage() {
     }
   };
 
+  // Function to handle optimization
   const handleOptimize = async (exhaustiveMode = false) => {
-    // Validation checks but without restricting tab navigation
+    // Validation checks
     if (!jsonData) {
       setError('Missing strategy: Please convert your Pine Script first');
       setActiveTab('input');
@@ -645,7 +584,7 @@ export default function OptimizationPage() {
       return;
     }
 
-    // Validate parameter input fields without preventing optimization
+    // Validate parameter input fields
     const inputFields = document.querySelectorAll('[data-param]');
     const emptyFields = [];
 
@@ -661,61 +600,15 @@ export default function OptimizationPage() {
       return;
     }
 
-    // Clear any previous errors
+    // Clear any previous errors and results
     setError(null);
-
-    // Clear any previous results
     setResults(null);
     setShowResults(false);
     setOptimizationId(null);
 
-    // Set optimization type
+    // Set optimization type and switch to results tab
     setIsExhaustive(exhaustiveMode);
-
-    // Check for cached results first
-    try {
-      const config = {
-        symbol,
-        timeframe,
-        timeDuration,
-        initialCapital,
-        quantity
-      };
-
-      const cachedData = getOptimizationFromCache(pineScript, config);
-      if (cachedData && cachedData.results) {
-        console.log('Using optimization results from cache');
-        // Generate a new optimization ID if we're using cached results
-        const tempOptimizationId = `cache-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-        // First switch to results tab
-        setActiveTab('results');
-
-        // Then set loading state
-        setIsLoading(true);
-
-        // Use a small timeout to ensure UI updates properly
-        setTimeout(() => {
-          setOptimizationId(tempOptimizationId);
-          setResults(cachedData.results);
-          setIsLoading(false);
-          setShowResults(true);
-        }, 500);
-
-        return;
-      }
-    } catch (error) {
-      console.error('Error checking cache:', error);
-      // Continue with API call if cache check fails
-    }
-
-    // Set longer countdown for exhaustive mode
-    setCountdownTime(exhaustiveMode ? 120 : 60);
-
-    // First switch to results tab
     setActiveTab('results');
-
-    // Then set loading state
     setIsLoading(true);
 
     try {
@@ -739,7 +632,7 @@ export default function OptimizationPage() {
           parameters[key] = {
             min: min,
             max: max,
-            default: defaultValue, // Include the default value for optimization
+            default: defaultValue,
             step: step
           };
         }
@@ -747,7 +640,6 @@ export default function OptimizationPage() {
 
       // Call API endpoint to optimize strategy
       try {
-        // Determine whether to use relative or absolute URL
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
           ? '/api/optimize'  // Use relative URL for local development
           : `${window.location.origin}/api/optimize`;  // Use absolute URL for production
@@ -765,9 +657,8 @@ export default function OptimizationPage() {
             initialCapital,
             quantity,
             parameters,
-            isExhaustive: exhaustiveMode // Include optimization type
+            isExhaustive: exhaustiveMode
           }),
-          // Add timeout to prevent hanging requests
           signal: AbortSignal.timeout(30000) // 30 second timeout
         });
 
@@ -778,38 +669,16 @@ export default function OptimizationPage() {
 
         const data = await response.json();
 
-        // Display message if cached results were used
-        if (data.cached) {
-          console.log('Using previously saved optimization results');
-        }
-
-        // Store the optimization_id for future use
+        // Store the optimization_id for future backtest use
         setOptimizationId(data.optimization_id);
-
-        // Set results
         setResults(data.results);
         setIsLoading(false);
         setShowResults(true);
-
-        // No need to save to localStorage if cached results were used
-        if (!data.cached && pineScript) {
-          const config = {
-            symbol,
-            timeframe,
-            timeDuration,
-            initialCapital,
-            quantity
-          };
-          saveOptimizationToCache(data.results, pineScript, config);
-        }
       } catch (apiError) {
         console.error("API error:", apiError);
-        console.log("Falling back to client-side optimization...");
 
-        // Show a warning message but continue with local optimization
-        setError(
-          "Server optimization failed. Using local optimization instead (results may be less accurate)."
-        );
+        // Show error but proceed with fallback
+        setError("Server optimization failed. Using local optimization instead (results may be less accurate).");
 
         // Fall back to local optimization if the API call fails
         const randomResults = generateRandomResults();
@@ -819,16 +688,6 @@ export default function OptimizationPage() {
         setResults(randomResults);
         setIsLoading(false);
         setShowResults(true);
-
-        // Save the locally generated results to cache
-        const config = {
-          symbol,
-          timeframe,
-          timeDuration,
-          initialCapital,
-          quantity
-        };
-        saveOptimizationToCache(randomResults, pineScript, config);
       }
     } catch (error) {
       console.error("Optimization error:", error);
@@ -1030,7 +889,6 @@ bb              = input_lookback`;
 
   const clearCode = () => {
     setPineScript('');
-    setJsonOutput('');
     setJsonData(null);
   };
 
@@ -1636,20 +1494,20 @@ if (shortCondition)
                   </div>
                   <div className="text-center">
                     <h3 className="text-xl font-semibold text-white mb-2">
-                      {isExhaustive ? 'Exhaustive Optimization In Progress' : 'Quick Optimization In Progress'}
+                      {exhaustiveMode ? 'Exhaustive Optimization In Progress' : 'Quick Optimization In Progress'}
                     </h3>
                     <p className="text-zinc-400 mb-6">Testing parameter combinations to find the optimal strategy</p>
                     <div className="bg-zinc-700/50 h-3 rounded-full max-w-md mx-auto overflow-hidden">
                       <div
-                        className="bg-indigo-500 h-full rounded-full transition-all duration-300"
-                        style={{ width: `${((60 - countdownTime) / 60) * 100}%` }}
+                        className="bg-indigo-500 h-full rounded-full animate-pulse"
+                        style={{ width: '50%' }}
                       ></div>
                     </div>
                     <div className="mt-3 text-zinc-300 font-medium">
-                      {countdownTime > 0 ? `${countdownTime} seconds remaining...` : 'Finalizing results...'}
+                      Running optimization...
                     </div>
                     <div className="mt-2 text-zinc-500">
-                      {isExhaustive
+                      {exhaustiveMode
                         ? 'This may take several minutes for a thorough analysis...'
                         : 'This may take a minute or two...'}
                     </div>
@@ -1853,7 +1711,7 @@ if (shortCondition)
 
                       <div className="mt-4 text-xs text-zinc-500 flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
-                        {isExhaustive
+                        {exhaustiveMode
                           ? `Exhaustive optimization completed in ${results?.optimizationTime} seconds`
                           : `Quick optimization completed in ${results?.optimizationTime} seconds`}
                       </div>
