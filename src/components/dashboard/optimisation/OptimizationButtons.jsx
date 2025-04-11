@@ -43,7 +43,11 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
 
       // Check if user has enough coins
       if (currentCoins < amount) {
-        alert(`Not enough coins. You need ${amount} coins but have ${currentCoins}.`);
+        // Replace alert with redirection to pricing page
+        const confirmation = window.confirm(`Not enough coins. You need ${amount} coins but have ${currentCoins}. Do you want to buy more coins?`);
+        if (confirmation) {
+          window.location.href = '/dashboard/pricing';
+        }
         setIsLoading(false);
         return;
       }
