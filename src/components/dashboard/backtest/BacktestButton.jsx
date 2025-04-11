@@ -21,7 +21,7 @@ const BacktestButton = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const BACKTEST_COST = 250;
+  const BACKTEST_COST = 25;
 
   const handleBacktestClick = async () => {
     if (!user) {
