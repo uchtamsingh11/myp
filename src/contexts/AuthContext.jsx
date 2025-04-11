@@ -212,8 +212,19 @@ export function AuthProvider({ children }) {
 
       // Clear local storage and session storage
       if (typeof window !== 'undefined') {
+        // Remove auth tokens
         localStorage.removeItem('supabase.auth.token');
         sessionStorage.removeItem('supabase.auth.token');
+        
+        // Remove user profile data
+        localStorage.removeItem('userProfile');
+        localStorage.removeItem('isAdmin');
+        
+        // Remove any other user-related data
+        localStorage.removeItem('tradingViewSelectedBroker');
+        localStorage.removeItem('scalpingToolSelectedBroker');
+        localStorage.removeItem('copyTradingSelectedBrokers');
+        localStorage.removeItem('copyTradingSelectedChildBrokers');
 
         // Clear any auth cookies
         document.cookie.split(';').forEach(c => {

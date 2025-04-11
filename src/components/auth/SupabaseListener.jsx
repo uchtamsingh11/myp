@@ -111,6 +111,14 @@ export default function SupabaseListener() {
           if (typeof window !== 'undefined') {
             localStorage.removeItem('supabase.auth.token');
             sessionStorage.removeItem('supabase.auth.token');
+            // Remove user profile and admin status
+            localStorage.removeItem('userProfile');
+            localStorage.removeItem('isAdmin');
+            // Remove app state data
+            localStorage.removeItem('tradingViewSelectedBroker');
+            localStorage.removeItem('scalpingToolSelectedBroker');
+            localStorage.removeItem('copyTradingSelectedBrokers');
+            localStorage.removeItem('copyTradingSelectedChildBrokers');
             // But keep the rate limit key!
 
             // Clear auth-related cookies

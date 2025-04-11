@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CalendarIcon, Clock, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight, Info, AlertTriangle } from 'lucide-react';
-import { saveOptimizationToCache, loadSavedConfig } from '../../../utils/localStorage';
+import { saveOptimizationToCache, getOptimizationFromCache } from '../../../utils/localStorage';
 import { Line, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -328,13 +328,21 @@ export default function OptimizationPage() {
 
   // Load saved configuration from localStorage on initial mount
   useEffect(() => {
-    const savedConfig = loadSavedConfig();
-    if (savedConfig) {
-      setSymbol(savedConfig.symbol || '');
-      setTimeframe(savedConfig.timeframe || '1D');
-      setTimeDuration(savedConfig.timeDuration || '1D');
-      setInitialCapital(savedConfig.initialCapital || 1000000);
-      setQuantity(savedConfig.quantity || 1);
+    // Need to check if there's any saved optimization configuration
+    if (typeof window !== 'undefined') {
+      const savedConfigString = localStorage.getItem('optimizationConfig');
+      if (savedConfigString) {
+        try {
+          const savedConfig = JSON.parse(savedConfigString);
+          setSymbol(savedConfig.symbol || '');
+          setTimeframe(savedConfig.timeframe || '1D');
+          setTimeDuration(savedConfig.timeDuration || '1m');
+          setInitialCapital(savedConfig.initialCapital || 1000000);
+          setQuantity(savedConfig.quantity || 1);
+        } catch (error) {
+          console.error('Error parsing saved configuration:', error);
+        }
+      }
     }
   }, []);
 
@@ -651,6 +659,29 @@ export default function OptimizationPage() {
 
     // Set optimization type
     setIsExhaustive(exhaustiveMode);
+
+    // Check for cached results first
+    try {
+      const config = {
+        symbol,
+        timeframe,
+        timeDuration,
+        initialCapital,
+        quantity
+      };
+
+      const cachedData = getOptimizationFromCache(pineScript, config);
+      if (cachedData && cachedData.results) {
+        console.log('Using optimization results from cache');
+        setResults(cachedData.results);
+        setIsLoading(false);
+        setShowResults(true);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking cache:', error);
+      // Continue with API call if cache check fails
+    }
 
     // Set longer countdown for exhaustive mode
     setCountdownTime(exhaustiveMode ? 120 : 60);
