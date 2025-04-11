@@ -309,7 +309,6 @@ export default function OptimizationPage() {
   const [timeDuration, setTimeDuration] = useState('1m');
   const [initialCapital, setInitialCapital] = useState(1000000);
   const [quantity, setQuantity] = useState(1);
-  const [exhaustiveMode, setIsExhaustive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [showResults, setShowResults] = useState(false);
@@ -561,7 +560,7 @@ export default function OptimizationPage() {
   };
 
   // Function to handle optimization
-  const handleOptimize = async (exhaustiveMode = false) => {
+  const handleOptimize = async () => {
     // Validation checks
     if (!jsonData) {
       setError('Missing strategy: Please convert your Pine Script first');
@@ -600,16 +599,14 @@ export default function OptimizationPage() {
       return;
     }
 
-    // Clear any previous errors and results
-    setError(null);
+    // Clear previous results and set loading state
     setResults(null);
-    setShowResults(false);
-    setOptimizationId(null);
-
-    // Set optimization type and switch to results tab
-    setIsExhaustive(exhaustiveMode);
-    setActiveTab('results');
+    setBacktestResults(null);
+    setShowBacktestResults(false);
     setIsLoading(true);
+    setShowResults(false);
+    setError(null);
+    setActiveTab('results'); // Switch to results tab first
 
     try {
       // Extract parameters from inputs for optimization
@@ -640,6 +637,7 @@ export default function OptimizationPage() {
 
       // Call API endpoint to optimize strategy
       try {
+        // Determine whether to use relative or absolute URL
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
           ? '/api/optimize'  // Use relative URL for local development
           : `${window.location.origin}/api/optimize`;  // Use absolute URL for production
@@ -657,7 +655,7 @@ export default function OptimizationPage() {
             initialCapital,
             quantity,
             parameters,
-            isExhaustive: exhaustiveMode
+            isExhaustive: true // Always use exhaustive mode for better results
           }),
           signal: AbortSignal.timeout(30000) // 30 second timeout
         });
@@ -1459,9 +1457,7 @@ if (shortCondition)
               </div>
               <div className="mt-6 pt-4 flex gap-2">
                 <OptimizationButtons
-                  onNonExhaustiveClick={() => handleOptimize(false)}
-                  onExhaustiveClick={() => handleOptimize(true)}
-                  setActiveTab={setActiveTab}
+                  onNonExhaustiveClick={() => handleOptimize()}
                 />
               </div>
             </div>
@@ -1494,7 +1490,7 @@ if (shortCondition)
                   </div>
                   <div className="text-center">
                     <h3 className="text-xl font-semibold text-white mb-2">
-                      {exhaustiveMode ? 'Exhaustive Optimization In Progress' : 'Quick Optimization In Progress'}
+                      Optimization In Progress
                     </h3>
                     <p className="text-zinc-400 mb-6">Testing parameter combinations to find the optimal strategy</p>
                     <div className="bg-zinc-700/50 h-3 rounded-full max-w-md mx-auto overflow-hidden">
@@ -1507,9 +1503,7 @@ if (shortCondition)
                       Running optimization...
                     </div>
                     <div className="mt-2 text-zinc-500">
-                      {exhaustiveMode
-                        ? 'This may take several minutes for a thorough analysis...'
-                        : 'This may take a minute or two...'}
+                      This may take a minute or two...
                     </div>
                   </div>
                 </div>
@@ -1711,9 +1705,7 @@ if (shortCondition)
 
                       <div className="mt-4 text-xs text-zinc-500 flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
-                        {exhaustiveMode
-                          ? `Exhaustive optimization completed in ${results?.optimizationTime} seconds`
-                          : `Quick optimization completed in ${results?.optimizationTime} seconds`}
+                        Optimization completed in {results?.optimizationTime} seconds
                       </div>
                     </div>
                   </div>

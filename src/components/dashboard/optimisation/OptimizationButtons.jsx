@@ -8,23 +8,17 @@ import {
   HoverCardTrigger, 
   HoverCardContent 
 } from '../../../components/ui/badges/hover-card';
-import { Coins, Zap, ShieldCheck } from 'lucide-react';
+import { Coins, Zap } from 'lucide-react';
 
-const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
-  // Track loading state for buttons
+const OptimizationButtons = ({ onNonExhaustiveClick }) => {
+  // Track loading state for button
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  const handleNonExhaustiveClick = async () => {
+  const handleOptimizeClick = async () => {
     // Only proceed if not already loading
     if (isLoading) return;
-    await handleCoinDeduction(500, onNonExhaustiveClick);
-  };
-
-  const handleExhaustiveClick = async () => {
-    // Only proceed if not already loading
-    if (isLoading) return;
-    await handleCoinDeduction(1000, onExhaustiveClick);
+    await handleCoinDeduction(699, onNonExhaustiveClick);
   };
 
   const handleCoinDeduction = async (amount, callback) => {
@@ -74,20 +68,20 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
   };
 
   return (
-    <div className="w-full flex justify-between space-x-4 items-center">
+    <div className="w-full flex justify-center">
       <HoverCard>
         <HoverCardTrigger asChild>
           <button
-            onClick={handleNonExhaustiveClick}
+            onClick={handleOptimizeClick}
             disabled={isLoading}
-            className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-3 px-6 rounded-lg flex items-center justify-center transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             ) : (
               <Zap className="w-5 h-5 mr-2" />
             )}
-            Quick Optimization
+            Optimize Strategy
           </button>
         </HoverCardTrigger>
         <HoverCardContent 
@@ -98,42 +92,10 @@ const OptimizationButtons = ({ onNonExhaustiveClick, onExhaustiveClick }) => {
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium flex items-center">
               <Coins className="w-4 h-4 mr-2 text-amber-400" />
-              Cost: 500 Coins
+              Cost: 699 Coins
             </p>
             <p className="text-xs text-zinc-400">
-              Quick optimization tests a limited set of parameter combinations to save time
-            </p>
-          </div>
-        </HoverCardContent>
-      </HoverCard>
-      
-      <HoverCard>
-        <HoverCardTrigger asChild>
-          <button
-            onClick={handleExhaustiveClick}
-            disabled={isLoading}
-            className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            ) : (
-              <ShieldCheck className="w-5 h-5 mr-2" />
-            )}
-            Exhaustive Optimization
-          </button>
-        </HoverCardTrigger>
-        <HoverCardContent 
-          className="bg-zinc-800 border border-zinc-700 text-white w-64 p-3" 
-          align="center"
-          sideOffset={5}
-        >
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium flex items-center">
-              <Coins className="w-4 h-4 mr-2 text-amber-400" />
-              Cost: 1000 Coins
-            </p>
-            <p className="text-xs text-zinc-400">
-              Exhaustive optimization tests all possible parameter combinations for maximum precision
+              Optimize your strategy parameters for better trading performance
             </p>
           </div>
         </HoverCardContent>
