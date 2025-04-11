@@ -30,7 +30,13 @@ const TRADE_SYMBOLS = [
   { value: 'XRPUSD', label: 'XRPUSD (Ripple)' },
   { value: 'DOTUSD', label: 'DOTUSD (Polkadot)' },
   { value: 'JPYUSD', label: 'JPYUSD (Japanese Yen/USD)' },
-  { value: 'GBPUSD', label: 'GBPUSD (British Pound/USD)' }
+  { value: 'GBPUSD', label: 'GBPUSD (British Pound/USD)' },
+  // Commodities
+  { value: 'XAUUSD', label: 'XAUUSD (Gold)' },
+  { value: 'XAGUSD', label: 'XAGUSD (Silver)' },
+  { value: 'WTIUSD', label: 'WTIUSD (Crude Oil WTI)' },
+  { value: 'NGUSD', label: 'NGUSD (Natural Gas)' },
+  { value: 'HGUSD', label: 'HGUSD (Copper)' }
 ];
 
 // Group symbols by type
@@ -43,6 +49,9 @@ const SYMBOL_GROUPS = {
   ],
   forex: [
     'EURUSD', 'JPYUSD', 'GBPUSD'
+  ],
+  commodities: [
+    'XAUUSD', 'XAGUSD', 'WTIUSD', 'NGUSD', 'HGUSD'
   ]
 };
 
@@ -125,6 +134,19 @@ const TradeSymbolSelector = ({
           <SelectGroup>
             <SelectLabel className="text-zinc-400">Forex</SelectLabel>
             {TRADE_SYMBOLS.filter(symbol => SYMBOL_GROUPS.forex.includes(symbol.value)).map(symbol => (
+              <SelectItem 
+                key={symbol.value} 
+                value={symbol.value}
+                className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+              >
+                {symbol.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+          
+          <SelectGroup>
+            <SelectLabel className="text-zinc-400">Commodities</SelectLabel>
+            {TRADE_SYMBOLS.filter(symbol => SYMBOL_GROUPS.commodities.includes(symbol.value)).map(symbol => (
               <SelectItem 
                 key={symbol.value} 
                 value={symbol.value}
