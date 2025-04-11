@@ -364,6 +364,8 @@ export default function OptimizationPage() {
               setIsLoading(false);
               setShowResults(true);
 
+              // Note: No need to switch tab here as we're already on the results tab
+
               // Save results to localStorage for future use
               if (pineScript) {
                 const config = {
@@ -380,7 +382,8 @@ export default function OptimizationPage() {
             } catch (error) {
               console.error("Error generating or saving optimization results:", error);
               setIsLoading(false);
-              alert("There was an error during optimization. Please try again.");
+              setError("There was an error during optimization. Please try again.");
+              // Don't use alert as it's not a good UX practice
             }
             return 0;
           }
@@ -657,6 +660,11 @@ export default function OptimizationPage() {
     // Clear any previous errors
     setError(null);
 
+    // Clear any previous results
+    setResults(null);
+    setShowResults(false);
+    setOptimizationId(null);
+
     // Set optimization type
     setIsExhaustive(exhaustiveMode);
 
@@ -673,9 +681,23 @@ export default function OptimizationPage() {
       const cachedData = getOptimizationFromCache(pineScript, config);
       if (cachedData && cachedData.results) {
         console.log('Using optimization results from cache');
-        setResults(cachedData.results);
-        setIsLoading(false);
-        setShowResults(true);
+        // Generate a new optimization ID if we're using cached results
+        const tempOptimizationId = `cache-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+        // First switch to results tab
+        setActiveTab('results');
+
+        // Then set loading state
+        setIsLoading(true);
+
+        // Use a small timeout to ensure UI updates properly
+        setTimeout(() => {
+          setOptimizationId(tempOptimizationId);
+          setResults(cachedData.results);
+          setIsLoading(false);
+          setShowResults(true);
+        }, 500);
+
         return;
       }
     } catch (error) {
@@ -686,6 +708,10 @@ export default function OptimizationPage() {
     // Set longer countdown for exhaustive mode
     setCountdownTime(exhaustiveMode ? 120 : 60);
 
+    // First switch to results tab
+    setActiveTab('results');
+
+    // Then set loading state
     setIsLoading(true);
 
     try {
@@ -774,7 +800,7 @@ export default function OptimizationPage() {
   // Add a function to run backtest with optimized parameters
   const runBacktest = async () => {
     if (!optimizationId || !results) {
-      alert('No optimization results available');
+      setError('No optimization results available. Please run an optimization first.');
       return;
     }
 
@@ -812,6 +838,9 @@ export default function OptimizationPage() {
       setComparison(data.comparison);
       setIsBacktesting(false);
       setShowBacktestResults(true);
+
+      // Make sure we're on the results tab
+      setActiveTab('results');
     } catch (error) {
       console.error("Backtest error:", error);
       setError(error.message || "Failed to backtest strategy. Please try again.");
@@ -1570,11 +1599,14 @@ if (shortCondition)
                       {isExhaustive ? 'Exhaustive Optimization In Progress' : 'Quick Optimization In Progress'}
                     </h3>
                     <p className="text-zinc-400 mb-6">Testing parameter combinations to find the optimal strategy</p>
-                    <div className="bg-zinc-700/50 h-2 rounded-full max-w-md mx-auto overflow-hidden">
+                    <div className="bg-zinc-700/50 h-3 rounded-full max-w-md mx-auto overflow-hidden">
                       <div
-                        className="bg-indigo-500 h-full rounded-full animate-pulse"
-                        style={{ width: '50%' }}
+                        className="bg-indigo-500 h-full rounded-full transition-all duration-300"
+                        style={{ width: `${((60 - countdownTime) / 60) * 100}%` }}
                       ></div>
+                    </div>
+                    <div className="mt-3 text-zinc-300 font-medium">
+                      {countdownTime > 0 ? `${countdownTime} seconds remaining...` : 'Finalizing results...'}
                     </div>
                     <div className="mt-2 text-zinc-500">
                       {isExhaustive
