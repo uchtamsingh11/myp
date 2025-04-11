@@ -313,10 +313,6 @@ export default function OptimizationPage() {
   const [results, setResults] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [optimizationId, setOptimizationId] = useState(null);
-  const [isBacktesting, setIsBacktesting] = useState(false);
-  const [backtestResults, setBacktestResults] = useState(null);
-  const [showBacktestResults, setShowBacktestResults] = useState(false);
-  const [comparison, setComparison] = useState(null);
   const [error, setError] = useState(null);
 
   // Load saved configuration from localStorage on initial mount
@@ -601,8 +597,6 @@ export default function OptimizationPage() {
 
     // Clear previous results and set loading state
     setResults(null);
-    setBacktestResults(null);
-    setShowBacktestResults(false);
     setIsLoading(true);
     setShowResults(false);
     setError(null);
@@ -667,7 +661,7 @@ export default function OptimizationPage() {
 
         const data = await response.json();
 
-        // Store the optimization_id for future backtest use
+        // Store the optimization_id for reference
         setOptimizationId(data.optimization_id);
         setResults(data.results);
         setIsLoading(false);
@@ -691,57 +685,6 @@ export default function OptimizationPage() {
       console.error("Optimization error:", error);
       setError(error.message || "Failed to optimize strategy. Please try again.");
       setIsLoading(false);
-    }
-  };
-
-  // Add a function to run backtest with optimized parameters
-  const runBacktest = async () => {
-    if (!optimizationId || !results) {
-      setError('No optimization results available. Please run an optimization first.');
-      return;
-    }
-
-    setIsBacktesting(true);
-    setError(null);
-
-    try {
-      // Call API endpoint to backtest the strategy with optimized parameters
-      const response = await fetch('/api/backtest', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          optimization_id: optimizationId,
-          // Using the optimized parameters from the optimization results
-          parameters: results.optimizedParameters
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Backtest failed');
-      }
-
-      const data = await response.json();
-
-      // Display message if cached results were used
-      if (data.cached) {
-        console.log('Using previously saved backtest results');
-      }
-
-      // Set backtest results and comparison data
-      setBacktestResults(data.results);
-      setComparison(data.comparison);
-      setIsBacktesting(false);
-      setShowBacktestResults(true);
-
-      // Make sure we're on the results tab
-      setActiveTab('results');
-    } catch (error) {
-      console.error("Backtest error:", error);
-      setError(error.message || "Failed to backtest strategy. Please try again.");
-      setIsBacktesting(false);
     }
   };
 
@@ -1508,29 +1451,6 @@ if (shortCondition)
                   </div>
                 </div>
               </div>
-            ) : isBacktesting ? (
-              // Backtesting state UI
-              <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50 p-8">
-                <div className="flex flex-col items-center justify-center space-y-4">
-                  <div className="relative">
-                    <div className="w-20 h-20 border-4 border-green-200 border-opacity-20 rounded-full"></div>
-                    <div className="w-20 h-20 border-4 border-green-500 border-t-transparent animate-spin rounded-full absolute top-0 left-0"></div>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-xl font-semibold text-white mb-2">Backtesting In Progress</h3>
-                    <p className="text-zinc-400 mb-6">Testing optimized parameters on historical data</p>
-                    <div className="bg-zinc-700/50 h-2 rounded-full max-w-md mx-auto overflow-hidden">
-                      <div
-                        className="bg-green-500 h-full rounded-full animate-pulse"
-                        style={{ width: '60%' }}
-                      ></div>
-                    </div>
-                    <div className="mt-2 text-zinc-500">
-                      This may take a moment...
-                    </div>
-                  </div>
-                </div>
-              </div>
             ) : results ? (
               // Results display UI
               <div className="space-y-6">
@@ -1599,42 +1519,6 @@ if (shortCondition)
                   </div>
                 </div>
 
-                {/* Comparison metrics shown when backtest is complete */}
-                {showBacktestResults && comparison && (
-                  <div className="bg-zinc-800/70 p-5 rounded-xl shadow-xl border border-zinc-700/50 mb-6">
-                    <h2 className="text-xl font-semibold mb-4 flex items-center">
-                      <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
-                      Backtest Results Comparison
-                    </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-zinc-900/50 p-4 rounded-lg">
-                        <div className="text-zinc-400 text-xs mb-1">Return Improvement</div>
-                        <div className={`font-semibold text-lg ${comparison.return_improvement > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {comparison.return_improvement > 0 ? '+' : ''}{comparison.return_improvement.toFixed(2)}%
-                        </div>
-                      </div>
-                      <div className="bg-zinc-900/50 p-4 rounded-lg">
-                        <div className="text-zinc-400 text-xs mb-1">Win Rate Improvement</div>
-                        <div className={`font-semibold text-lg ${comparison.winrate_improvement > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {comparison.winrate_improvement > 0 ? '+' : ''}{comparison.winrate_improvement.toFixed(2)}%
-                        </div>
-                      </div>
-                      <div className="bg-zinc-900/50 p-4 rounded-lg">
-                        <div className="text-zinc-400 text-xs mb-1">Drawdown Reduction</div>
-                        <div className={`font-semibold text-lg ${comparison.drawdown_reduction > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {comparison.drawdown_reduction > 0 ? '-' : '+'}{Math.abs(comparison.drawdown_reduction).toFixed(2)}%
-                        </div>
-                      </div>
-                      <div className="bg-zinc-900/50 p-4 rounded-lg">
-                        <div className="text-zinc-400 text-xs mb-1">Sharpe Improvement</div>
-                        <div className={`font-semibold text-lg ${comparison.sharpe_improvement > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {comparison.sharpe_improvement > 0 ? '+' : ''}{comparison.sharpe_improvement.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Best Parameters Card */}
                   <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50">
@@ -1681,28 +1565,6 @@ if (shortCondition)
                         </div>
                       </div>
 
-                      {showBacktestResults && backtestResults && (
-                        <div className="mt-4 pt-4 border-t border-zinc-700/30">
-                          <h3 className="text-md font-medium mb-3 text-zinc-300">Backtest Metrics</h3>
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <div className="text-zinc-400 text-xs mb-1">Return</div>
-                              <div className={`font-semibold text-lg ${backtestResults?.return >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {backtestResults?.return}%
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-zinc-400 text-xs mb-1">Win Rate</div>
-                              <div className="text-white font-semibold text-lg">{backtestResults?.winRate}%</div>
-                            </div>
-                            <div>
-                              <div className="text-zinc-400 text-xs mb-1">Profit Factor</div>
-                              <div className="text-white font-semibold text-lg">{backtestResults?.profitFactor}</div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
                       <div className="mt-4 text-xs text-zinc-500 flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
                         Optimization completed in {results?.optimizationTime} seconds
@@ -1715,9 +1577,7 @@ if (shortCondition)
                     <div className="p-4 bg-zinc-900/70 border-b border-zinc-700/50 flex items-center justify-between">
                       <div className="flex items-center">
                         <BarChart2 className="w-5 h-5 text-indigo-500 mr-2" />
-                        <h2 className="text-white font-medium">
-                          {showBacktestResults ? 'Backtest Performance' : 'Optimization Analysis'}
-                        </h2>
+                        <h2 className="text-white font-medium">Optimization Analysis</h2>
                       </div>
                       <div className="text-xs text-zinc-400">
                         {results?.testedCombinations} combinations tested
@@ -1735,9 +1595,7 @@ if (shortCondition)
                           <div className="h-full flex items-center justify-center text-center">
                             <div className="text-zinc-500">
                               <BarChart2 className="w-10 h-10 mx-auto mb-2 text-zinc-700" />
-                              <p className="text-zinc-400">
-                                {showBacktestResults ? 'Equity Curve' : 'Parameter Optimization Chart'}
-                              </p>
+                              <p className="text-zinc-400">Parameter Optimization Chart</p>
                               <p className="text-zinc-600 text-xs mt-1">Performance visualization would appear here</p>
                             </div>
                           </div>
@@ -1757,28 +1615,6 @@ if (shortCondition)
                           heatMapData={results.heatMapData}
                           parameterRanges={results.parameterRanges}
                         />
-                      )}
-
-                      {/* Additional metrics */}
-                      {showBacktestResults && backtestResults && (
-                        <div className="mt-4 grid grid-cols-4 gap-4">
-                          <div className="bg-zinc-900/50 p-3 rounded-lg">
-                            <div className="text-zinc-400 text-xs mb-1">Total Trades</div>
-                            <div className="text-white font-semibold">{backtestResults.totalTrades}</div>
-                          </div>
-                          <div className="bg-zinc-900/50 p-3 rounded-lg">
-                            <div className="text-zinc-400 text-xs mb-1">Max Drawdown</div>
-                            <div className="text-red-400 font-semibold">{backtestResults.maxDrawdown}%</div>
-                          </div>
-                          <div className="bg-zinc-900/50 p-3 rounded-lg">
-                            <div className="text-zinc-400 text-xs mb-1">Sharpe Ratio</div>
-                            <div className="text-white font-semibold text-lg">{backtestResults.sharpeRatio}</div>
-                          </div>
-                          <div className="bg-zinc-900/50 p-3 rounded-lg">
-                            <div className="text-zinc-400 text-xs mb-1">Avg. Win</div>
-                            <div className="text-green-400 font-semibold">{backtestResults.averageWin}%</div>
-                          </div>
-                        </div>
                       )}
                     </div>
                   </div>
@@ -1829,28 +1665,6 @@ if (shortCondition)
                     </table>
                   </div>
                 </div>
-
-                {/* Recommendations Card (shown for backtest results) */}
-                {showBacktestResults && backtestResults && backtestResults.recommendations && (
-                  <div className="bg-zinc-800/70 rounded-xl shadow-xl overflow-hidden border border-zinc-700/50">
-                    <div className="p-4 bg-zinc-900/70 border-b border-zinc-700/50 flex items-center">
-                      <Info className="w-5 h-5 text-indigo-500 mr-2" />
-                      <h2 className="text-white font-medium">Strategy Recommendations</h2>
-                    </div>
-                    <div className="p-6">
-                      <ul className="space-y-2">
-                        {backtestResults.recommendations.map((rec, idx) => (
-                          <li key={idx} className="flex items-start">
-                            <div className="bg-indigo-900/30 p-1 rounded-full mr-3 mt-0.5">
-                              <Zap className="w-3 h-3 text-indigo-400" />
-                            </div>
-                            <span className="text-zinc-300">{rec}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               // No results placeholder
