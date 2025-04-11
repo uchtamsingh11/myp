@@ -17,43 +17,21 @@ const BacktestButton = ({
   timeframe,
   timeDuration,
   initialCapital,
-  quantity,
-  jsonData,
-  setIsBacktesting,
-  setActiveTab,
-  setBacktestResults,
-  setShowResults,
-  useCachedResults,
-  setCountdownTime
+  quantity
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const BACKTEST_COST = 250;
 
-  const getBacktestFromCache = (pineScript, config) => {
-    try {
-      const cachedData = localStorage.getItem(`backtest_${pineScript}_${JSON.stringify(config)}`);
-      if (cachedData) {
-        return JSON.parse(cachedData);
-      }
-    } catch (error) {
-      console.error('Error reading from cache:', error);
-    }
-    return null;
-  };
-
-  const transformOptimizationToBacktest = (optimizationResults, isOptimized = false) => {
-    // Transform optimization results to backtest format
-    // This is a placeholder - implement the actual transformation logic
-    return {
-      ...optimizationResults,
-      isOptimized
-    };
-  };
-
   const handleBacktestClick = async () => {
     if (!user) {
       alert('You must be logged in to perform this action.');
+      return;
+    }
+
+    // Validate required fields
+    if (!symbol || !timeframe || !timeDuration || !pineScript) {
+      alert('Please fill in all required fields');
       return;
     }
 
@@ -84,85 +62,16 @@ const BacktestButton = ({
 
       if (updateError) throw updateError;
 
-      // Call the parent's onBacktestClick handler which includes validation
+      // Call the parent's onBacktestClick handler
       if (onBacktestClick) {
         await onBacktestClick();
       }
-
-      // Check for existing optimizations
-      const response = await fetch('/api/optimize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pineScript,
-          symbol,
-          timeframe,
-          timeDuration,
-          initialCapital,
-          quantity,
-          parameters: extractParameters(jsonData)
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to check for existing optimizations');
-      }
-
-      const data = await response.json();
-
-      if (data.cached) {
-        console.log('Found existing optimization, using those results');
-        const optimizedBacktestResults = transformOptimizationToBacktest(data.results, true);
-        setBacktestResults(optimizedBacktestResults);
-        setIsBacktesting(false);
-        setShowResults(true);
-        return;
-      }
-
-      // If no cached results, check localStorage cache
-      const config = {
-        symbol,
-        timeframe,
-        timeDuration,
-        initialCapital,
-        quantity
-      };
-
-      if (useCachedResults) {
-        const cachedBacktest = getBacktestFromCache(pineScript, config);
-        if (cachedBacktest) {
-          console.log('Using cached backtest results from localStorage');
-          setBacktestResults(cachedBacktest.results);
-          setIsBacktesting(false);
-          setShowResults(true);
-          return;
-        }
-      }
-
     } catch (error) {
       console.error('Error during backtest process:', error);
       alert('Failed to run backtest. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const extractParameters = (jsonData) => {
-    const parameters = {};
-    if (jsonData && jsonData.inputs) {
-      Object.entries(jsonData.inputs).forEach(([key, input]) => {
-        if (['integer', 'float', 'simple'].includes(input.type)) {
-          parameters[key] = {
-            min: parseFloat(input.minval) || parseFloat(input.defaultValue) / 2,
-            max: parseFloat(input.maxval) || parseFloat(input.defaultValue) * 2,
-            step: input.type === 'float' ? 0.1 : 1
-          };
-        }
-      });
-    }
-    return parameters;
   };
 
   return (
@@ -181,11 +90,7 @@ const BacktestButton = ({
           Run Backtest
         </button>
       </HoverCardTrigger>
-      <HoverCardContent 
-        className="bg-zinc-800 border border-zinc-700 text-white w-64 p-3" 
-        // align="center"
-        // sideOffset={5}
-      >
+      <HoverCardContent className="bg-zinc-800 border border-zinc-700 text-white w-64 p-3">
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium flex items-center">
             <Coins className="w-4 h-4 mr-2 text-amber-400" />

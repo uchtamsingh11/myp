@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '../../../utils/supabase';
-import { v4 as uuidv4 } from 'uuid';
 import { cookies } from 'next/headers';
 
 export async function POST(request) {
@@ -9,119 +8,35 @@ export async function POST(request) {
                 const body = await request.json();
 
                 // Extract necessary data from the request
-                const { optimization_id, parameters } = body;
+                const { pineScript, symbol, timeframe, timeDuration, initialCapital, quantity } = body;
 
-                if (!optimization_id) {
+                // Validate required fields
+                if (!pineScript || !symbol || !timeframe || !timeDuration) {
                         return NextResponse.json(
-                                { error: 'Missing required field: optimization_id' },
+                                { error: 'Missing required fields' },
                                 { status: 400 }
                         );
                 }
 
-                // Get user authentication info
+                // Get user authentication info for coin deduction
                 const cookieStore = cookies();
                 const supabaseAuthClient = createServerClient({ cookies: () => cookieStore });
                 const { data: { session } } = await supabaseAuthClient.auth.getSession();
-                const user_id = session?.user?.id || 'anonymous';
 
-                // Create Supabase client
-                const supabase = createServerClient();
-
-                // Retrieve the optimization from the database
-                const { data: optimization, error: selectError } = await supabase
-                        .from('optimizations')
-                        .select('*')
-                        .eq('id', optimization_id)
-                        .single();
-
-                if (selectError || !optimization) {
-                        console.error('Error retrieving optimization:', selectError);
+                if (!session?.user?.id) {
                         return NextResponse.json(
-                                { error: 'Failed to retrieve optimization data' },
-                                { status: 404 }
+                                { error: 'Authentication required' },
+                                { status: 401 }
                         );
                 }
 
-                // Define the parameters for this backtest
-                const backTestParams = parameters || optimization.results.optimizedParameters;
+                // Generate backtest results
+                const backtestResults = generateBacktestResults(timeframe, timeDuration);
 
-                // SIMPLIFIED APPROACH: Check if we already have results for this optimization with these parameters
-                const { data: existingBacktests } = await supabase
-                        .from('backtests')
-                        .select('id, results, parameters')
-                        .eq('optimization_id', optimization_id)
-                        .eq('user_id', user_id)
-                        .order('created_at', { ascending: false })
-                        .limit(5);
-
-                // Check if any existing backtests have the same parameters
-                if (existingBacktests && existingBacktests.length > 0) {
-                        for (const existing of existingBacktests) {
-                                // Compare parameters
-                                const paramsMatch = JSON.stringify(existing.parameters) === JSON.stringify(backTestParams);
-
-                                if (paramsMatch) {
-                                        console.log('Using cached backtest results');
-                                        return NextResponse.json({
-                                                backtest_id: existing.id,
-                                                optimization_id,
-                                                results: existing.results,
-                                                original_results: optimization.results.bestResult,
-                                                comparison: {
-                                                        return_improvement: existing.results.return - optimization.results.bestResult.return,
-                                                        winrate_improvement: existing.results.winRate - optimization.results.bestResult.winRate,
-                                                        drawdown_reduction: optimization.results.bestResult.maxDrawdown - existing.results.maxDrawdown,
-                                                        sharpe_improvement: existing.results.sharpeRatio - optimization.results.bestResult.sharpeRatio
-                                                },
-                                                cached: true
-                                        });
-                                }
-                        }
-                }
-
-                // If we reached here, we need to generate new results
-                const backtest_id = uuidv4();
-                const backtestResults = generateBacktestResults(backTestParams, optimization.results.bestResult);
-
-                // Store the backtest in the database
-                const { error: insertError } = await supabase
-                        .from('backtests')
-                        .insert({
-                                id: backtest_id,
-                                optimization_id,
-                                script: optimization.script,
-                                symbol: optimization.symbol,
-                                timeframe: optimization.timeframe,
-                                time_duration: optimization.time_duration,
-                                initial_capital: optimization.initial_capital,
-                                quantity: optimization.quantity,
-                                parameters: backTestParams,
-                                results: backtestResults,
-                                created_at: new Date().toISOString(),
-                                user_id: user_id
-                        });
-
-                if (insertError) {
-                        console.error('Error inserting backtest:', insertError);
-                        return NextResponse.json(
-                                { error: 'Failed to save backtest results' },
-                                { status: 500 }
-                        );
-                }
-
-                // Return the backtest results along with original optimization metrics for comparison
+                // Return the results directly (no DB storage)
                 return NextResponse.json({
-                        backtest_id,
-                        optimization_id,
-                        results: backtestResults,
-                        original_results: optimization.results.bestResult,
-                        comparison: {
-                                return_improvement: backtestResults.return - optimization.results.bestResult.return,
-                                winrate_improvement: backtestResults.winRate - optimization.results.bestResult.winRate,
-                                drawdown_reduction: optimization.results.bestResult.maxDrawdown - backtestResults.maxDrawdown,
-                                sharpe_improvement: backtestResults.sharpeRatio - optimization.results.bestResult.sharpeRatio
-                        },
-                        cached: false
+                        success: true,
+                        results: backtestResults
                 });
 
         } catch (error) {
@@ -133,119 +48,178 @@ export async function POST(request) {
         }
 }
 
-// Helper function to generate pseudo-backtest results that show improved metrics
-function generateBacktestResults(parameters, originalResults) {
-        // Create improved metrics based on original optimization results
-        // In a real system, this would run actual backtests with the parameters
+// Generate random backtest results
+function generateBacktestResults(timeframe, timeDuration) {
+        // Generate results based on time duration
+        let overallReturn, winRate, profitFactor, maxDrawdown, sharpeRatio;
 
-        // Calculate slightly improved return (5-15% better)
-        const improvementFactor = 1 + (Math.random() * 0.1 + 0.05);
-        const returnImprovement = originalResults.return > 0
-                ? originalResults.return * improvementFactor
-                : originalResults.return / improvementFactor;
+        // Use the time duration to determine the range of results
+        switch (timeDuration) {
+                case '1W':
+                        // Under 1 week: +27% to -49%
+                        overallReturn = Math.random() * 76 - 49;
+                        break;
+                case '1m':
+                        // Under 1 month: +27% to -84%
+                        overallReturn = Math.random() * 111 - 84;
+                        break;
+                case '3m':
+                        // Under 3 month: +27% to -146%
+                        overallReturn = Math.random() * 173 - 146;
+                        break;
+                case '6m':
+                        // Under 6 months: +27% to -211%
+                        overallReturn = Math.random() * 238 - 211;
+                        break;
+                case '1y':
+                case '12m':
+                        // Under 12 months: +27% to -276%
+                        overallReturn = Math.random() * 303 - 276;
+                        break;
+                case '2y':
+                case '24m':
+                        // Under 24 months: +27% to -381%
+                        overallReturn = Math.random() * 407 - 381;
+                        break;
+                case '3y':
+                case '36m':
+                        // Under 36 months: +27% to -486%
+                        overallReturn = Math.random() * 511 - 486;
+                        break;
+                case '4y':
+                case '48m':
+                        // Under 48 months: +27% to -591%
+                        overallReturn = Math.random() * 616 - 591;
+                        break;
+                case '5y':
+                case '60m':
+                        // Under 60 months: +27% to -696%
+                        overallReturn = Math.random() * 721 - 696;
+                        break;
+                case '6y':
+                case '120m':
+                        // Under 120 months: +27% to -801%
+                        overallReturn = Math.random() * 826 - 801;
+                        break;
+                default:
+                        // Default case
+                        overallReturn = Math.random() * 197 - 170;
+        }
 
-        // Generate trade data for equity curve
+        // Adjust other metrics based on the overall return
+        const isPositive = overallReturn > 0;
+
+        // Calculate win rate - positive returns have higher win rates
+        winRate = isPositive
+                ? 45 + Math.random() * 25 // 45-70% for profitable strategies
+                : 20 + Math.random() * 30; // 20-50% for losing strategies
+
+        // Profit factor is correlated with performance
+        profitFactor = isPositive
+                ? 1 + Math.random() * 1.5 // 1.0-2.5 for profitable strategies
+                : 0.2 + Math.random() * 0.7; // 0.2-0.9 for losing strategies
+
+        // Max drawdown is typically worse for losing strategies
+        maxDrawdown = isPositive
+                ? 5 + Math.random() * 25 // 5-30% for profitable strategies
+                : 20 + Math.random() * 40; // 20-60% for losing strategies
+
+        // Sharpe ratio - positive for profitable strategies, often negative for losing ones
+        sharpeRatio = isPositive
+                ? 0.2 + Math.random() * 1.8 // 0.2-2.0 for profitable strategies
+                : -2 + Math.random() * 2.2; // -2.0 to +0.2 for losing strategies
+
+        // Calculate number of trades
+        const totalTrades = 30 + Math.floor(Math.random() * 100);
+
+        // Calculate winning trades based on win rate
+        const winningTrades = Math.floor(totalTrades * (winRate / 100));
+        const losingTrades = totalTrades - winningTrades;
+
+        // Calculate average values for wins and losses
+        const averageWin = isPositive
+                ? 1.5 + Math.random() * 5 // 1.5-6.5% for profitable strategies
+                : 1.0 + Math.random() * 3; // 1.0-4.0% for losing strategies
+
+        const averageLoss = isPositive
+                ? 1.0 + Math.random() * 2 // 1.0-3.0% for profitable strategies
+                : 2.0 + Math.random() * 5; // 2.0-7.0% for losing strategies
+
+        // Calculate largest values
+        const largestWin = averageWin * (2 + Math.random() * 2); // 2-4x the average win
+        const largestLoss = averageLoss * (2 + Math.random() * 3); // 2-5x the average loss
+
+        // Generate appropriate recommendations based on performance
+        let recommendations = [];
+        if (isPositive) {
+                recommendations = [
+                        "Consider increasing position size as the strategy shows positive returns",
+                        "Strategy performs better in trending markets; consider adding a trend filter",
+                        "Review stop-loss placement to reduce drawdown further",
+                        "Long trades outperform short trades; consider optimizing short entry criteria"
+                ];
+        } else {
+                recommendations = [
+                        "Reduce position size until strategy is further optimized",
+                        "Consider adding additional filters to reduce false signals",
+                        "Implement stricter risk management with tighter stop-losses",
+                        "Test with different market conditions; current parameters may be unsuitable for this market"
+                ];
+        }
+
+        // Generate equity curve data
         const equityCurveData = [];
         let equity = 100; // Start at 100%
 
         for (let i = 0; i < 100; i++) {
-                // Generate a curve that eventually reaches the target return
+                // Basic equity curve generation
                 const progress = i / 99;
-                const targetEquity = 100 + returnImprovement;
+                let currentEquity;
 
-                // Add some realistic volatility using sin waves with different frequencies
-                const volatility =
-                        Math.sin(i * 0.3) * 3 +
-                        Math.sin(i * 0.7) * 2 +
-                        Math.sin(i * 1.1) * 1;
-
-                // Gradually move toward target with volatility
-                equity = (100 * (1 - progress)) + (targetEquity * progress) + volatility;
-
-                // Ensure last point matches exactly
-                if (i === 99) {
-                        equity = 100 + returnImprovement;
+                if (isPositive) {
+                        // For profitable strategies, steady growth with a few drawdowns
+                        currentEquity = 100 + (overallReturn * progress * (1.1 - 0.2 * Math.sin(progress * 8)));
+                } else {
+                        // For losing strategies, initial promise then deterioration
+                        const inflection = 0.3 + (Math.random() * 0.2); // Point where strategy turns negative
+                        if (progress < inflection) {
+                                // Initial promising period
+                                currentEquity = 100 + (10 * progress / inflection);
+                        } else {
+                                // Deterioration period
+                                const remainingProgress = (progress - inflection) / (1 - inflection);
+                                currentEquity = 110 + ((overallReturn + 10) * remainingProgress);
+                        }
                 }
 
+                // Add some noise for realism
+                const noise = Math.random() * 4 - 2; // ±2% noise
+                equity = currentEquity + noise;
+
+                // Record the data point
                 equityCurveData.push({
                         day: i + 1,
                         equity: parseFloat(equity.toFixed(2))
                 });
         }
 
-        // Generate trade history data
-        const tradeHistory = [];
-        const totalTrades = Math.floor(originalResults.totalTrades * (0.9 + Math.random() * 0.2));
-        const winRate = Math.min(originalResults.winRate * (1 + (Math.random() * 0.1)), 95); // Cap at 95%
-
-        let currentEquity = 100;
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 100); // 100 days ago
-
-        for (let i = 0; i < totalTrades; i++) {
-                const isWin = Math.random() * 100 <= winRate;
-                const tradeSize = (Math.random() * 2 + 0.5).toFixed(2); // 0.5% to 2.5% of account
-                const profit = isWin
-                        ? +(Math.random() * 2 + 0.5).toFixed(2) // 0.5% to 2.5% profit
-                        : -(Math.random() * 1.5 + 0.3).toFixed(2); // 0.3% to 1.8% loss
-
-                currentEquity += profit;
-
-                // Generate trade date (spread over 100 days)
-                const tradeDate = new Date(startDate);
-                tradeDate.setDate(startDate.getDate() + Math.floor(i * (100 / totalTrades)));
-
-                tradeHistory.push({
-                        id: i + 1,
-                        date: tradeDate.toISOString(),
-                        type: Math.random() > 0.5 ? 'LONG' : 'SHORT',
-                        entryPrice: +(Math.random() * 1000 + 100).toFixed(2),
-                        exitPrice: +(Math.random() * 1000 + 100).toFixed(2),
-                        size: tradeSize + '%',
-                        profit: profit + '%',
-                        equity: currentEquity.toFixed(2) + '%'
-                });
-        }
-
-        // Generate monthly returns data
-        const monthlyReturns = [];
-        for (let i = 0; i < 12; i++) {
-                // Generate monthly return data that adds up to rough approximation of total return
-                const monthDate = new Date();
-                monthDate.setMonth(monthDate.getMonth() - (11 - i));
-
-                // Make returns more positive toward the end to show improvement
-                const monthReturn = i < 6
-                        ? -(Math.random() * 3) + (Math.random() * 6) // -3% to +6%
-                        : -(Math.random() * 1) + (Math.random() * 8); // -1% to +8%
-
-                monthlyReturns.push({
-                        month: monthDate.toISOString().substring(0, 7), // YYYY-MM format
-                        return: +monthReturn.toFixed(2)
-                });
-        }
+        // Ensure the final value matches the overall return
+        equityCurveData[99].equity = 100 + parseFloat(overallReturn.toFixed(2));
 
         return {
-                return: +returnImprovement.toFixed(2),
-                winRate: +winRate.toFixed(2),
-                profitFactor: +(originalResults.profitFactor * (1 + (Math.random() * 0.15))).toFixed(2),
-                maxDrawdown: +(originalResults.maxDrawdown * (0.75 - (Math.random() * 0.1))).toFixed(2), // Lower drawdown
-                sharpeRatio: +(originalResults.sharpeRatio * (1 + (Math.random() * 0.2))).toFixed(2),
+                overallReturn: parseFloat(overallReturn.toFixed(2)),
+                winRate: parseFloat(winRate.toFixed(1)),
+                profitFactor: parseFloat(profitFactor.toFixed(2)),
+                maxDrawdown: parseFloat(maxDrawdown.toFixed(1)),
+                sharpeRatio: parseFloat(sharpeRatio.toFixed(2)),
                 totalTrades,
-                winningTrades: Math.floor(totalTrades * (winRate / 100)),
-                losingTrades: Math.floor(totalTrades * (1 - (winRate / 100))),
-                averageWin: +(Math.random() * 1.5 + 1).toFixed(2),
-                averageLoss: +(Math.random() * 1 + 0.5).toFixed(2),
-                largestWin: +(Math.random() * 5 + 3).toFixed(2),
-                largestLoss: +(Math.random() * 3 + 1).toFixed(2),
-                equityCurveData,
-                tradeHistory,
-                monthlyReturns,
-                recommendations: [
-                        "Consider trailing stop-loss to protect profits",
-                        "Position sizing is optimal at current levels",
-                        "The strategy performs well in trending markets",
-                        "Consider implementing a market regime filter"
-                ]
+                winningTrades,
+                losingTrades,
+                averageWin: parseFloat(averageWin.toFixed(2)),
+                averageLoss: parseFloat(averageLoss.toFixed(2)),
+                largestWin: parseFloat(largestWin.toFixed(1)),
+                largestLoss: parseFloat(largestLoss.toFixed(1)),
+                recommendations,
+                equityCurveData
         };
 } 
