@@ -2,9 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { RainbowButton } from '../../ui/buttons/RainbowButton';
 import IntroducingBadge from '../../ui/badges/IntroducingBadge';
 import GradientText from '../../ui/effects/GradientText';
+import TextReveal from '../../magicui/text-reveal';
 
 const steps = [
   {
@@ -110,7 +110,7 @@ const HowItWorks = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-16"
         >
-           <div className="inline-block relative mb-6">
+          <div className="inline-block relative mb-6">
             <IntroducingBadge>
               HOW IT WORKS
             </IntroducingBadge>
@@ -131,6 +131,7 @@ const HowItWorks = () => {
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6">
           {/* Connecting line */}
+
           <div className="absolute left-8 sm:left-12 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-900/30 via-indigo-600/40 to-indigo-900/30 rounded-full transform md:-translate-x-px"></div>
 
           {/* Steps */}

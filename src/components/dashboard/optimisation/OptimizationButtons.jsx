@@ -18,7 +18,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
   const handleOptimizeClick = async () => {
     // Only proceed if not already loading
     if (isLoading) return;
-    await handleCoinDeduction(699, onNonExhaustiveClick);
+    await handleCoinDeduction(749, onNonExhaustiveClick);
   };
 
   const handleCoinDeduction = async (amount, callback) => {
@@ -92,7 +92,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium flex items-center">
               <Coins className="w-4 h-4 mr-2 text-amber-400" />
-              Cost: 699 Coins
+              Cost: 749 Coins
             </p>
             <p className="text-xs text-zinc-400">
               Optimize your strategy parameters for better trading performance
