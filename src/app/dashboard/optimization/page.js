@@ -335,6 +335,53 @@ export default function OptimizationPage() {
     }
   }, []);
 
+  // Check for previously unfinished optimization on page load
+  useEffect(() => {
+    try {
+      const lastOptimizationStr = localStorage.getItem('optimization_last_config');
+      if (lastOptimizationStr) {
+        const lastOptimization = JSON.parse(lastOptimizationStr);
+        const lastRunTime = new Date(lastOptimization.lastRun);
+        const now = new Date();
+        const differenceInMinutes = (now - lastRunTime) / (1000 * 60);
+
+        // If the last optimization was attempted less than 5 minutes ago and we don't have results
+        if (differenceInMinutes < 5 && !showResults && !results) {
+          // Ask user if they want to resume the previous optimization
+          const shouldResume = confirm('It appears your previous optimization may not have completed. Would you like to resume it?');
+
+          if (shouldResume) {
+            // Restore previous configuration
+            if (lastOptimization.symbol) setSymbol(lastOptimization.symbol);
+            if (lastOptimization.timeframe) setTimeframe(lastOptimization.timeframe);
+            if (lastOptimization.timeDuration) setTimeDuration(lastOptimization.timeDuration);
+            if (lastOptimization.initialCapital) setInitialCapital(lastOptimization.initialCapital);
+            if (lastOptimization.quantity) setQuantity(lastOptimization.quantity);
+            if (lastOptimization.pineScript) setPineScript(lastOptimization.pineScript);
+
+            // If we have jsonData stored, use it
+            if (lastOptimization.jsonData) {
+              setJsonData(JSON.parse(lastOptimization.jsonData));
+            }
+
+            // Start optimization process again
+            setTimeout(() => {
+              setIsLoading(true);
+              setActiveTab('results');
+              handleOptimize();
+            }, 500);
+          } else {
+            // Clear the last config if they don't want to resume
+            localStorage.removeItem('optimization_last_config');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for previous optimization:', error);
+      // Silently fail - non-critical functionality
+    }
+  }, []);
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     console.log(`Tab changed to: ${tab}`);
@@ -602,6 +649,25 @@ export default function OptimizationPage() {
     setError(null);
     setActiveTab('results'); // Switch to results tab first
 
+    // Save current configuration to localStorage to persist between reloads
+    try {
+      const config = {
+        symbol,
+        timeframe,
+        timeDuration,
+        initialCapital,
+        quantity,
+        pineScript,
+        jsonData: jsonData ? JSON.stringify(jsonData) : null,
+        lastRun: new Date().toISOString()
+      };
+
+      localStorage.setItem('optimization_last_config', JSON.stringify(config));
+    } catch (error) {
+      console.error('Error saving optimization config:', error);
+      // Non-critical, continue with optimization
+    }
+
     try {
       // Extract parameters from inputs for optimization
       const parameters = {};
@@ -629,12 +695,15 @@ export default function OptimizationPage() {
         }
       });
 
-      // Call API endpoint to optimize strategy
+      // Try API optimization with robust error handling
       try {
         // Determine whether to use relative or absolute URL
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
           ? '/api/optimize'  // Use relative URL for local development
           : `${window.location.origin}/api/optimize`;  // Use absolute URL for production
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
         const response = await fetch(apiUrl, {
           method: 'POST',
@@ -651,8 +720,10 @@ export default function OptimizationPage() {
             parameters,
             isExhaustive: true // Always use exhaustive mode for better results
           }),
-          signal: AbortSignal.timeout(30000) // 30 second timeout
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -666,6 +737,9 @@ export default function OptimizationPage() {
         setResults(data.results);
         setIsLoading(false);
         setShowResults(true);
+
+        // Clear the stored config since we completed successfully
+        localStorage.removeItem('optimization_last_config');
       } catch (apiError) {
         console.error("API error:", apiError);
 
@@ -680,6 +754,9 @@ export default function OptimizationPage() {
         setResults(randomResults);
         setIsLoading(false);
         setShowResults(true);
+
+        // Clear the stored config since we completed with local fallback
+        localStorage.removeItem('optimization_last_config');
       }
     } catch (error) {
       console.error("Optimization error:", error);

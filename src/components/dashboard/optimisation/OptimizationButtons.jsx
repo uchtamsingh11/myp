@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { 
@@ -11,19 +11,43 @@ import {
 import { Coins, Zap } from 'lucide-react';
 
 const OptimizationButtons = ({ onNonExhaustiveClick }) => {
-  // Track loading state for button
+  // Track loading and disabled states
   const [isLoading, setIsLoading] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
   const { user } = useAuth();
 
-  const handleOptimizeClick = async () => {
-    // Only proceed if not already loading
-    if (isLoading) return;
-    await handleCoinDeduction(749, onNonExhaustiveClick);
+  // Reset disabled state when component mounts or updates
+  useEffect(() => {
+    setIsDisabled(false);
+  }, [onNonExhaustiveClick]);
+
+  const handleOptimizeClick = async (e) => {
+    // Prevent default behavior and stop propagation
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent multiple clicks or when already loading/disabled
+    if (isLoading || isDisabled) {
+      return;
+    }
+    
+    // Temporarily disable button to prevent double clicks
+    setIsDisabled(true);
+    
+    try {
+      await handleCoinDeduction(749, onNonExhaustiveClick);
+    } catch (error) {
+      console.error("Error in optimization button click:", error);
+    } finally {
+      // Add a slight delay before re-enabling the button
+      setTimeout(() => setIsDisabled(false), 1000);
+    }
   };
 
   const handleCoinDeduction = async (amount, callback) => {
     if (!user) {
       alert('You must be logged in to perform this action.');
+      setIsDisabled(false);
       return;
     }
 
@@ -37,7 +61,10 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
         .eq('id', user.id)
         .single();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching profile:', fetchError);
+        throw new Error('Failed to check coin balance. Please try again.');
+      }
 
       const currentCoins = profileData?.coins || 0;
 
@@ -48,7 +75,6 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
         if (confirmation) {
           window.location.href = '/dashboard/pricing';
         }
-        setIsLoading(false);
         return;
       }
 
@@ -58,14 +84,19 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
         .update({ coins: currentCoins - amount })
         .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating coins:', updateError);
+        throw new Error('Failed to deduct coins. Please try again.');
+      }
 
       // Call the callback function
-      if (callback) callback();
+      if (callback) {
+        await callback();
+      }
 
     } catch (error) {
       console.error('Error deducting coins:', error);
-      alert('Failed to deduct coins. Please try again.');
+      alert(error.message || 'Failed to deduct coins. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -77,8 +108,14 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
         <HoverCardTrigger asChild>
           <button
             onClick={handleOptimizeClick}
-            disabled={isLoading}
-            className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] text-white py-3 px-6 rounded-lg flex items-center justify-center transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            disabled={isLoading || isDisabled}
+            className={`bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white py-3 px-6 rounded-lg flex items-center justify-center transition-all ${
+              isLoading || isDisabled
+                ? 'opacity-75 cursor-not-allowed'
+                : 'hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df]'
+            }`}
+            type="button"
+            aria-label="Optimize Strategy"
           >
             {isLoading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
