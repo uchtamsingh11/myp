@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { 
@@ -20,18 +20,44 @@ const BacktestButton = ({
   quantity
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
   const { user } = useAuth();
   const BACKTEST_COST = 25;
 
-  const handleBacktestClick = async () => {
-    if (!user) {
-      alert('You must be logged in to perform this action.');
-      return;
-    }
+  // Reset disabled state if component rerenders
+  useEffect(() => {
+    setIsDisabled(false);
+  }, [symbol, pineScript, timeframe, timeDuration, initialCapital, quantity]);
 
+  const validateInputs = () => {
     // Validate required fields
     if (!symbol || !timeframe || !timeDuration || !pineScript) {
       alert('Please fill in all required fields');
+      return false;
+    }
+    return true;
+  };
+
+  const handleBacktestClick = async (e) => {
+    // Prevent default to ensure no form submission occurs
+    e.preventDefault();
+    
+    // Prevent multiple clicks
+    if (isLoading || isDisabled) {
+      return;
+    }
+
+    // Temporarily disable the button to prevent double clicks
+    setIsDisabled(true);
+    
+    if (!user) {
+      alert('You must be logged in to perform this action.');
+      setTimeout(() => setIsDisabled(false), 500);
+      return;
+    }
+
+    if (!validateInputs()) {
+      setTimeout(() => setIsDisabled(false), 500);
       return;
     }
 
@@ -45,7 +71,10 @@ const BacktestButton = ({
         .eq('id', user.id)
         .single();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching user profile:', fetchError);
+        throw new Error('Failed to check coin balance. Please try again.');
+      }
 
       const currentCoins = profileData?.coins || 0;
 
@@ -60,7 +89,10 @@ const BacktestButton = ({
         .update({ coins: currentCoins - BACKTEST_COST })
         .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating coin balance:', updateError);
+        throw new Error('Failed to deduct coins. Please try again.');
+      }
 
       // Call the parent's onBacktestClick handler
       if (onBacktestClick) {
@@ -68,9 +100,11 @@ const BacktestButton = ({
       }
     } catch (error) {
       console.error('Error during backtest process:', error);
-      alert('Failed to run backtest. Please try again.');
+      alert(error.message || 'Failed to run backtest. Please try again.');
     } finally {
       setIsLoading(false);
+      // Keep button disabled for a short period to prevent accidental double-clicks
+      setTimeout(() => setIsDisabled(false), 1000);
     }
   };
 
@@ -79,8 +113,14 @@ const BacktestButton = ({
       <HoverCardTrigger asChild>
         <button
           onClick={handleBacktestClick}
-          disabled={isLoading}
-          className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df] disabled:bg-gray-400"
+          disabled={isLoading || isDisabled}
+          className={`bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-all ${
+            isLoading || isDisabled
+              ? 'opacity-75 cursor-not-allowed'
+              : 'hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df]'
+          }`}
+          type="button" 
+          aria-label="Run Backtest"
         >
           {isLoading ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

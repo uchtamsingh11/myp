@@ -111,9 +111,49 @@ export default function Backtest() {
       setInitialCapital(savedConfig.initialCapital || 1000000);
       setQuantity(savedConfig.quantity || 1);
     }
+
+    // Check if there was a recently failed backtest attempt
+    try {
+      const lastBacktestConfigStr = localStorage.getItem('backtest_last_config');
+      if (lastBacktestConfigStr) {
+        const lastBacktestConfig = JSON.parse(lastBacktestConfigStr);
+        const lastRunTime = new Date(lastBacktestConfig.lastRun);
+        const now = new Date();
+        const differenceInMinutes = (now - lastRunTime) / (1000 * 60);
+
+        // If the last backtest was attempted less than 5 minutes ago and the results tab isn't showing
+        if (differenceInMinutes < 5 && !showResults && activeTab !== 'results') {
+          // Ask user if they want to resume the previous backtest
+          const shouldResume = confirm('It appears your previous backtest may not have completed. Would you like to resume it?');
+
+          if (shouldResume) {
+            // Restore the previous configuration
+            setSymbol(lastBacktestConfig.symbol || '');
+            setTimeframe(lastBacktestConfig.timeframe || '1D');
+            setTimeDuration(lastBacktestConfig.timeDuration || '1W');
+            setStartDate(lastBacktestConfig.startDate || '');
+            setEndDate(lastBacktestConfig.endDate || '');
+            setInitialCapital(lastBacktestConfig.initialCapital || 1000000);
+            setQuantity(lastBacktestConfig.quantity || 1);
+
+            // Start the backtest again
+            setTimeout(() => {
+              setIsBacktesting(true);
+              setActiveTab('results');
+              setCountdownTime(60);
+            }, 500);
+          } else {
+            // Clear the last config if they don't want to resume
+            localStorage.removeItem('backtest_last_config');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for previous backtest:', error);
+      // Silently fail - non-critical functionality
+    }
   }, []);
 
-  // Check localStorage on initial load to populate form with last used values if available
   // Countdown effect
   useEffect(() => {
     let timer;
@@ -140,6 +180,9 @@ export default function Backtest() {
                 quantity
               };
               saveBacktestToCache(randomResults, pineScript, config);
+
+              // Remove the last backtest config since we completed it successfully
+              localStorage.removeItem('backtest_last_config');
             }
 
             return 0;
@@ -147,10 +190,18 @@ export default function Backtest() {
           return prev - 1;
         });
       }, 1000);
+    } else if (!isBacktesting && countdownTime === 0) {
+      // Backtest is complete, clean up
+      if (pineScript) {
+        // Remove the last backtest config since we're done
+        localStorage.removeItem('backtest_last_config');
+      }
     }
 
     return () => {
-      if (timer) clearInterval(timer);
+      if (timer) {
+        clearInterval(timer);
+      }
     };
   }, [isBacktesting, countdownTime, pineScript, symbol, timeframe, timeDuration, startDate, endDate, initialCapital, quantity]);
 
@@ -565,10 +616,30 @@ export default function Backtest() {
       return;
     }
 
-    // If all validations pass, proceed with backtest
-    setIsBacktesting(true);
-    setActiveTab('results');
-    setCountdownTime(60);
+    try {
+      // Save current configuration to localStorage to persist between reloads
+      const config = {
+        symbol,
+        timeframe,
+        timeDuration,
+        startDate,
+        endDate,
+        initialCapital,
+        quantity,
+        lastRun: new Date().toISOString()
+      };
+
+      localStorage.setItem('backtest_last_config', JSON.stringify(config));
+
+      // If all validations pass, proceed with backtest
+      setIsBacktesting(true);
+      setActiveTab('results');
+      setCountdownTime(60);
+    } catch (error) {
+      console.error('Error starting backtest:', error);
+      alert('Failed to start backtest. Please try again.');
+      setIsBacktesting(false);
+    }
   };
 
   // New function to transform optimization results to backtest format
