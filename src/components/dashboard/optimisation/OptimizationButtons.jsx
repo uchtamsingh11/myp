@@ -33,12 +33,22 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
     
     // Temporarily disable button to prevent double clicks
     setIsDisabled(true);
+    setIsLoading(true);
     
     try {
       await handleCoinDeduction(749, onNonExhaustiveClick);
     } catch (error) {
       console.error("Error in optimization button click:", error);
+      // If there's an error with coin deduction but we're logged in, still try to run the optimization
+      if (user && onNonExhaustiveClick) {
+        try {
+          await onNonExhaustiveClick();
+        } catch (callbackError) {
+          console.error("Error executing callback after coin error:", callbackError);
+        }
+      }
     } finally {
+      setIsLoading(false);
       // Add a slight delay before re-enabling the button
       setTimeout(() => setIsDisabled(false), 1000);
     }
@@ -47,11 +57,10 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
   const handleCoinDeduction = async (amount, callback) => {
     if (!user) {
       alert('You must be logged in to perform this action.');
+      setIsLoading(false);
       setIsDisabled(false);
       return;
     }
-
-    setIsLoading(true);
 
     try {
       // Get current coin balance
@@ -75,6 +84,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
         if (confirmation) {
           window.location.href = '/dashboard/pricing';
         }
+        setIsLoading(false);
         return;
       }
 
@@ -97,8 +107,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
     } catch (error) {
       console.error('Error deducting coins:', error);
       alert(error.message || 'Failed to deduct coins. Please try again.');
-    } finally {
-      setIsLoading(false);
+      throw error; // Re-throw to trigger the catch in handleOptimizeClick
     }
   };
 

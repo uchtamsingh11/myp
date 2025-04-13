@@ -383,6 +383,19 @@ export default function OptimizationPage() {
   }, []);
 
   const handleTabChange = (tab) => {
+    // Validate tab changes to prevent navigation to tabs that require data
+    if (tab === 'configure' && !jsonData) {
+      setError('Please convert your Pine Script first before configuring parameters');
+      return;
+    }
+
+    if (tab === 'results' && !showResults && !isLoading) {
+      setError('Please run the optimization first to view results');
+      return;
+    }
+
+    // Clear any errors when changing tabs
+    setError(null);
     setActiveTab(tab);
     console.log(`Tab changed to: ${tab}`);
   };
@@ -612,34 +625,53 @@ export default function OptimizationPage() {
     }
 
     if (!symbol) {
-      setError('Missing symbol: Please select a trading symbol');
-      return;
+      setSymbol('BTCUSDT'); // Default to BTCUSDT if empty
     }
 
     if (!initialCapital || initialCapital <= 0) {
-      setError('Invalid initial capital: Please enter a positive value');
-      return;
+      setInitialCapital(10000); // Default to 10000 if not valid
     }
 
     if (!quantity || quantity <= 0) {
-      setError('Invalid quantity: Please enter a positive value');
-      return;
+      setQuantity(1); // Default to 1 if not valid
     }
 
-    // Validate parameter input fields
-    const inputFields = document.querySelectorAll('[data-param]');
-    const emptyFields = [];
+    // Validate and set default values for parameter input fields
+    if (jsonData && jsonData.inputs) {
+      const inputFields = document.querySelectorAll('[data-param]');
 
-    inputFields.forEach(field => {
-      if (!field.value.trim()) {
-        const paramName = field.getAttribute('data-param');
-        emptyFields.push(paramName);
-      }
-    });
+      inputFields.forEach(field => {
+        if (!field.value.trim()) {
+          const paramName = field.getAttribute('data-param');
+          const paramParts = paramName.split('-');
+          const baseParam = paramParts[0];
+          const type = paramParts[1]; // min, max, default, step
 
-    if (emptyFields.length > 0) {
-      setError(`Missing parameters: Please fill in all parameter fields (${emptyFields.join(', ')})`);
-      return;
+          // Get the input info
+          const inputInfo = jsonData.inputs[baseParam];
+
+          if (inputInfo) {
+            // Set default values based on type
+            if (type === 'min') {
+              field.value = inputInfo.minval ||
+                (inputInfo.type === 'float' ? parseFloat(inputInfo.defaultValue || 0) / 2 : parseInt(inputInfo.defaultValue || 0, 10) / 2);
+            } else if (type === 'max') {
+              field.value = inputInfo.maxval ||
+                (inputInfo.type === 'float' ? parseFloat(inputInfo.defaultValue || 0) * 2 : parseInt(inputInfo.defaultValue || 0, 10) * 2);
+            } else if (type === 'default') {
+              field.value = inputInfo.defaultValue || 0;
+            } else if (type === 'step') {
+              field.value = inputInfo.type === 'float' ? 0.1 : 1;
+            }
+          } else {
+            // Set some reasonable defaults if we can't find input info
+            if (type === 'min') field.value = 1;
+            if (type === 'max') field.value = 100;
+            if (type === 'default') field.value = 10;
+            if (type === 'step') field.value = 1;
+          }
+        }
+      });
     }
 
     // Clear previous results and set loading state
@@ -680,11 +712,15 @@ export default function OptimizationPage() {
           const defaultInput = document.querySelector(`input[data-param="${key}-default"]`);
           const stepInput = document.querySelector(`input[data-param="${key}-step"]`);
 
-          // Read current values from form
-          const min = minInput ? parseFloat(minInput.value) : parseFloat(input.minval) || parseFloat(input.defaultValue) / 2;
-          const max = maxInput ? parseFloat(maxInput.value) : parseFloat(input.maxval) || parseFloat(input.defaultValue) * 2;
-          const defaultValue = defaultInput ? parseFloat(defaultInput.value) : parseFloat(input.defaultValue);
-          const step = stepInput ? parseFloat(stepInput.value) : (input.type === 'float' ? 0.1 : 1);
+          // Read current values from form with fallbacks
+          const min = minInput && minInput.value ? parseFloat(minInput.value) :
+            (parseFloat(input.minval) || parseFloat(input.defaultValue) / 2 || 1);
+          const max = maxInput && maxInput.value ? parseFloat(maxInput.value) :
+            (parseFloat(input.maxval) || parseFloat(input.defaultValue) * 2 || 100);
+          const defaultValue = defaultInput && defaultInput.value ? parseFloat(defaultInput.value) :
+            (parseFloat(input.defaultValue) || (min + max) / 2);
+          const step = stepInput && stepInput.value ? parseFloat(stepInput.value) :
+            (input.type === 'float' ? 0.1 : 1);
 
           parameters[key] = {
             min: min,
@@ -762,6 +798,7 @@ export default function OptimizationPage() {
       console.error("Optimization error:", error);
       setError(error.message || "Failed to optimize strategy. Please try again.");
       setIsLoading(false);
+      // Stay on results tab to show the error
     }
   };
 
@@ -903,6 +940,11 @@ input_textColor = input.color(defval = color.white, title = '', inline = 'Overri
 bb              = input_lookback`;
 
     setPineScript(samplePineScript);
+
+    // Automatically convert the sample code after a short delay
+    setTimeout(() => {
+      handleConvert();
+    }, 100);
   };
 
   const clearCode = () => {
