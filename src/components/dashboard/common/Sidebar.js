@@ -610,7 +610,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
               </button>
             </div>
           </li>
-          <li className="w-full">
+          {/* <li className="w-full">
             <div className="relative w-full">
               <button
                 onClick={e => {
@@ -628,7 +628,7 @@ export default function Sidebar({ onMenuItemClick, activeMenuItem, isAdmin = fal
                 </div>
               </button>
             </div>
-          </li>
+          </li> */}
           <li className="w-full">
             <div className="relative w-full">
               <button
