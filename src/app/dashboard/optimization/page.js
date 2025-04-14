@@ -1764,7 +1764,7 @@ if (shortCondition)
                       </div>
 
                       {/* Add button to apply optimized parameters and go to backtest */}
-                      {results && results.optimizedParameters && (
+                      {/* {results && results.optimizedParameters && (
                         <div className="mt-6">
                           <button
                             onClick={applyOptimizedParametersAndGoToBacktest}
@@ -1774,7 +1774,7 @@ if (shortCondition)
                             Apply Optimized Parameters & Run Backtest
                           </button>
                         </div>
-                      )}
+                      )} */}
                     </div>
                   </div>
 
