@@ -94,9 +94,21 @@ const BacktestButton = ({
         throw new Error('Failed to deduct coins. Please try again.');
       }
 
-      // Call the parent's onBacktestClick handler
+      // Check if optimization was performed for this strategy
+      const wasOptimized = localStorage.getItem('optimization_performed') === 'true';
+
+      // Call the parent's onBacktestClick handler with all parameters
       if (onBacktestClick) {
-        await onBacktestClick();
+        // Pass all strategy parameters and wasOptimized flag to the parent component
+        await onBacktestClick({
+          symbol,
+          pineScript,
+          timeframe,
+          timeDuration,
+          initialCapital,
+          quantity,
+          wasOptimized
+        });
       }
     } catch (error) {
       console.error('Error during backtest process:', error);

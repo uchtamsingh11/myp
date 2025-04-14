@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CalendarIcon, Clock, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight, Info, AlertTriangle } from 'lucide-react';
+import { CalendarIcon, Clock, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight, Info, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Line, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -964,6 +964,64 @@ bb              = input_lookback`;
     { value: '1W', label: '1 Week' },
   ];
 
+  // Function to apply optimized parameters and go to backtest
+  const applyOptimizedParametersAndGoToBacktest = () => {
+    if (!results || !results.optimizedParameters) {
+      alert('No optimization results to apply.');
+      return;
+    }
+
+    try {
+      // Mark that optimization was performed
+      localStorage.setItem('optimization_performed', 'true');
+
+      // Save the optimization results to localStorage
+      const config = {
+        symbol,
+        timeframe,
+        timeDuration,
+        initialCapital,
+        quantity,
+        pineScript,
+        optimizedParameters: results.optimizedParameters,
+        lastRun: new Date().toISOString()
+      };
+
+      // Save the most recent optimization for the backtest to use
+      const cacheKey = `optimization_${Date.now()}`;
+      const cacheData = {
+        results,
+        timestamp: new Date().toISOString(),
+        config: {
+          symbol,
+          timeframe,
+          timeDuration,
+          initialCapital,
+          quantity
+        },
+        scriptHash: cacheKey
+      };
+
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+
+      // Update optimization keys list
+      const optimizationKeys = JSON.parse(localStorage.getItem('optimizationKeys') || '[]');
+      optimizationKeys.push(cacheKey);
+      if (optimizationKeys.length > 20) {
+        // Remove oldest keys and their data
+        const removedKeys = optimizationKeys.splice(0, optimizationKeys.length - 20);
+        removedKeys.forEach(key => localStorage.removeItem(key));
+      }
+      localStorage.setItem('optimizationKeys', JSON.stringify(optimizationKeys));
+
+      // Navigate to backtest page
+      window.location.href = '/dashboard/backtest';
+    } catch (error) {
+      console.error('Error saving optimization for backtest:', error);
+      alert('Failed to save optimization. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen text-white bg-zinc-950">
       <div className="container mx-auto px-4 py-8">
@@ -1662,32 +1720,18 @@ if (shortCondition)
                         ))}
                       </div>
 
-                      <div className="mt-6 pt-4 border-t border-zinc-700/30">
-                        <h3 className="text-md font-medium mb-3 text-zinc-300">Optimization Metrics</h3>
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <div className="text-zinc-400 text-xs mb-1">Return</div>
-                            <div className={`font-semibold text-lg ${results?.bestResult?.return >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {results?.bestResult?.return >= 1000 ?
-                                `+${(results?.bestResult?.return).toLocaleString()}%` :
-                                `+${results?.bestResult?.return}%`}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-zinc-400 text-xs mb-1">Win Rate</div>
-                            <div className="text-white font-semibold text-lg">{results?.bestResult?.winRate}%</div>
-                          </div>
-                          <div>
-                            <div className="text-zinc-400 text-xs mb-1">Profit Factor</div>
-                            <div className="text-white font-semibold text-lg">{results?.bestResult?.profitFactor}</div>
-                          </div>
+                      {/* Add button to apply optimized parameters and go to backtest */}
+                      {results && results.optimizedParameters && (
+                        <div className="mt-6">
+                          <button
+                            onClick={applyOptimizedParametersAndGoToBacktest}
+                            className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Apply Optimized Parameters & Run Backtest
+                          </button>
                         </div>
-                      </div>
-
-                      <div className="mt-4 text-xs text-zinc-500 flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Optimization completed in {results?.optimizationTime} seconds
-                      </div>
+                      )}
                     </div>
                   </div>
 

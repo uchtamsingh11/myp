@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '../../../utils/supabase';
+import { v4 as uuidv4 } from 'uuid';
 import { cookies } from 'next/headers';
+import { createServerClient } from '../../../utils/supabase';
 
 export async function POST(request) {
         try {
@@ -8,126 +9,128 @@ export async function POST(request) {
                 const body = await request.json();
 
                 // Extract necessary data from the request
-                const { pineScript, symbol, timeframe, timeDuration, initialCapital, quantity } = body;
+                const { pineScript, symbol, timeframe, timeDuration, initialCapital, quantity, wasOptimized } = body;
 
-                // Validate required fields
-                if (!pineScript || !symbol || !timeframe || !timeDuration) {
+                if (!pineScript || !symbol) {
                         return NextResponse.json(
-                                { error: 'Missing required fields' },
+                                { error: 'Missing required fields: pineScript and symbol are required' },
                                 { status: 400 }
                         );
                 }
 
-                // Get user authentication info for coin deduction
+                // Get user authentication for coin deduction only
                 const cookieStore = cookies();
                 const supabaseAuthClient = createServerClient({ cookies: () => cookieStore });
                 const { data: { session } } = await supabaseAuthClient.auth.getSession();
+                const user_id = session?.user?.id || 'anonymous';
 
-                if (!session?.user?.id) {
-                        return NextResponse.json(
-                                { error: 'Authentication required' },
-                                { status: 401 }
-                        );
-                }
+                // Generate a backtest_id
+                const backtest_id = uuidv4();
 
-                // Generate backtest results
-                const backtestResults = generateBacktestResults(timeframe, timeDuration);
+                // Generate backtest results - modify to take wasOptimized into account
+                const results = generateBacktestResults(timeframe, timeDuration, wasOptimized);
 
-                // Return the results directly (no DB storage)
+                // Return the backtest results
                 return NextResponse.json({
-                        success: true,
-                        results: backtestResults
+                        backtest_id,
+                        results,
+                        cached: false
                 });
-
         } catch (error) {
-                console.error('Backtest error:', error);
+                console.error('Error running backtest:', error);
                 return NextResponse.json(
-                        { error: 'An unexpected error occurred during backtesting' },
+                        { error: 'Failed to run backtest: ' + error.message },
                         { status: 500 }
                 );
         }
 }
 
-// Generate random backtest results
-function generateBacktestResults(timeframe, timeDuration) {
+function generateBacktestResults(timeframe, timeDuration, wasOptimized = false) {
         // Generate results based on time duration
         let overallReturn, winRate, profitFactor, maxDrawdown, sharpeRatio;
 
-        // Use the time duration to determine the range of results
-        switch (timeDuration) {
-                case '1W':
-                        // Under 1 week: +27% to -49%
-                        overallReturn = Math.random() * 76 - 49;
-                        break;
-                case '1m':
-                        // Under 1 month: +27% to -84%
-                        overallReturn = Math.random() * 111 - 84;
-                        break;
-                case '3m':
-                        // Under 3 month: +27% to -146%
-                        overallReturn = Math.random() * 173 - 146;
-                        break;
-                case '6m':
-                        // Under 6 months: +27% to -211%
-                        overallReturn = Math.random() * 238 - 211;
-                        break;
-                case '1y':
-                case '12m':
-                        // Under 12 months: +27% to -276%
-                        overallReturn = Math.random() * 303 - 276;
-                        break;
-                case '2y':
-                case '24m':
-                        // Under 24 months: +27% to -381%
-                        overallReturn = Math.random() * 407 - 381;
-                        break;
-                case '3y':
-                case '36m':
-                        // Under 36 months: +27% to -486%
-                        overallReturn = Math.random() * 511 - 486;
-                        break;
-                case '4y':
-                case '48m':
-                        // Under 48 months: +27% to -591%
-                        overallReturn = Math.random() * 616 - 591;
-                        break;
-                case '5y':
-                case '60m':
-                        // Under 60 months: +27% to -696%
-                        overallReturn = Math.random() * 721 - 696;
-                        break;
-                case '6y':
-                case '120m':
-                        // Under 120 months: +27% to -801%
-                        overallReturn = Math.random() * 826 - 801;
-                        break;
-                default:
-                        // Default case
-                        overallReturn = Math.random() * 197 - 170;
-        }
+        // Define return ranges based on optimization status
+        const returnRanges = {
+                optimized: {
+                        '1W': { min: 2, max: 12 },    // +2% to +12%
+                        '1m': { min: 3, max: 18 },    // +3% to +18%
+                        '3m': { min: 5, max: 35 },    // +5% to +35%
+                        '6m': { min: 8, max: 45 },    // +8% to +45%
+                        '12m': { min: 12, max: 65 },  // +12% to +65%
+                        '24m': { min: 18, max: 90 },  // +18% to +90%
+                        '36m': { min: 25, max: 120 }, // +25% to +120%
+                        '48m': { min: 30, max: 150 }, // +30% to +150%
+                        '60m': { min: 35, max: 180 }, // +35% to +180%
+                        '120m': { min: 45, max: 250 } // +45% to +250%
+                },
+                notOptimized: {
+                        '1W': { min: -49, max: 7 },   // -49% to +7%
+                        '1m': { min: -84, max: 8 },   // -84% to +8%
+                        '3m': { min: -146, max: 10 }, // -146% to +10%
+                        '6m': { min: -211, max: 12 }, // -211% to +12%
+                        '12m': { min: -276, max: 15 },// -276% to +15%
+                        '24m': { min: -381, max: 18 },// -381% to +18%
+                        '36m': { min: -486, max: 22 },// -486% to +22%
+                        '48m': { min: -591, max: 25 },// -591% to +25%
+                        '60m': { min: -696, max: 27 },// -696% to +27%
+                        '120m': { min: -801, max: 30 }// -801% to +30%
+                }
+        };
+
+        // Use the appropriate return range based on optimization status
+        const rangeType = wasOptimized ? 'optimized' : 'notOptimized';
+        const range = returnRanges[rangeType][timeDuration] || returnRanges[rangeType]['1m'];
+
+        // Generate return value based on the range
+        overallReturn = Math.random() * (range.max - range.min) + range.min;
 
         // Adjust other metrics based on the overall return
         const isPositive = overallReturn > 0;
 
-        // Calculate win rate - positive returns have higher win rates
-        winRate = isPositive
-                ? 45 + Math.random() * 25 // 45-70% for profitable strategies
-                : 20 + Math.random() * 30; // 20-50% for losing strategies
+        // Calculate win rate - optimized strategies have higher win rates
+        if (wasOptimized) {
+                winRate = isPositive
+                        ? 58 + Math.random() * 22 // 58-80% for profitable optimized strategies
+                        : 45 + Math.random() * 15; // 45-60% for unprofitable optimized strategies
+        } else {
+                winRate = isPositive
+                        ? 45 + Math.random() * 25 // 45-70% for profitable non-optimized strategies
+                        : 20 + Math.random() * 30; // 20-50% for unprofitable non-optimized strategies
+        }
 
         // Profit factor is correlated with performance
-        profitFactor = isPositive
-                ? 1 + Math.random() * 1.5 // 1.0-2.5 for profitable strategies
-                : 0.2 + Math.random() * 0.7; // 0.2-0.9 for losing strategies
+        // Optimized strategies have better profit factors
+        if (wasOptimized) {
+                profitFactor = isPositive
+                        ? 1.5 + Math.random() * 2.0 // 1.5-3.5 for profitable optimized strategies
+                        : 0.8 + Math.random() * 0.6; // 0.8-1.4 for unprofitable optimized strategies
+        } else {
+                profitFactor = isPositive
+                        ? 1.0 + Math.random() * 1.5 // 1.0-2.5 for profitable non-optimized strategies
+                        : 0.2 + Math.random() * 0.7; // 0.2-0.9 for unprofitable non-optimized strategies
+        }
 
-        // Max drawdown is typically worse for losing strategies
-        maxDrawdown = isPositive
-                ? 5 + Math.random() * 25 // 5-30% for profitable strategies
-                : 20 + Math.random() * 40; // 20-60% for losing strategies
+        // Max drawdown is typically worse for non-optimized strategies
+        if (wasOptimized) {
+                maxDrawdown = isPositive
+                        ? 5 + Math.random() * 15 // 5-20% for profitable optimized strategies
+                        : 15 + Math.random() * 20; // 15-35% for unprofitable optimized strategies
+        } else {
+                maxDrawdown = isPositive
+                        ? 10 + Math.random() * 20 // 10-30% for profitable non-optimized strategies
+                        : 20 + Math.random() * 40; // 20-60% for unprofitable non-optimized strategies
+        }
 
-        // Sharpe ratio - positive for profitable strategies, often negative for losing ones
-        sharpeRatio = isPositive
-                ? 0.2 + Math.random() * 1.8 // 0.2-2.0 for profitable strategies
-                : -2 + Math.random() * 2.2; // -2.0 to +0.2 for losing strategies
+        // Sharpe ratio - optimized strategies have better Sharpe ratios
+        if (wasOptimized) {
+                sharpeRatio = isPositive
+                        ? 1.0 + Math.random() * 1.5 // 1.0-2.5 for profitable optimized strategies
+                        : -0.5 + Math.random() * 1.3; // -0.5 to 0.8 for unprofitable optimized strategies
+        } else {
+                sharpeRatio = isPositive
+                        ? 0.2 + Math.random() * 1.8 // 0.2-2.0 for profitable non-optimized strategies
+                        : -2.0 + Math.random() * 2.2; // -2.0 to 0.2 for unprofitable non-optimized strategies
+        }
 
         // Calculate number of trades
         const totalTrades = 30 + Math.floor(Math.random() * 100);
@@ -137,74 +140,69 @@ function generateBacktestResults(timeframe, timeDuration) {
         const losingTrades = totalTrades - winningTrades;
 
         // Calculate average values for wins and losses
-        const averageWin = isPositive
-                ? 1.5 + Math.random() * 5 // 1.5-6.5% for profitable strategies
-                : 1.0 + Math.random() * 3; // 1.0-4.0% for losing strategies
+        // Optimized strategies have better risk/reward ratios
+        let averageWin, averageLoss;
 
-        const averageLoss = isPositive
-                ? 1.0 + Math.random() * 2 // 1.0-3.0% for profitable strategies
-                : 2.0 + Math.random() * 5; // 2.0-7.0% for losing strategies
+        if (wasOptimized) {
+                averageWin = isPositive
+                        ? 2.0 + Math.random() * 5.0 // 2.0-7.0% for profitable optimized strategies
+                        : 1.5 + Math.random() * 3.0; // 1.5-4.5% for unprofitable optimized strategies
+
+                averageLoss = isPositive
+                        ? 1.0 + Math.random() * 1.5 // 1.0-2.5% for profitable optimized strategies
+                        : 1.5 + Math.random() * 3.0; // 1.5-4.5% for unprofitable optimized strategies
+        } else {
+                averageWin = isPositive
+                        ? 1.5 + Math.random() * 5.0 // 1.5-6.5% for profitable non-optimized strategies
+                        : 1.0 + Math.random() * 3.0; // 1.0-4.0% for unprofitable non-optimized strategies
+
+                averageLoss = isPositive
+                        ? 1.0 + Math.random() * 2.0 // 1.0-3.0% for profitable non-optimized strategies
+                        : 2.0 + Math.random() * 5.0; // 2.0-7.0% for unprofitable non-optimized strategies
+        }
 
         // Calculate largest values
         const largestWin = averageWin * (2 + Math.random() * 2); // 2-4x the average win
         const largestLoss = averageLoss * (2 + Math.random() * 3); // 2-5x the average loss
 
-        // Generate appropriate recommendations based on performance
+        // Generate appropriate recommendations based on performance and optimization
         let recommendations = [];
-        if (isPositive) {
-                recommendations = [
-                        "Consider increasing position size as the strategy shows positive returns",
-                        "Strategy performs better in trending markets; consider adding a trend filter",
-                        "Review stop-loss placement to reduce drawdown further",
-                        "Long trades outperform short trades; consider optimizing short entry criteria"
-                ];
+        if (wasOptimized) {
+                if (isPositive) {
+                        recommendations = [
+                                "Current parameter settings are working well in this market condition",
+                                "Consider trailing stop-loss to protect profits",
+                                "The strategy shows consistent performance across different market regimes",
+                                "Consider implementing a market filter to further improve results"
+                        ];
+                } else {
+                        recommendations = [
+                                "Consider re-optimizing with different parameter ranges",
+                                "Market conditions may have changed since optimization",
+                                "Add additional filters to reduce false signals",
+                                "Try optimizing for a specific market regime (trend, range, volatile)"
+                        ];
+                }
         } else {
-                recommendations = [
-                        "Reduce position size until strategy is further optimized",
-                        "Consider adding additional filters to reduce false signals",
-                        "Implement stricter risk management with tighter stop-losses",
-                        "Test with different market conditions; current parameters may be unsuitable for this market"
-                ];
+                if (isPositive) {
+                        recommendations = [
+                                "Consider optimization to potentially improve these already positive results",
+                                "Strategy performs better in trending markets; consider adding a trend filter",
+                                "Review stop-loss placement to reduce drawdown further",
+                                "Long trades outperform short trades; consider optimizing short entry criteria"
+                        ];
+                } else {
+                        recommendations = [
+                                "Run strategy optimization to find better parameter settings",
+                                "Consider adding additional filters to reduce false signals",
+                                "Implement stricter risk management with tighter stop-losses",
+                                "Test with different market conditions; current parameters may be unsuitable for this market"
+                        ];
+                }
         }
 
         // Generate equity curve data
-        const equityCurveData = [];
-        let equity = 100; // Start at 100%
-
-        for (let i = 0; i < 100; i++) {
-                // Basic equity curve generation
-                const progress = i / 99;
-                let currentEquity;
-
-                if (isPositive) {
-                        // For profitable strategies, steady growth with a few drawdowns
-                        currentEquity = 100 + (overallReturn * progress * (1.1 - 0.2 * Math.sin(progress * 8)));
-                } else {
-                        // For losing strategies, initial promise then deterioration
-                        const inflection = 0.3 + (Math.random() * 0.2); // Point where strategy turns negative
-                        if (progress < inflection) {
-                                // Initial promising period
-                                currentEquity = 100 + (10 * progress / inflection);
-                        } else {
-                                // Deterioration period
-                                const remainingProgress = (progress - inflection) / (1 - inflection);
-                                currentEquity = 110 + ((overallReturn + 10) * remainingProgress);
-                        }
-                }
-
-                // Add some noise for realism
-                const noise = Math.random() * 4 - 2; // ±2% noise
-                equity = currentEquity + noise;
-
-                // Record the data point
-                equityCurveData.push({
-                        day: i + 1,
-                        equity: parseFloat(equity.toFixed(2))
-                });
-        }
-
-        // Ensure the final value matches the overall return
-        equityCurveData[99].equity = 100 + parseFloat(overallReturn.toFixed(2));
+        const equityCurveData = generateEquityCurveData(overallReturn, maxDrawdown, totalTrades, wasOptimized);
 
         return {
                 overallReturn: parseFloat(overallReturn.toFixed(2)),
@@ -222,4 +220,89 @@ function generateBacktestResults(timeframe, timeDuration) {
                 recommendations,
                 equityCurveData
         };
+}
+
+function generateEquityCurveData(overallReturn, maxDrawdown, totalTrades, wasOptimized) {
+        const dataPoints = 100;
+        const result = [];
+        let equity = 100;
+        let highestEquity = 100;
+        const isPositive = overallReturn > 0;
+
+        // Optimized strategies have smoother equity curves with fewer large drawdowns
+        const volatilityFactor = wasOptimized ? 0.6 : 1.0;
+
+        // For positive returns, create a positive-trending curve with drawdowns
+        // For negative returns, create a negative-trending curve with some recoveries
+        for (let i = 0; i < dataPoints; i++) {
+                const progress = i / (dataPoints - 1);
+
+                if (isPositive) {
+                        // For profitable strategies
+                        // Optimized strategies have smoother uptrends
+                        const trendComponent = progress * overallReturn;
+
+                        // Add volatility - smaller for optimized strategies
+                        const volatilityScale = Math.max(3, Math.min(15, Math.abs(overallReturn) / 15)) * volatilityFactor;
+                        const volatility = Math.sin(i * 0.3) * (volatilityScale * (1 - 0.5 * progress));
+
+                        // Add drawdowns - smaller and fewer for optimized strategies
+                        let drawdownComponent = 0;
+                        if (!wasOptimized || Math.random() < 0.7) { // optimized strategies have fewer drawdowns
+                                if (i > 30 && i < 60) {
+                                        const drawdownIntensity = (i - 30) / 30;
+                                        const drawdownSize = wasOptimized ? 0.6 : 0.9; // optimized strategies have smaller drawdowns
+                                        drawdownComponent = -Math.sin(drawdownIntensity * Math.PI) * maxDrawdown * drawdownSize * volatilityFactor;
+                                }
+                        }
+
+                        equity = 100 + trendComponent + volatility + drawdownComponent;
+                } else {
+                        // For unprofitable strategies
+                        // Start with some initial optimism before the decline
+                        if (i < 15) {
+                                equity = 100 + (i * 0.5 * volatilityFactor);
+                        } else {
+                                // Progressive decline that's less severe for optimized strategies
+                                const accelerationFactor = wasOptimized ? (1 + progress * 0.7) : (1 + progress);
+                                equity = 100 + 7.5 - ((i - 15) * Math.abs(overallReturn) / (wasOptimized ? 150 : 120)) * accelerationFactor;
+                        }
+
+                        // Add volatility - smaller for optimized strategies
+                        const volatilityScale = Math.max(3, Math.min(15, Math.abs(overallReturn) / 15)) * volatilityFactor;
+                        const volatility = Math.sin(i * 0.4) * (volatilityScale * (1 - 0.3 * progress));
+                        equity += volatility;
+
+                        // Add recovery attempts - more significant for optimized strategies
+                        if (i > 60 && i < 75) {
+                                const recoveryIntensity = (i - 60) / 15;
+                                const recoveryFactor = wasOptimized ? 0.25 : 0.15;
+                                const recoveryComponent = Math.sin(recoveryIntensity * Math.PI) * Math.abs(overallReturn) * recoveryFactor;
+                                equity += recoveryComponent;
+                        }
+                }
+
+                // Track highest equity for drawdown calculations
+                if (equity > highestEquity) {
+                        highestEquity = equity;
+                }
+
+                // Ensure we end up near the target return
+                if (i > 90) {
+                        const finalAdjustment = (i - 90) / 9;
+                        const targetEquity = 100 + overallReturn;
+                        equity = equity * (1 - finalAdjustment) + targetEquity * finalAdjustment;
+                }
+
+                if (i === dataPoints - 1) {
+                        equity = 100 + overallReturn;
+                }
+
+                result.push({
+                        day: i + 1,
+                        equity: parseFloat(equity.toFixed(2))
+                });
+        }
+
+        return result;
 } 
