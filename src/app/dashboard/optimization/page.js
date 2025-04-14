@@ -314,6 +314,7 @@ export default function OptimizationPage() {
   const [showResults, setShowResults] = useState(false);
   const [optimizationId, setOptimizationId] = useState(null);
   const [error, setError] = useState(null);
+  const [optimizationComplete, setOptimizationComplete] = useState(false);
 
   // Load saved configuration from localStorage on initial mount
   useEffect(() => {
@@ -615,8 +616,20 @@ export default function OptimizationPage() {
     }
   };
 
+  // Cleanup function to reset the optimization state when starting a new one
+  const resetOptimizationState = () => {
+    setResults(null);
+    setShowResults(false);
+    setOptimizationId(null);
+    setError(null);
+    setOptimizationComplete(false);
+  };
+
   // Function to handle optimization
   const handleOptimize = async () => {
+    // Reset the state
+    resetOptimizationState();
+
     // Validation checks
     if (!jsonData) {
       setError('Missing strategy: Please convert your Pine Script first');
@@ -635,6 +648,10 @@ export default function OptimizationPage() {
     if (!quantity || quantity <= 0) {
       setQuantity(1); // Default to 1 if not valid
     }
+
+    // Set loading state and switch to results tab
+    setIsLoading(true);
+    setActiveTab('results'); // Switch to results tab first
 
     // Validate and set default values for parameter input fields
     if (jsonData && jsonData.inputs) {
@@ -673,13 +690,6 @@ export default function OptimizationPage() {
         }
       });
     }
-
-    // Clear previous results and set loading state
-    setResults(null);
-    setIsLoading(true);
-    setShowResults(false);
-    setError(null);
-    setActiveTab('results'); // Switch to results tab first
 
     // Save current configuration to localStorage to persist between reloads
     try {
@@ -731,6 +741,9 @@ export default function OptimizationPage() {
         }
       });
 
+      // Show a small processing delay for better UI feedback
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Try API optimization with robust error handling
       try {
         // Determine whether to use relative or absolute URL
@@ -771,11 +784,29 @@ export default function OptimizationPage() {
         // Store the optimization_id for reference
         setOptimizationId(data.optimization_id);
         setResults(data.results);
-        setIsLoading(false);
+        setOptimizationComplete(true);
         setShowResults(true);
+
+        // Flag that we've successfully optimized for possible backtest use
+        localStorage.setItem('optimization_performed', 'true');
 
         // Clear the stored config since we completed successfully
         localStorage.removeItem('optimization_last_config');
+
+        // Save the optimization results for backtest to use
+        const optimizationData = {
+          results: data.results,
+          timestamp: new Date().toISOString(),
+          config: {
+            symbol,
+            timeframe,
+            timeDuration,
+            initialCapital,
+            quantity,
+            pineScript
+          }
+        };
+        localStorage.setItem('latest_optimization', JSON.stringify(optimizationData));
       } catch (apiError) {
         console.error("API error:", apiError);
 
@@ -788,8 +819,26 @@ export default function OptimizationPage() {
 
         setOptimizationId(localOptimizationId);
         setResults(randomResults);
-        setIsLoading(false);
+        setOptimizationComplete(true);
         setShowResults(true);
+
+        // Flag that we've done an optimization for possible backtest use
+        localStorage.setItem('optimization_performed', 'true');
+
+        // Save the optimization results for backtest to use
+        const optimizationData = {
+          results: randomResults,
+          timestamp: new Date().toISOString(),
+          config: {
+            symbol,
+            timeframe,
+            timeDuration,
+            initialCapital,
+            quantity,
+            pineScript
+          }
+        };
+        localStorage.setItem('latest_optimization', JSON.stringify(optimizationData));
 
         // Clear the stored config since we completed with local fallback
         localStorage.removeItem('optimization_last_config');
@@ -797,8 +846,9 @@ export default function OptimizationPage() {
     } catch (error) {
       console.error("Optimization error:", error);
       setError(error.message || "Failed to optimize strategy. Please try again.");
+    } finally {
+      // Always set loading to false when done
       setIsLoading(false);
-      // Stay on results tab to show the error
     }
   };
 
@@ -975,21 +1025,8 @@ bb              = input_lookback`;
       // Mark that optimization was performed
       localStorage.setItem('optimization_performed', 'true');
 
-      // Save the optimization results to localStorage
-      const config = {
-        symbol,
-        timeframe,
-        timeDuration,
-        initialCapital,
-        quantity,
-        pineScript,
-        optimizedParameters: results.optimizedParameters,
-        lastRun: new Date().toISOString()
-      };
-
-      // Save the most recent optimization for the backtest to use
-      const cacheKey = `optimization_${Date.now()}`;
-      const cacheData = {
+      // Save the optimization results to localStorage for immediate access
+      const optimizationData = {
         results,
         timestamp: new Date().toISOString(),
         config: {
@@ -997,12 +1034,15 @@ bb              = input_lookback`;
           timeframe,
           timeDuration,
           initialCapital,
-          quantity
-        },
-        scriptHash: cacheKey
+          quantity,
+          pineScript
+        }
       };
+      localStorage.setItem('latest_optimization', JSON.stringify(optimizationData));
 
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      // Also save it in the optimization history
+      const cacheKey = `optimization_${Date.now()}`;
+      localStorage.setItem(cacheKey, JSON.stringify(optimizationData));
 
       // Update optimization keys list
       const optimizationKeys = JSON.parse(localStorage.getItem('optimizationKeys') || '[]');
@@ -1013,6 +1053,9 @@ bb              = input_lookback`;
         removedKeys.forEach(key => localStorage.removeItem(key));
       }
       localStorage.setItem('optimizationKeys', JSON.stringify(optimizationKeys));
+
+      // Set a flag to auto-run backtest when the page loads
+      localStorage.setItem('auto_run_backtest', 'true');
 
       // Navigate to backtest page
       window.location.href = '/dashboard/backtest';
@@ -1628,7 +1671,7 @@ if (shortCondition)
                   </div>
                 </div>
               </div>
-            ) : results ? (
+            ) : showResults && results ? (
               // Results display UI
               <div className="space-y-6">
                 {/* Performance Summary Cards */}

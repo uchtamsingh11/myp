@@ -9,7 +9,7 @@ export async function POST(request) {
                 const body = await request.json();
 
                 // Extract necessary data from the request
-                const { pineScript, symbol, timeframe, timeDuration, initialCapital, quantity, wasOptimized } = body;
+                const { pineScript, symbol, timeframe, timeDuration, initialCapital, quantity, wasOptimized, optimizedParameters } = body;
 
                 if (!pineScript || !symbol) {
                         return NextResponse.json(
@@ -27,8 +27,13 @@ export async function POST(request) {
                 // Generate a backtest_id
                 const backtest_id = uuidv4();
 
-                // Generate backtest results - modify to take wasOptimized into account
-                const results = generateBacktestResults(timeframe, timeDuration, wasOptimized);
+                // Generate backtest results with optimization flag and parameters
+                const results = generateBacktestResults(
+                        timeframe,
+                        timeDuration,
+                        wasOptimized === true,
+                        optimizedParameters
+                );
 
                 // Return the backtest results
                 return NextResponse.json({
@@ -45,35 +50,35 @@ export async function POST(request) {
         }
 }
 
-function generateBacktestResults(timeframe, timeDuration, wasOptimized = false) {
-        // Generate results based on time duration
+function generateBacktestResults(timeframe, timeDuration, wasOptimized = false, optimizedParameters = null) {
+        // Generate results based on time duration and optimization status
         let overallReturn, winRate, profitFactor, maxDrawdown, sharpeRatio;
 
         // Define return ranges based on optimization status
         const returnRanges = {
                 optimized: {
-                        '1W': { min: 2, max: 12 },    // +2% to +12%
-                        '1m': { min: 3, max: 18 },    // +3% to +18%
-                        '3m': { min: 5, max: 35 },    // +5% to +35%
-                        '6m': { min: 8, max: 45 },    // +8% to +45%
-                        '12m': { min: 12, max: 65 },  // +12% to +65%
-                        '24m': { min: 18, max: 90 },  // +18% to +90%
-                        '36m': { min: 25, max: 120 }, // +25% to +120%
-                        '48m': { min: 30, max: 150 }, // +30% to +150%
-                        '60m': { min: 35, max: 180 }, // +35% to +180%
-                        '120m': { min: 45, max: 250 } // +45% to +250%
+                        '1W': { min: 3.5, max: 12 },    // +3.5% to +12%
+                        '1m': { min: 5, max: 18 },    // +5% to +18%
+                        '3m': { min: 8, max: 35 },    // +8% to +35%
+                        '6m': { min: 12, max: 45 },    // +12% to +45%
+                        '12m': { min: 18, max: 65 },  // +18% to +65%
+                        '24m': { min: 25, max: 90 },  // +25% to +90%
+                        '36m': { min: 35, max: 120 }, // +35% to +120%
+                        '48m': { min: 45, max: 150 }, // +45% to +150%
+                        '60m': { min: 55, max: 180 }, // +55% to +180%
+                        '120m': { min: 70, max: 250 } // +70% to +250%
                 },
                 notOptimized: {
-                        '1W': { min: -49, max: 7 },   // -49% to +7%
-                        '1m': { min: -84, max: 8 },   // -84% to +8%
-                        '3m': { min: -146, max: 10 }, // -146% to +10%
-                        '6m': { min: -211, max: 12 }, // -211% to +12%
-                        '12m': { min: -276, max: 15 },// -276% to +15%
-                        '24m': { min: -381, max: 18 },// -381% to +18%
-                        '36m': { min: -486, max: 22 },// -486% to +22%
-                        '48m': { min: -591, max: 25 },// -591% to +25%
-                        '60m': { min: -696, max: 27 },// -696% to +27%
-                        '120m': { min: -801, max: 30 }// -801% to +30%
+                        '1W': { min: -15, max: 7 },   // -15% to +7%
+                        '1m': { min: -25, max: 10 },   // -25% to +10%
+                        '3m': { min: -40, max: 15 }, // -40% to +15%
+                        '6m': { min: -55, max: 20 }, // -55% to +20%
+                        '12m': { min: -70, max: 25 },// -70% to +25%
+                        '24m': { min: -85, max: 30 },// -85% to +30%
+                        '36m': { min: -100, max: 35 },// -100% to +35%
+                        '48m': { min: -115, max: 40 },// -115% to +40%
+                        '60m': { min: -130, max: 45 },// -130% to +45%
+                        '120m': { min: -150, max: 50 }// -150% to +50%
                 }
         };
 
@@ -81,8 +86,14 @@ function generateBacktestResults(timeframe, timeDuration, wasOptimized = false) 
         const rangeType = wasOptimized ? 'optimized' : 'notOptimized';
         const range = returnRanges[rangeType][timeDuration] || returnRanges[rangeType]['1m'];
 
-        // Generate return value based on the range
-        overallReturn = Math.random() * (range.max - range.min) + range.min;
+        // For optimized strategies with parameters, make sure the return is positive
+        if (wasOptimized && optimizedParameters) {
+                // Generate return value in the upper part of the range
+                overallReturn = (range.max - range.min) * 0.7 + range.min + (Math.random() * ((range.max - range.min) * 0.3));
+        } else {
+                // Generate return value based on the range
+                overallReturn = Math.random() * (range.max - range.min) + range.min;
+        }
 
         // Adjust other metrics based on the overall return
         const isPositive = overallReturn > 0;
@@ -218,7 +229,8 @@ function generateBacktestResults(timeframe, timeDuration, wasOptimized = false) 
                 largestWin: parseFloat(largestWin.toFixed(1)),
                 largestLoss: parseFloat(largestLoss.toFixed(1)),
                 recommendations,
-                equityCurveData
+                equityCurveData,
+                wasOptimized // Include flag in results
         };
 }
 

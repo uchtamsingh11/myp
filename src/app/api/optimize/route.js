@@ -27,6 +27,9 @@ export async function POST(request) {
                 // Generate an optimization_id
                 const optimization_id = uuidv4();
 
+                // Add a small delay to simulate processing time (helps with UI feedback)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
                 // Generate optimization results
                 const results = generateOptimizationResults(parameters, timeDuration);
 

@@ -21,20 +21,33 @@ const BacktestButton = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [wasOptimized, setWasOptimized] = useState(false);
   const { user } = useAuth();
   const BACKTEST_COST = 25;
 
-  // Reset disabled state if component rerenders
+  // Check if there's optimization data available on mount
   useEffect(() => {
+    // Check if optimization was performed
+    const optimizationPerformed = localStorage.getItem('optimization_performed') === 'true';
+    if (optimizationPerformed) {
+      setWasOptimized(true);
+    }
+    
     setIsDisabled(false);
   }, [symbol, pineScript, timeframe, timeDuration, initialCapital, quantity]);
 
   const validateInputs = () => {
     // Validate required fields
-    if (!symbol || !timeframe || !timeDuration || !pineScript) {
-      alert('Please fill in all required fields');
+    if (!symbol) {
+      alert('Please select a trading symbol');
       return false;
     }
+    
+    if (!pineScript || pineScript.trim() === '') {
+      alert('Please enter or load Pine Script code');
+      return false;
+    }
+    
     return true;
   };
 
@@ -49,19 +62,20 @@ const BacktestButton = ({
 
     // Temporarily disable the button to prevent double clicks
     setIsDisabled(true);
+    setIsLoading(true);
     
     if (!user) {
       alert('You must be logged in to perform this action.');
+      setIsLoading(false);
       setTimeout(() => setIsDisabled(false), 500);
       return;
     }
 
     if (!validateInputs()) {
+      setIsLoading(false);
       setTimeout(() => setIsDisabled(false), 500);
       return;
     }
-
-    setIsLoading(true);
 
     try {
       // Check coin balance and deduct coins
@@ -80,6 +94,8 @@ const BacktestButton = ({
 
       if (currentCoins < BACKTEST_COST) {
         alert(`Not enough coins. You need ${BACKTEST_COST} coins but have ${currentCoins}.`);
+        setIsLoading(false);
+        setTimeout(() => setIsDisabled(false), 500);
         return;
       }
 
@@ -94,28 +110,16 @@ const BacktestButton = ({
         throw new Error('Failed to deduct coins. Please try again.');
       }
 
-      // Check if optimization was performed for this strategy
-      const wasOptimized = localStorage.getItem('optimization_performed') === 'true';
-
-      // Call the parent's onBacktestClick handler with all parameters
+      // Call the parent's onBacktestClick handler with optimization flag
       if (onBacktestClick) {
-        // Pass all strategy parameters and wasOptimized flag to the parent component
-        await onBacktestClick({
-          symbol,
-          pineScript,
-          timeframe,
-          timeDuration,
-          initialCapital,
-          quantity,
-          wasOptimized
-        });
+        await onBacktestClick(wasOptimized);
       }
+      
+      // Button will remain loading while backtest is processing
     } catch (error) {
       console.error('Error during backtest process:', error);
       alert(error.message || 'Failed to run backtest. Please try again.');
-    } finally {
       setIsLoading(false);
-      // Keep button disabled for a short period to prevent accidental double-clicks
       setTimeout(() => setIsDisabled(false), 1000);
     }
   };
@@ -139,7 +143,7 @@ const BacktestButton = ({
           ) : (
             <PlayCircle className="w-5 h-5 mr-2" />
           )}
-          Run Backtest
+          Run Backtest{wasOptimized ? ' (Optimized)' : ''}
         </button>
       </HoverCardTrigger>
       <HoverCardContent className="bg-zinc-800 border border-zinc-700 text-white w-64 p-3">
@@ -151,7 +155,7 @@ const BacktestButton = ({
           <div className="flex items-start gap-2 mt-1">
             <History className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-zinc-400">
-              Tests your strategy against historical market data to analyze performance
+              Tests your {wasOptimized ? 'optimized ' : ''}strategy against historical market data to analyze performance
             </p>
           </div>
         </div>

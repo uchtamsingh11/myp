@@ -14,12 +14,26 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
   // Track loading and disabled states
   const [isLoading, setIsLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [callbackExecuted, setCallbackExecuted] = useState(false);
   const { user } = useAuth();
 
-  // Reset disabled state when component mounts or updates
+  // Reset state when component mounts or updates
   useEffect(() => {
     setIsDisabled(false);
+    setIsLoading(false);
+    setCallbackExecuted(false);
   }, [onNonExhaustiveClick]);
+
+  const executeCallback = async () => {
+    if (callbackExecuted || !onNonExhaustiveClick) return;
+    
+    try {
+      setCallbackExecuted(true);
+      await onNonExhaustiveClick();
+    } catch (error) {
+      console.error("Error executing optimization callback:", error);
+    }
+  };
 
   const handleOptimizeClick = async (e) => {
     // Prevent default behavior and stop propagation
@@ -34,32 +48,39 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
     // Temporarily disable button to prevent double clicks
     setIsDisabled(true);
     setIsLoading(true);
+    setCallbackExecuted(false);
+    
+    if (!user) {
+      alert('You must be logged in to perform this action.');
+      setIsLoading(false);
+      setTimeout(() => setIsDisabled(false), 500);
+      return;
+    }
     
     try {
-      await handleCoinDeduction(749, onNonExhaustiveClick);
+      // Try to deduct coins first
+      await handleCoinDeduction(749);
+      
+      // If coin deduction was successful, execute the callback
+      await executeCallback();
     } catch (error) {
       console.error("Error in optimization button click:", error);
-      // If there's an error with coin deduction but we're logged in, still try to run the optimization
-      if (user && onNonExhaustiveClick) {
-        try {
-          await onNonExhaustiveClick();
-        } catch (callbackError) {
-          console.error("Error executing callback after coin error:", callbackError);
-        }
+      
+      // If there was an error with coins but we're logged in, still try to execute the callback
+      if (user && !callbackExecuted) {
+        await executeCallback();
       }
     } finally {
+      // Clear loading state
       setIsLoading(false);
       // Add a slight delay before re-enabling the button
       setTimeout(() => setIsDisabled(false), 1000);
     }
   };
 
-  const handleCoinDeduction = async (amount, callback) => {
+  const handleCoinDeduction = async (amount) => {
     if (!user) {
-      alert('You must be logged in to perform this action.');
-      setIsLoading(false);
-      setIsDisabled(false);
-      return;
+      throw new Error('You must be logged in to perform this action.');
     }
 
     try {
@@ -84,8 +105,7 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
         if (confirmation) {
           window.location.href = '/dashboard/pricing';
         }
-        setIsLoading(false);
-        return;
+        throw new Error(`Not enough coins. You need ${amount} coins.`);
       }
 
       // Update coin balance
@@ -99,14 +119,8 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
         throw new Error('Failed to deduct coins. Please try again.');
       }
 
-      // Call the callback function
-      if (callback) {
-        await callback();
-      }
-
     } catch (error) {
       console.error('Error deducting coins:', error);
-      alert(error.message || 'Failed to deduct coins. Please try again.');
       throw error; // Re-throw to trigger the catch in handleOptimizeClick
     }
   };

@@ -236,23 +236,10 @@ export default function BrokerAuthPage() {
       setLoading(true);
       setError(null);
 
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      // Add a timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        if (loading) {
-          setLoading(false);
-          setError('Request timed out. Please refresh the page and try again.');
-        }
-      }, 15000);
+      if (!user) return;
 
       // Call the Supabase function to get all saved broker credentials
       const { data, error } = await supabase.rpc('get_all_broker_credentials_v2');
-
-      clearTimeout(timeoutId);
 
       if (error) {
         throw new Error('Error fetching broker credentials: ' + error.message);
@@ -267,26 +254,21 @@ export default function BrokerAuthPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, loading]);
+  }, [user]);
 
   // Function to reset component state
   const resetComponentState = () => {
+    setLoading(true);
     setError(null);
     setInitialDataLoaded(false);
-    // Don't immediately set loading to true here
-    // We'll do that in the useEffect when we actually fetch
   };
 
   useEffect(() => {
-    // Don't attempt to fetch if no user is available
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
     // Only fetch saved brokers when user changes or if initial data hasn't been loaded
-    if (!initialDataLoaded) {
+    if (user && !initialDataLoaded) {
       fetchSavedBrokers();
+    } else if (!user) {
+      setLoading(false);
     } else {
       // If we already have the data, just ensure we're not in loading state
       setLoading(false);
@@ -349,11 +331,7 @@ export default function BrokerAuthPage() {
         );
       } else {
         // New broker - need to fetch to get the assigned ID
-        setInitialDataLoaded(false);
-        // Wait a moment before triggering a fetch to ensure DB operation completes
-        setTimeout(() => {
-          fetchSavedBrokers();
-        }, 500);
+        resetComponentState();
       }
 
       // Success
@@ -365,7 +343,7 @@ export default function BrokerAuthPage() {
     } finally {
       setSavingCredentials(false);
     }
-  }, [user, selectedBroker, credentials, accountLabel, savedBrokers, fetchSavedBrokers]);
+  }, [user, selectedBroker, credentials, accountLabel, savedBrokers, resetComponentState]);
 
   // Handle removing saved broker credentials
   const handleRemoveBrokerCredentials = useCallback(async savedBroker => {
@@ -392,20 +370,15 @@ export default function BrokerAuthPage() {
 
       // Success
       toast.success(`${savedBroker.broker_name} credentials removed successfully!`);
-      // Instead of resetting component state, directly update the broker list
-      setSavedBrokers(prevBrokers =>
-        prevBrokers.filter(broker =>
-          !(broker.broker_id === savedBroker.broker_id &&
-            broker.account_label === savedBroker.account_label)
-        )
-      );
+      // Reset component state to trigger a fresh data fetch
+      resetComponentState();
     } catch (err) {
       toast.error(err.message);
       setError(err.message);
     } finally {
       setRemovingBroker(null);
     }
-  }, [user]);
+  }, [user, resetComponentState]);
 
   // Toggle broker active state
   const toggleBrokerActive = useCallback(async savedBroker => {
@@ -431,24 +404,13 @@ export default function BrokerAuthPage() {
       // Success toast notification
       toast.success(`${savedBroker.broker_name} status updated!`);
 
-      // Update the is_active status in local state instead of refetching
-      setSavedBrokers(prevBrokers =>
-        prevBrokers.map(broker => {
-          if (broker.broker_id === savedBroker.broker_id &&
-            broker.account_label === savedBroker.account_label) {
-            return {
-              ...broker,
-              is_active: !broker.is_active
-            };
-          }
-          return broker;
-        })
-      );
+      // Reset component state to trigger a fresh data fetch
+      resetComponentState();
     } catch (err) {
       toast.error(err.message);
       setError(err.message);
     }
-  }, [user]);
+  }, [user, resetComponentState]);
 
   // Helper function to get filtered available brokers
   const getFilteredBrokers = useMemo(() => {

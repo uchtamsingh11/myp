@@ -155,6 +155,45 @@ export default function Backtest() {
     }
   }, []);
 
+  // Check for auto-run flag when coming from optimization page
+  useEffect(() => {
+    const shouldAutoRun = localStorage.getItem('auto_run_backtest') === 'true';
+
+    if (shouldAutoRun) {
+      // Clear the flag immediately to prevent multiple runs
+      localStorage.removeItem('auto_run_backtest');
+
+      // Check for latest optimization data
+      try {
+        const latestOptimizationJson = localStorage.getItem('latest_optimization');
+        if (latestOptimizationJson) {
+          const optimizationData = JSON.parse(latestOptimizationJson);
+          if (optimizationData && optimizationData.config) {
+            // Set the form values from optimization data
+            setSymbol(optimizationData.config.symbol || '');
+            setTimeframe(optimizationData.config.timeframe || '1D');
+            setTimeDuration(optimizationData.config.timeDuration || '1W');
+            setInitialCapital(optimizationData.config.initialCapital || 1000000);
+            setQuantity(optimizationData.config.quantity || 1);
+            setPineScript(optimizationData.config.pineScript || '');
+
+            // Give a moment for state to update then run the backtest
+            setTimeout(() => {
+              handleBacktest(true); // Run with wasOptimized=true
+            }, 500);
+          }
+        } else {
+          // If we can't find optimization data, still try to run backtest
+          setTimeout(() => {
+            handleBacktest(true);
+          }, 500);
+        }
+      } catch (error) {
+        console.error('Error auto-running backtest:', error);
+      }
+    }
+  }, []);
+
   // Countdown effect
   useEffect(() => {
     let timer;
@@ -163,27 +202,32 @@ export default function Backtest() {
         setCountdownTime(prev => {
           if (prev <= 1) {
             clearInterval(timer);
-            // Generate and show results when countdown reaches zero
-            const randomResults = generateRandomResults();
-            setBacktestResults(randomResults);
-            setIsBacktesting(false);
-            setShowResults(true);
 
-            // Save results to localStorage for future use
-            if (pineScript) {
-              const config = {
-                symbol,
-                timeframe,
-                timeDuration,
-                startDate,
-                endDate,
-                initialCapital,
-                quantity
-              };
-              saveBacktestToCache(randomResults, pineScript, config);
+            // Only generate random results if we're doing the timer-based generation
+            // This check ensures we don't overwrite results from handleBacktest
+            if (!showResults) {
+              // Generate and show results when countdown reaches zero
+              const randomResults = generateRandomResults();
+              setBacktestResults(randomResults);
+              setIsBacktesting(false);
+              setShowResults(true);
 
-              // Remove the last backtest config since we completed it successfully
-              localStorage.removeItem('backtest_last_config');
+              // Save results to localStorage for future use
+              if (pineScript) {
+                const config = {
+                  symbol,
+                  timeframe,
+                  timeDuration,
+                  startDate,
+                  endDate,
+                  initialCapital,
+                  quantity
+                };
+                saveBacktestToCache(randomResults, pineScript, config);
+
+                // Remove the last backtest config since we completed it successfully
+                localStorage.removeItem('backtest_last_config');
+              }
             }
 
             return 0;
@@ -204,7 +248,7 @@ export default function Backtest() {
         clearInterval(timer);
       }
     };
-  }, [isBacktesting, countdownTime, pineScript, symbol, timeframe, timeDuration, startDate, endDate, initialCapital, quantity]);
+  }, [isBacktesting, countdownTime, pineScript, symbol, timeframe, timeDuration, startDate, endDate, initialCapital, quantity, showResults]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -532,11 +576,15 @@ export default function Backtest() {
   };
 
   // Function to run backtest
-  const handleBacktest = async () => {
+  const handleBacktest = async (wasOptimizedParam) => {
     try {
       // Switch to results tab first
       setActiveTab('results');
       setIsBacktesting(true);
+      // Reset the countdown timer
+      setCountdownTime(60);
+      setShowResults(false);
+      setError('');
 
       // Save current configuration to localStorage to persist between reloads
       try {
@@ -557,7 +605,50 @@ export default function Backtest() {
       }
 
       // Check if optimization was performed for this strategy
-      const wasOptimized = localStorage.getItem('optimization_performed') === 'true';
+      // Use parameter if provided, otherwise check localStorage
+      const wasOptimized = wasOptimizedParam !== undefined
+        ? wasOptimizedParam
+        : localStorage.getItem('optimization_performed') === 'true';
+
+      // Try to load the latest optimization data if available
+      let optimizationData = null;
+      if (wasOptimized) {
+        try {
+          const latestOptimizationJson = localStorage.getItem('latest_optimization');
+          if (latestOptimizationJson) {
+            optimizationData = JSON.parse(latestOptimizationJson);
+
+            // Use the optimization config if available
+            if (optimizationData && optimizationData.config) {
+              // Update UI with optimization config values if they're not already set
+              if (!symbol && optimizationData.config.symbol) {
+                setSymbol(optimizationData.config.symbol);
+              }
+              if (!timeframe && optimizationData.config.timeframe) {
+                setTimeframe(optimizationData.config.timeframe);
+              }
+              if (!timeDuration && optimizationData.config.timeDuration) {
+                setTimeDuration(optimizationData.config.timeDuration);
+              }
+              if ((!initialCapital || initialCapital <= 0) && optimizationData.config.initialCapital) {
+                setInitialCapital(optimizationData.config.initialCapital);
+              }
+              if ((!quantity || quantity <= 0) && optimizationData.config.quantity) {
+                setQuantity(optimizationData.config.quantity);
+              }
+              if (!pineScript && optimizationData.config.pineScript) {
+                setPineScript(optimizationData.config.pineScript);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error loading optimization data:', error);
+          // Continue even if we can't load optimization data
+        }
+      }
+
+      // Use a fake delay to give the impression of processing
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Try API backtest with robust error handling
       try {
@@ -581,7 +672,8 @@ export default function Backtest() {
             timeDuration,
             initialCapital,
             quantity,
-            wasOptimized // Send whether the strategy was optimized for improved results
+            wasOptimized, // Send whether the strategy was optimized for improved results
+            optimizedParameters: optimizationData?.results?.optimizedParameters // Include optimized parameters if available
           }),
           signal: controller.signal
         });
@@ -598,6 +690,7 @@ export default function Backtest() {
         // Set backtest results
         setBacktestResults(data.results);
         setIsBacktesting(false);
+        setShowResults(true); // Important: Set this to true to show results
 
         // Clear the stored config since we completed successfully
         localStorage.removeItem('backtest_last_config');
@@ -608,8 +701,20 @@ export default function Backtest() {
         setError("Server backtest failed. Using local backtest instead (results may be less accurate).");
 
         // Fall back to local backtest results if API fails
-        if (wasOptimized) {
-          // Get the most recent optimization results from localStorage
+        if (wasOptimized && optimizationData && optimizationData.results) {
+          // Use the optimization results to generate good backtest results
+          const optimizedBacktestResults = transformOptimizationToBacktest(optimizationData.results, true);
+          setBacktestResults(optimizedBacktestResults);
+          setIsBacktesting(false);
+          setShowResults(true); // Ensure results are displayed
+
+          // Clear the stored config since we completed with local fallback
+          localStorage.removeItem('backtest_last_config');
+          return;
+        }
+
+        // Get the most recent optimization from storage if we don't have optimization data yet
+        if (wasOptimized && !optimizationData) {
           try {
             // Get the list of optimization keys
             const optimizationKeys = JSON.parse(localStorage.getItem('optimizationKeys') || '[]');
@@ -617,13 +722,14 @@ export default function Backtest() {
             if (optimizationKeys.length > 0) {
               // Get the most recent optimization
               const latestKey = optimizationKeys[optimizationKeys.length - 1];
-              const optimizationData = JSON.parse(localStorage.getItem(latestKey) || 'null');
+              const storedOptimizationData = JSON.parse(localStorage.getItem(latestKey) || 'null');
 
-              if (optimizationData && optimizationData.results) {
+              if (storedOptimizationData && storedOptimizationData.results) {
                 // Use the optimization results to generate good backtest results
-                const optimizedBacktestResults = transformOptimizationToBacktest(optimizationData.results, true);
+                const optimizedBacktestResults = transformOptimizationToBacktest(storedOptimizationData.results, true);
                 setBacktestResults(optimizedBacktestResults);
                 setIsBacktesting(false);
+                setShowResults(true); // Ensure results are displayed
 
                 // Clear the stored config since we completed with local fallback
                 localStorage.removeItem('backtest_last_config');
@@ -640,6 +746,7 @@ export default function Backtest() {
         const randomResults = generateRandomResults();
         setBacktestResults(randomResults);
         setIsBacktesting(false);
+        setShowResults(true); // Ensure results are displayed
 
         // Clear the stored config since we completed with local fallback
         localStorage.removeItem('backtest_last_config');
