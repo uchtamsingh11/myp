@@ -11,7 +11,7 @@ const BrokerIcons = {
   alice_blue: <svg className="w-7 h-7 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>,
   angel_broking: <svg className="w-7 h-7 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"></path><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>,
   binance: <svg className="w-7 h-7 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16L6 10 7.4 8.6 12 13.2 16.6 8.6 18 10z"></path><path d="M12 8L6 14 7.4 15.4 12 10.8 16.6 15.4 18 14z"></path><path d="M13.5 5.5L12 4 10.5 5.5 12 7z"></path><path d="M13.5 18.5L12 20 10.5 18.5 12 17z"></path></svg>,
-  default: <svg className="w-7 h-7 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21 17h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2zm-9-7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h4a2 2 0 012 2v4zm6 0a2 2 0 01-2 2h-2a2 2 0 01-2-2V6a2 2 0 012-2h2a2 2 0 012 2v4zm-6 8a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2h4a2 2 0 012 2v4z"></path></svg>,
+  default: <svg className="w-7 h-7 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21 17h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2zm-9-7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h4a2 2 0 012 2v4zm6 0a2 2 0 01-2 2h-2a2 2 0 01-2-2V6a2 2 0 012-2h2a2 2 0 012 2v4z"></path></svg>,
   flattrade: <svg className="w-7 h-7 text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"></path></svg>
 };
 
@@ -236,10 +236,23 @@ export default function BrokerAuthPage() {
       setLoading(true);
       setError(null);
 
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Add a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        if (loading) {
+          setLoading(false);
+          setError('Request timed out. Please refresh the page and try again.');
+        }
+      }, 15000);
 
       // Call the Supabase function to get all saved broker credentials
       const { data, error } = await supabase.rpc('get_all_broker_credentials_v2');
+
+      clearTimeout(timeoutId);
 
       if (error) {
         throw new Error('Error fetching broker credentials: ' + error.message);
@@ -254,21 +267,26 @@ export default function BrokerAuthPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, loading]);
 
   // Function to reset component state
   const resetComponentState = () => {
-    setLoading(true);
     setError(null);
     setInitialDataLoaded(false);
+    // Don't immediately set loading to true here
+    // We'll do that in the useEffect when we actually fetch
   };
 
   useEffect(() => {
-    // Only fetch saved brokers when user changes or if initial data hasn't been loaded
-    if (user && !initialDataLoaded) {
-      fetchSavedBrokers();
-    } else if (!user) {
+    // Don't attempt to fetch if no user is available
+    if (!user) {
       setLoading(false);
+      return;
+    }
+
+    // Only fetch saved brokers when user changes or if initial data hasn't been loaded
+    if (!initialDataLoaded) {
+      fetchSavedBrokers();
     } else {
       // If we already have the data, just ensure we're not in loading state
       setLoading(false);
@@ -331,7 +349,11 @@ export default function BrokerAuthPage() {
         );
       } else {
         // New broker - need to fetch to get the assigned ID
-        resetComponentState();
+        setInitialDataLoaded(false);
+        // Wait a moment before triggering a fetch to ensure DB operation completes
+        setTimeout(() => {
+          fetchSavedBrokers();
+        }, 500);
       }
 
       // Success
@@ -343,7 +365,7 @@ export default function BrokerAuthPage() {
     } finally {
       setSavingCredentials(false);
     }
-  }, [user, selectedBroker, credentials, accountLabel, savedBrokers, resetComponentState]);
+  }, [user, selectedBroker, credentials, accountLabel, savedBrokers, fetchSavedBrokers]);
 
   // Handle removing saved broker credentials
   const handleRemoveBrokerCredentials = useCallback(async savedBroker => {
@@ -370,15 +392,20 @@ export default function BrokerAuthPage() {
 
       // Success
       toast.success(`${savedBroker.broker_name} credentials removed successfully!`);
-      // Reset component state to trigger a fresh data fetch
-      resetComponentState();
+      // Instead of resetting component state, directly update the broker list
+      setSavedBrokers(prevBrokers =>
+        prevBrokers.filter(broker =>
+          !(broker.broker_id === savedBroker.broker_id &&
+            broker.account_label === savedBroker.account_label)
+        )
+      );
     } catch (err) {
       toast.error(err.message);
       setError(err.message);
     } finally {
       setRemovingBroker(null);
     }
-  }, [user, resetComponentState]);
+  }, [user]);
 
   // Toggle broker active state
   const toggleBrokerActive = useCallback(async savedBroker => {
@@ -404,13 +431,24 @@ export default function BrokerAuthPage() {
       // Success toast notification
       toast.success(`${savedBroker.broker_name} status updated!`);
 
-      // Reset component state to trigger a fresh data fetch
-      resetComponentState();
+      // Update the is_active status in local state instead of refetching
+      setSavedBrokers(prevBrokers =>
+        prevBrokers.map(broker => {
+          if (broker.broker_id === savedBroker.broker_id &&
+            broker.account_label === savedBroker.account_label) {
+            return {
+              ...broker,
+              is_active: !broker.is_active
+            };
+          }
+          return broker;
+        })
+      );
     } catch (err) {
       toast.error(err.message);
       setError(err.message);
     }
-  }, [user, resetComponentState]);
+  }, [user]);
 
   // Helper function to get filtered available brokers
   const getFilteredBrokers = useMemo(() => {
@@ -544,7 +582,7 @@ export default function BrokerAuthPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-white flex items-center">
                 <svg className="w-5 h-5 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Connected Brokers
               </h2>
@@ -900,4 +938,4 @@ export default function BrokerAuthPage() {
       </AnimatePresence>
     </div>
   );
-} 
+}
