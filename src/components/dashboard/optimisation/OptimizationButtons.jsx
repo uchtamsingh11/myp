@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { 
@@ -16,65 +16,107 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
   const [isDisabled, setIsDisabled] = useState(false);
   const [callbackExecuted, setCallbackExecuted] = useState(false);
   const { user } = useAuth();
+  const timeoutRef = useRef(null);
 
-  // Reset state when component mounts or updates
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Force reset state after mounting to ensure no stuck states
   useEffect(() => {
     setIsDisabled(false);
     setIsLoading(false);
     setCallbackExecuted(false);
-  }, [onNonExhaustiveClick]);
+  }, []);
+
+  // Ensure the button is always responsive within 20 seconds max
+  const forceResetState = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      setIsLoading(false);
+      setIsDisabled(false);
+      setCallbackExecuted(false);
+      console.log("Force reset optimization button state");
+    }, 20000);
+  };
 
   const executeCallback = async () => {
-    if (callbackExecuted || !onNonExhaustiveClick) return;
+    if (!onNonExhaustiveClick) return;
     
     try {
       setCallbackExecuted(true);
       await onNonExhaustiveClick();
     } catch (error) {
       console.error("Error executing optimization callback:", error);
+    } finally {
+      // Always ensure the button is reset regardless of outcome
+      setIsLoading(false);
+      setIsDisabled(false);
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
   };
 
   const handleOptimizeClick = async (e) => {
-    // Prevent default behavior and stop propagation
+    // Prevent default behavior
     e.preventDefault();
     e.stopPropagation();
     
-    // Prevent multiple clicks or when already loading/disabled
-    if (isLoading || isDisabled) {
-      return;
+    // Clear any existing timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
     
-    // Temporarily disable button to prevent double clicks
-    setIsDisabled(true);
+    // Set loading state and start safety timeout
     setIsLoading(true);
+    setIsDisabled(true);
     setCallbackExecuted(false);
+    forceResetState();
     
     if (!user) {
       alert('You must be logged in to perform this action.');
       setIsLoading(false);
-      setTimeout(() => setIsDisabled(false), 500);
+      setIsDisabled(false);
       return;
     }
     
     try {
-      // Try to deduct coins first
+      // Deduct coins
       await handleCoinDeduction(749);
       
-      // If coin deduction was successful, execute the callback
+      // Execute optimization
       await executeCallback();
     } catch (error) {
       console.error("Error in optimization button click:", error);
       
-      // If there was an error with coins but we're logged in, still try to execute the callback
+      // If coin deduction failed but we're logged in, try the callback anyway
       if (user && !callbackExecuted) {
-        await executeCallback();
+        try {
+          await executeCallback();
+        } catch (callbackError) {
+          console.error("Callback execution failed:", callbackError);
+        }
       }
     } finally {
-      // Clear loading state
+      // Always reset state after operation completes or fails
       setIsLoading(false);
-      // Add a slight delay before re-enabling the button
-      setTimeout(() => setIsDisabled(false), 1000);
+      setIsDisabled(false);
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
   };
 

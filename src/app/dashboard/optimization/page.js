@@ -315,6 +315,7 @@ export default function OptimizationPage() {
   const [optimizationId, setOptimizationId] = useState(null);
   const [error, setError] = useState(null);
   const [optimizationComplete, setOptimizationComplete] = useState(false);
+  const [hasGraphData, setHasGraphData] = useState(false);
 
   // Load saved configuration from localStorage on initial mount
   useEffect(() => {
@@ -346,6 +347,14 @@ export default function OptimizationPage() {
         const now = new Date();
         const differenceInMinutes = (now - lastRunTime) / (1000 * 60);
 
+        // If the last optimization was more than 10 minutes ago, it's likely stale
+        if (differenceInMinutes > 10) {
+          // Clean up stale optimization state
+          console.log("Cleaning up stale optimization state");
+          localStorage.removeItem('optimization_last_config');
+          return;
+        }
+
         // If the last optimization was attempted less than 5 minutes ago and we don't have results
         if (differenceInMinutes < 5 && !showResults && !results) {
           // Ask user if they want to resume the previous optimization
@@ -362,7 +371,12 @@ export default function OptimizationPage() {
 
             // If we have jsonData stored, use it
             if (lastOptimization.jsonData) {
-              setJsonData(JSON.parse(lastOptimization.jsonData));
+              try {
+                setJsonData(JSON.parse(lastOptimization.jsonData));
+              } catch (parseError) {
+                console.error("Error parsing stored JSON data:", parseError);
+                // If parsing fails, don't use the data
+              }
             }
 
             // Start optimization process again
@@ -378,8 +392,9 @@ export default function OptimizationPage() {
         }
       }
     } catch (error) {
-      console.error('Error checking for previous optimization:', error);
-      // Silently fail - non-critical functionality
+      console.error("Error checking previous optimization:", error);
+      // If there's any error processing the stored configuration, remove it
+      localStorage.removeItem('optimization_last_config');
     }
   }, []);
 
@@ -627,27 +642,54 @@ export default function OptimizationPage() {
 
   // Function to handle optimization
   const handleOptimize = async () => {
-    // Reset the state
-    resetOptimizationState();
+    // Reset any previous errors or results
+    setError(null);
+    setResults(null);
+    setShowResults(false);
+    setOptimizationComplete(false);
+    setHasGraphData && setHasGraphData(false);
 
-    // Validation checks
-    if (!jsonData) {
-      setError('Missing strategy: Please convert your Pine Script first');
-      setActiveTab('input');
+    // Validate inputs
+    if (!symbol) {
+      setError('Please enter a symbol.');
       return;
     }
 
-    if (!symbol) {
-      setSymbol('BTCUSDT'); // Default to BTCUSDT if empty
+    if (!timeframe) {
+      setError('Please select a timeframe.');
+      return;
     }
 
-    if (!initialCapital || initialCapital <= 0) {
-      setInitialCapital(10000); // Default to 10000 if not valid
+    if (!timeDuration) {
+      setError('Please enter a time duration.');
+      return;
     }
 
-    if (!quantity || quantity <= 0) {
-      setQuantity(1); // Default to 1 if not valid
+    if (!initialCapital) {
+      setError('Please enter initial capital.');
+      return;
     }
+
+    if (!pineScript || !pineScript.trim()) {
+      setError('Please enter Pine Script code.');
+      return;
+    }
+
+    if (!jsonData) {
+      setError('Please convert your Pine Script first to identify parameters.');
+      return;
+    }
+
+    // Save the original input values for reset after optimization
+    const originalInputs = {
+      symbol,
+      timeframe,
+      timeDuration,
+      initialCapital,
+      quantity,
+      pineScript,
+      jsonData
+    };
 
     // Set loading state and switch to results tab
     setIsLoading(true);
@@ -709,6 +751,16 @@ export default function OptimizationPage() {
       console.error('Error saving optimization config:', error);
       // Non-critical, continue with optimization
     }
+
+    // Setup timeout to handle hanging API calls
+    const optimizationTimeout = setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+        setError("Optimization process timed out. Please try again.");
+        // Clear stored config to prevent getting stuck in incomplete state
+        localStorage.removeItem('optimization_last_config');
+      }
+    }, 60000); // 60 second timeout
 
     try {
       // Extract parameters from inputs for optimization
@@ -775,11 +827,13 @@ export default function OptimizationPage() {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({ error: 'Optimization failed' }));
           throw new Error(errorData.error || 'Optimization failed');
         }
 
-        const data = await response.json();
+        const data = await response.json().catch(() => {
+          throw new Error('Invalid response from server');
+        });
 
         // Store the optimization_id for reference
         setOptimizationId(data.optimization_id);
@@ -807,11 +861,15 @@ export default function OptimizationPage() {
           }
         };
         localStorage.setItem('latest_optimization', JSON.stringify(optimizationData));
+
+        // Reset input fields after successful optimization
+        resetStrategyInputs();
+
       } catch (apiError) {
         console.error("API error:", apiError);
 
         // Show error but proceed with fallback
-        setError("Server optimization failed. Using local optimization instead (results may be less accurate).");
+        setError(`Server optimization failed: ${apiError.message}. Using local optimization instead (results may be less accurate).`);
 
         // Fall back to local optimization if the API call fails
         const randomResults = generateRandomResults();
@@ -842,14 +900,40 @@ export default function OptimizationPage() {
 
         // Clear the stored config since we completed with local fallback
         localStorage.removeItem('optimization_last_config');
+
+        // Reset input fields after local fallback
+        resetStrategyInputs();
       }
     } catch (error) {
       console.error("Optimization error:", error);
       setError(error.message || "Failed to optimize strategy. Please try again.");
+
+      // Clear the stored config if there's an error to prevent getting stuck
+      localStorage.removeItem('optimization_last_config');
     } finally {
       // Always set loading to false when done
       setIsLoading(false);
+      // Clear the timeout
+      clearTimeout(optimizationTimeout);
     }
+  };
+
+  // Function to reset strategy input fields
+  const resetStrategyInputs = () => {
+    // Reset pine script code
+    setPineScript('');
+    setJsonData(null);
+
+    // Reset input fields
+    const inputFields = document.querySelectorAll('[data-param]');
+    if (inputFields && inputFields.length > 0) {
+      inputFields.forEach(field => {
+        field.value = '';
+      });
+    }
+
+    // Only update strategy UI on next render (don't switch back to input tab)
+    console.log("Strategy inputs have been reset after optimization");
   };
 
   const generateRandomResults = () => {

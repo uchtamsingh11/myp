@@ -4,11 +4,19 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../utils/supabase';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
+} from '../../../components/ui/cards/dropdown-menu';
+import {User, Settings, Bell } from 'lucide-react';
 
 const DashboardHeader = ({ userEmail }) => {
   const [coinBalance, setCoinBalance] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const { user, profile } = useAuth();
 
@@ -42,11 +50,9 @@ const DashboardHeader = ({ userEmail }) => {
           setCoinBalance(newBalance);
         }
 
-        setError(null);
       } catch (err) {
         console.error('Error fetching coin balance:', err);
         if (isMounted) {
-          setError('Failed to fetch coin balance');
           // Use profile data as fallback
           if (profile?.coins !== undefined && profile?.coins !== null) {
             setCoinBalance(profile.coins);
@@ -109,20 +115,36 @@ const DashboardHeader = ({ userEmail }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-xs text-zinc-400">Online</span>
-          </div>
-
-          <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 transition-colors w-8 h-8 rounded-full flex items-center justify-center">
-            <span className="text-sm font-semibold">
-              {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
-            </span>
-          </div>
-
-          <div className="hidden sm:block">
-            <p className="text-xs text-zinc-300">{userEmail}</p>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 transition-colors w-8 h-8 rounded-full flex items-center justify-center focus:outline-none">
+                <span className="text-sm font-semibold">
+                  {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-zinc-800">
+              <DropdownMenuLabel className="text-zinc-300">My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-zinc-800" />
+              <div className="px-2 py-1.5">
+                <p className="text-sm text-zinc-300">{userEmail}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Trader</p>
+              </div>
+              <DropdownMenuSeparator className="bg-zinc-800" />
+              <DropdownMenuItem className="text-zinc-300 hover:bg-zinc-800 hover:text-white cursor-pointer">
+                <User className="w-4 h-4 mr-2" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-zinc-300 hover:bg-zinc-800 hover:text-white cursor-pointer">
+                <Settings className="w-4 h-4 mr-2" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-zinc-300 hover:bg-zinc-800 hover:text-white cursor-pointer">
+                <Bell className="w-4 h-4 mr-2" />
+                <span>Notifications</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
