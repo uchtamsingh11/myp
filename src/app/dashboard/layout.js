@@ -55,11 +55,10 @@ export default function DashboardLayout({ children }) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-black">
         <div className="text-center">
-          <div className="relative mx-auto mb-4">
+          <div className="relative mx-auto">
             <div className="w-12 h-12 rounded-full absolute border-4 border-solid border-zinc-800"></div>
             <div className="w-12 h-12 rounded-full animate-spin absolute border-4 border-solid border-indigo-500 border-t-transparent"></div>
           </div>
-          <p className="text-zinc-400">Access denied. Redirecting to login...</p>
         </div>
       </div>
     );
