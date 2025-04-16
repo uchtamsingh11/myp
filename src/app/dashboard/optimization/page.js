@@ -305,7 +305,7 @@ export default function OptimizationPage() {
   const [pineScript, setPineScript] = useState('');
   const [isConverting, setIsConverting] = useState(false);
   const [jsonData, setJsonData] = useState(null);
-  const [symbol, setSymbol] = useState('');
+  const [symbol, setSymbol] = useState('AAPL');
   const [timeframe, setTimeframe] = useState('1D');
   const [timeDuration, setTimeDuration] = useState('1m');
   const [initialCapital, setInitialCapital] = useState(1000000);
