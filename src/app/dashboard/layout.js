@@ -6,6 +6,7 @@ import Sidebar from '../../components/dashboard/common/Sidebar';
 import DashboardHeader from '../../components/dashboard/common/Header';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import { useAuth } from '../../contexts/AuthContext';
+import DatabaseStatusMonitor from '../../components/dashboard/common/DatabaseStatusMonitor';
 
 // Admin email
 const ADMIN_EMAIL = 'uchtamsingh@gmail.com';
@@ -80,6 +81,9 @@ export default function DashboardLayout({ children }) {
             <Suspense fallback={<Loading />}>{children}</Suspense>
           </main>
         </div>
+
+        {/* Database connection status monitor */}
+        <DatabaseStatusMonitor />
       </div>
     </ProtectedRoute>
   );

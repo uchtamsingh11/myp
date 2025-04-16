@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { cn } from "@/lib/utils.js";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import PropTypes from 'prop-types';
 
@@ -40,7 +40,7 @@ export const AnimatedBeam = ({
     const startX = from.left + from.width / 2 - container.left;
     const startY = from.top + from.height / 2 - container.top;
     const endX = to.left + to.width / 2 - container.left;
-    const endY = to.top + to.height / 2 - container.top + (endYOffset || 0);
+    const endY = to.top + to.height / 2 - container.top + endYOffset;
 
     // Calculate control points for the curve
     const deltaX = endX - startX;

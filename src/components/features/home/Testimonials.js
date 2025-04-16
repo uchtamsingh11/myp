@@ -1,6 +1,7 @@
 'use client';
 
-import { cn } from "@/lib/utils.js";
+import { motion } from 'framer-motion';
+import { cn } from "@/lib/utils";
 import IntroducingBadge from "../../ui/badges/IntroducingBadge";
 import GradientText from "../../ui/effects/GradientText";
 

@@ -11,34 +11,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Check if we're on client-side to safely use window
 const isClient = typeof window !== 'undefined';
 
-// Rate limiting and exponential backoff configuration
-const rateLimitConfig = {
-  maxRetries: 3,
-  initialBackoffMs: 1000, // 1 second
-  maxBackoffMs: 10000, // 10 seconds
-  jitterFactor: 0.2 // Random jitter of up to 20%
-};
-
-// Exponential backoff function with jitter for rate limiting
-export const backoffWithJitter = (retry, initialBackoff = rateLimitConfig.initialBackoffMs) => {
-  const exp = Math.min(retry, 10); // Cap the exponent to avoid excessive wait times
-  const baseDelay = Math.min(
-    rateLimitConfig.maxBackoffMs,
-    initialBackoff * Math.pow(2, exp)
-  );
-  const jitter = baseDelay * rateLimitConfig.jitterFactor * Math.random();
-  return baseDelay + jitter;
-};
-
-// Create Supabase client with safe window references
+/**
+ * Create and configure the Supabase client with proper auth settings
+ */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storageKey: 'supabase.auth.token',
     persistSession: true,
-    detectSessionInUrl: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
     flowType: 'pkce',
-    debug: process.env.NODE_ENV === 'development', // Enable debug logs in development
+    debug: process.env.NODE_ENV === 'development',
+    // Proper cookie options for security and cross-domain functionality
     cookieOptions: {
       name: 'sb-auth',
       lifetime: 60 * 60 * 24 * 7, // 7 days
@@ -49,53 +32,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     },
   },
   global: {
-    headers: {
-      'X-Client-Info': 'supabase-js-browser/2.38.4',
-    },
+    // Set proper client info header
+    headers: { 'X-Client-Info': 'supabase-js-browser' },
   },
+  // Configure reasonable timeouts for requests
   realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
     timeout: 30000, // 30 seconds
     reconnect: true,
-    retryInterval: 5000, // 5 seconds
-    maxRetries: 10,
-    heartbeatIntervalMs: 10000 // 10 seconds
   },
-  // Add HTTP specific options
-  fetch: (url, options) => {
-    // Increase timeout for auth operations
-    const timeoutMs = url.includes('/auth/') ? 15000 : 10000; // 15 seconds for auth, 10 for others
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    return fetch(url, {
-      ...options,
-      signal: controller.signal,
-    }).then(response => {
-      clearTimeout(timeoutId);
-      return response;
-    }).catch(error => {
-      clearTimeout(timeoutId);
-      throw error;
-    });
-  }
 });
 
-// Make session state available globally in development for debugging
-if (process.env.NODE_ENV === 'development' && isClient) {
-  window.getSupabaseSession = async () => {
-    const { data } = await supabase.auth.getSession();
-    console.log('Current session:', data);
-    return data;
-  };
-}
-
-// Create a server-side Supabase client (service role, for admin operations)
-export const createServerClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+/**
+ * Create a Supabase client for server-side operations
+ */
+export const createServerClient = (options = {}) => {
+  // Server operations should use service role key for admin access
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
@@ -107,62 +58,101 @@ export const createServerClient = () => {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
-      debug: process.env.NODE_ENV === 'development', // Enable debug logs in development
     },
+    ...options
   });
 };
 
-// Manually refreshes the session if needed
+/**
+ * Manually refresh the auth session
+ * Only needed in special cases since autoRefreshToken handles this automatically
+ */
 export const refreshSession = async () => {
-  if (!isClient) return;
+  if (!isClient) return false;
+
+  // Use a short-lived local storage flag to prevent multiple concurrent refreshes
+  const refreshInProgress = localStorage.getItem('auth_refresh_in_progress');
+  const refreshStartTime = parseInt(refreshInProgress, 10);
+
+  // If a refresh is in progress and started less than 10 seconds ago, don't attempt another one
+  if (refreshInProgress && !isNaN(refreshStartTime) && Date.now() - refreshStartTime < 10000) {
+    console.log('Session refresh already in progress, skipping duplicate request');
+    return true; // Optimistically return true to prevent multiple refresh attempts
+  }
+
+  // Set refresh in progress flag with current timestamp
+  localStorage.setItem('auth_refresh_in_progress', Date.now().toString());
 
   try {
     const { data, error } = await supabase.auth.refreshSession();
+
     if (error) {
       console.error('Session refresh error:', error);
       return false;
     }
+
+    // Clear the in-progress flag
+    localStorage.removeItem('auth_refresh_in_progress');
     return data.session !== null;
   } catch (err) {
     console.error('Failed to refresh session:', err);
+    // Clear the in-progress flag even on error
+    localStorage.removeItem('auth_refresh_in_progress');
     return false;
   }
 };
 
-// Helper function to implement retry with exponential backoff for rate limits
-export const retryWithBackoff = async (fn, maxRetries = rateLimitConfig.maxRetries) => {
-  let retries = 0;
+/**
+ * Check if the user's session is valid
+ */
+export const isAuthenticated = async () => {
+  // Don't check in server-side context
+  if (!isClient) return false;
 
-  while (retries <= maxRetries) {
-    try {
-      return await fn();
-    } catch (error) {
-      retries++;
+  // Check for a recent auth check to avoid redundant calls
+  const lastAuthCheck = localStorage.getItem('last_auth_check');
+  const lastCheckTime = parseInt(lastAuthCheck, 10);
 
-      // If this is the last retry, throw the error
-      if (retries > maxRetries) {
-        throw error;
-      }
+  // If we checked within the last 30 seconds, use the cached result
+  if (lastAuthCheck && !isNaN(lastCheckTime) && Date.now() - lastCheckTime < 30000) {
+    const cachedResult = localStorage.getItem('auth_check_result') === 'true';
+    return cachedResult;
+  }
 
-      // Check if error is rate limit related
-      const isRateLimit =
-        error.status === 429 ||
-        (error.error?.status === 429) ||
-        (typeof error.message === 'string' &&
-          (error.message.includes('rate limit') ||
-            error.message.includes('too many requests')));
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const isAuth = session !== null;
 
-      // Only retry on rate limit errors
-      if (!isRateLimit) {
-        throw error;
-      }
+    // Cache the result and timestamp
+    localStorage.setItem('last_auth_check', Date.now().toString());
+    localStorage.setItem('auth_check_result', isAuth.toString());
 
-      // Calculate backoff time
-      const backoffTime = backoffWithJitter(retries);
-      console.log(`Rate limit reached. Retrying in ${Math.round(backoffTime / 1000)}s... (attempt ${retries}/${maxRetries})`);
-
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, backoffTime));
-    }
+    return isAuth;
+  } catch (error) {
+    console.error('Error checking authentication status:', error);
+    return false;
   }
 };
+
+/**
+ * Sign out the current user
+ */
+export const signOut = async () => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error signing out:', error);
+    return { success: false, error };
+  }
+};
+
+// Development-only helpers
+if (process.env.NODE_ENV === 'development' && isClient) {
+  window.getSupabaseSession = async () => {
+    const { data } = await supabase.auth.getSession();
+    console.log('Current session:', data);
+    return data;
+  };
+}

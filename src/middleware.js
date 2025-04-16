@@ -5,10 +5,10 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
  * Next.js middleware for handling authentication and request processing
  */
 export async function middleware(request) {
-  // Skip middleware for static files and API routes
+  // Get the pathname from the URL
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static assets, APIs, and non-auth-required paths
+  // Skip middleware for static assets and API routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -26,7 +26,7 @@ export async function middleware(request) {
   const publicRoutes = [
     '/',
     '/auth',
-    '/auth/callback', // Allow OAuth callback
+    '/auth/callback',
     '/auth/reset-password',
     '/signup',
     '/reset-password',
@@ -34,85 +34,63 @@ export async function middleware(request) {
     '/privacy',
   ];
 
-  // Get the session from the request cookies
-  let response = NextResponse.next();
+  // Create a response object that we can modify
+  const response = NextResponse.next();
 
   try {
     // Create Supabase client using the middleware helper
     const supabase = createMiddlewareClient({ req: request, res: response });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+
+    // Get the session from Supabase auth
+    const { data: { session } } = await supabase.auth.getSession();
 
     // Handle protected routes (dashboard)
-    if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+    if (pathname.startsWith('/dashboard')) {
       if (!session) {
-        console.log(`Redirecting to /auth: No session found for ${pathname}`);
-
-        // Create a simple redirect URL to break any potential loops
+        // If no session and trying to access dashboard, redirect to auth
         const redirectUrl = new URL('/auth', request.url);
 
-        // Set cache control headers to prevent caching of the response
-        response = NextResponse.redirect(redirectUrl);
-        response.headers.set(
-          'Cache-Control',
-          'no-store, no-cache, must-revalidate, proxy-revalidate'
-        );
-        response.headers.set('Pragma', 'no-cache');
-        response.headers.set('Expires', '0');
+        // Add the original URL as a redirect parameter
+        redirectUrl.searchParams.set('redirectTo', pathname);
 
-        // Force-clear cookies to ensure clean state
-        response.cookies.delete('sb-access-token');
-        response.cookies.delete('sb-refresh-token');
-
-        return response;
+        // Return the redirect response with security headers
+        const redirectResponse = NextResponse.redirect(redirectUrl);
+        redirectResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        return redirectResponse;
       }
-
-      // User is authenticated and accessing dashboard
-      console.log('User authenticated for dashboard access');
     }
 
-    // Handle auth pages when user is already authenticated
-    if (
-      session &&
-      (pathname === '/auth' || pathname === '/signup' || pathname === '/reset-password')
-    ) {
-      // Check if there's a redirectTo parameter that should be honored
+    // If user is authenticated and trying to access auth pages, redirect to dashboard
+    if (session && (pathname === '/auth' || pathname === '/signup' || pathname === '/reset-password')) {
+      // Check if there's a redirectTo parameter
       const redirectTo = request.nextUrl.searchParams.get('redirectTo');
-      const targetUrl = redirectTo || '/dashboard';
 
-      console.log(`User is authenticated, redirecting to: ${targetUrl}`);
-      response = NextResponse.redirect(new URL(targetUrl, request.url));
-      return response;
+      // Redirect to the specified URL or dashboard by default
+      const targetUrl = redirectTo || '/dashboard';
+      return NextResponse.redirect(new URL(targetUrl, request.url));
     }
 
-    // Set security headers for all responses
+    // Add security headers to all responses
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('X-Frame-Options', 'DENY');
     response.headers.set('X-XSS-Protection', '1; mode=block');
-
-    // Always set strong cache control for auth-related routes
-    response.headers.set('Cache-Control', 'no-store, max-age=0');
 
     return response;
   } catch (error) {
     console.error('Middleware error:', error);
 
-    // On error with dashboard routes, redirect to auth
-    if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+    // On error with protected routes, redirect to auth
+    if (pathname.startsWith('/dashboard')) {
       return NextResponse.redirect(new URL('/auth', request.url));
     }
 
-    // Return the page but prevent caching
+    // For other routes, continue but prevent caching
     response.headers.set('Cache-Control', 'no-store, max-age=0');
     return response;
   }
 }
 
-// Configure the middleware to run for all routes
+// Configure the middleware to run for all routes except static files
 export const config = {
-  matcher: [
-    // Apply middleware to all routes except static files
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)',],
 };

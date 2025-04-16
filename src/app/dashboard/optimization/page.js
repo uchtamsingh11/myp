@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CalendarIcon, Clock, ChevronDown, Code, TrendingUp, BarChart2, Zap, Server, RefreshCw, Download, ArrowRight, Info, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Line, Bar } from 'react-chartjs-2';
 import {
@@ -25,6 +25,7 @@ import {
   SelectContent,
   SelectItem,
 } from '../../../components/ui/tooltips/select';
+import { toast } from '../../../hooks/use-toast';
 
 // Register Chart.js components
 ChartJS.register(
@@ -316,11 +317,65 @@ export default function OptimizationPage() {
   const [error, setError] = useState(null);
   const [optimizationComplete, setOptimizationComplete] = useState(false);
   const [hasGraphData, setHasGraphData] = useState(false);
+  const isMounted = useRef(true);
 
-  // Load saved configuration from localStorage on initial mount
+  const resetOptimizationState = () => {
+    // Reset all state variables related to optimization
+    setResults(null);
+    setShowResults(false);
+    setOptimizationComplete(false);
+    setIsLoading(false);
+    setError(null);
+    setOptimizationId(null);
+    setHasGraphData(false);
+
+    // Clear localStorage items that could cause issues
+    localStorage.removeItem('optimization_last_config');
+
+    console.log("Optimization state fully reset");
+  };
+
+  // Clean up optimization state on initial mount to prevent stale state issues
   useEffect(() => {
-    // Need to check if there's any saved optimization configuration
+    // Set isMounted to true on mount
+    isMounted.current = true;
+
+    // Clear optimization state
+    resetOptimizationState();
+
+    // Load saved configuration from localStorage on initial mount
     if (typeof window !== 'undefined') {
+      // Check if there are optimization results to restore
+      const latestOptimizationStr = localStorage.getItem('latest_optimization');
+      if (latestOptimizationStr) {
+        try {
+          const latestOptimization = JSON.parse(latestOptimizationStr);
+          if (latestOptimization.results) {
+            console.log("Restoring previous optimization results");
+            // Restore the optimization results
+            setResults(latestOptimization.results);
+            setShowResults(true);
+            setOptimizationComplete(true);
+            setHasGraphData(true);
+
+            // Also restore the configuration
+            if (latestOptimization.config) {
+              setSymbol(latestOptimization.config.symbol || '');
+              setTimeframe(latestOptimization.config.timeframe || '1D');
+              setTimeDuration(latestOptimization.config.timeDuration || '1m');
+              setInitialCapital(latestOptimization.config.initialCapital || 1000000);
+              setQuantity(latestOptimization.config.quantity || 1);
+              if (latestOptimization.config.pineScript) {
+                setPineScript(latestOptimization.config.pineScript);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error restoring optimization results:', error);
+          localStorage.removeItem('latest_optimization');
+        }
+      }
+
       const savedConfigString = localStorage.getItem('optimizationConfig');
       if (savedConfigString) {
         try {
@@ -335,6 +390,15 @@ export default function OptimizationPage() {
         }
       }
     }
+
+    // Cleanup function that runs on unmount
+    return () => {
+      // Mark component as unmounted
+      isMounted.current = false;
+
+      // Reset optimization state when component unmounts
+      resetOptimizationState();
+    };
   }, []);
 
   // Check for previously unfinished optimization on page load
@@ -399,6 +463,22 @@ export default function OptimizationPage() {
   }, []);
 
   const handleTabChange = (tab) => {
+    // Reset optimization state when switching back to input tab
+    if (tab === 'input') {
+      // Clear results and reset optimization state
+      setResults(null);
+      setShowResults(false);
+      setOptimizationComplete(false);
+      setIsLoading(false);
+      setError(null);
+      setOptimizationId(null);
+      setHasGraphData(false);
+
+      // Clear any stored optimization session data to prevent state persistence issues
+      localStorage.removeItem('optimization_last_config');
+      return setActiveTab(tab);
+    }
+
     // Validate tab changes to prevent navigation to tabs that require data
     if (tab === 'configure' && !jsonData) {
       setError('Please convert your Pine Script first before configuring parameters');
@@ -631,309 +711,205 @@ export default function OptimizationPage() {
     }
   };
 
-  // Cleanup function to reset the optimization state when starting a new one
-  const resetOptimizationState = () => {
-    setResults(null);
-    setShowResults(false);
-    setOptimizationId(null);
-    setError(null);
-    setOptimizationComplete(false);
-  };
-
   // Function to handle optimization
   const handleOptimize = async () => {
-    // Reset any previous errors or results
-    setError(null);
-    setResults(null);
-    setShowResults(false);
-    setOptimizationComplete(false);
-    setHasGraphData && setHasGraphData(false);
-
-    // Validate inputs
-    if (!symbol) {
-      setError('Please enter a symbol.');
-      return;
-    }
-
-    if (!timeframe) {
-      setError('Please select a timeframe.');
-      return;
-    }
-
-    if (!timeDuration) {
-      setError('Please enter a time duration.');
-      return;
-    }
-
-    if (!initialCapital) {
-      setError('Please enter initial capital.');
-      return;
-    }
-
-    if (!pineScript || !pineScript.trim()) {
-      setError('Please enter Pine Script code.');
-      return;
-    }
-
-    if (!jsonData) {
-      setError('Please convert your Pine Script first to identify parameters.');
-      return;
-    }
-
-    // Save the original input values for reset after optimization
-    const originalInputs = {
-      symbol,
-      timeframe,
-      timeDuration,
-      initialCapital,
-      quantity,
-      pineScript,
-      jsonData
-    };
-
-    // Set loading state and switch to results tab
-    setIsLoading(true);
-    setActiveTab('results'); // Switch to results tab first
-
-    // Validate and set default values for parameter input fields
-    if (jsonData && jsonData.inputs) {
-      const inputFields = document.querySelectorAll('[data-param]');
-
-      inputFields.forEach(field => {
-        if (!field.value.trim()) {
-          const paramName = field.getAttribute('data-param');
-          const paramParts = paramName.split('-');
-          const baseParam = paramParts[0];
-          const type = paramParts[1]; // min, max, default, step
-
-          // Get the input info
-          const inputInfo = jsonData.inputs[baseParam];
-
-          if (inputInfo) {
-            // Set default values based on type
-            if (type === 'min') {
-              field.value = inputInfo.minval ||
-                (inputInfo.type === 'float' ? parseFloat(inputInfo.defaultValue || 0) / 2 : parseInt(inputInfo.defaultValue || 0, 10) / 2);
-            } else if (type === 'max') {
-              field.value = inputInfo.maxval ||
-                (inputInfo.type === 'float' ? parseFloat(inputInfo.defaultValue || 0) * 2 : parseInt(inputInfo.defaultValue || 0, 10) * 2);
-            } else if (type === 'default') {
-              field.value = inputInfo.defaultValue || 0;
-            } else if (type === 'step') {
-              field.value = inputInfo.type === 'float' ? 0.1 : 1;
-            }
-          } else {
-            // Set some reasonable defaults if we can't find input info
-            if (type === 'min') field.value = 1;
-            if (type === 'max') field.value = 100;
-            if (type === 'default') field.value = 10;
-            if (type === 'step') field.value = 1;
-          }
-        }
-      });
-    }
-
-    // Save current configuration to localStorage to persist between reloads
     try {
-      const config = {
-        symbol,
-        timeframe,
-        timeDuration,
-        initialCapital,
-        quantity,
-        pineScript,
-        jsonData: jsonData ? JSON.stringify(jsonData) : null,
-        lastRun: new Date().toISOString()
-      };
+      // Reset any previous errors or results
+      resetOptimizationState();
 
-      localStorage.setItem('optimization_last_config', JSON.stringify(config));
-    } catch (error) {
-      console.error('Error saving optimization config:', error);
-      // Non-critical, continue with optimization
-    }
-
-    // Setup timeout to handle hanging API calls
-    const optimizationTimeout = setTimeout(() => {
-      if (isLoading) {
-        setIsLoading(false);
-        setError("Optimization process timed out. Please try again.");
-        // Clear stored config to prevent getting stuck in incomplete state
-        localStorage.removeItem('optimization_last_config');
+      // Validate inputs
+      if (!symbol) {
+        setError('Please enter a symbol.');
+        return;
       }
-    }, 60000); // 60 second timeout
 
-    try {
+      if (!timeframe) {
+        setError('Please select a timeframe.');
+        return;
+      }
+
+      if (!timeDuration) {
+        setError('Please select a time duration.');
+        return;
+      }
+
+      if (!initialCapital) {
+        setError('Please enter initial capital.');
+        return;
+      }
+
+      if (!pineScript || !pineScript.trim()) {
+        setError('Please enter Pine Script code.');
+        return;
+      }
+
+      if (!jsonData) {
+        setError('Please convert your Pine Script first to identify parameters.');
+        return;
+      }
+
+      // Set loading state and switch to results tab
+      setIsLoading(true);
+      setActiveTab('results');
+
+      // Record the start time of optimization
+      const startTime = Date.now();
+
       // Extract parameters from inputs for optimization
       const parameters = {};
-      Object.entries(jsonData.inputs).forEach(([key, input]) => {
-        // Only include numeric inputs for optimization
-        if (['integer', 'float', 'simple'].includes(input.type)) {
-          // Get the input element to read current value
-          const minInput = document.querySelector(`input[data-param="${key}-min"]`);
-          const maxInput = document.querySelector(`input[data-param="${key}-max"]`);
-          const defaultInput = document.querySelector(`input[data-param="${key}-default"]`);
-          const stepInput = document.querySelector(`input[data-param="${key}-step"]`);
-
-          // Read current values from form with fallbacks
-          const min = minInput && minInput.value ? parseFloat(minInput.value) :
-            (parseFloat(input.minval) || parseFloat(input.defaultValue) / 2 || 1);
-          const max = maxInput && maxInput.value ? parseFloat(maxInput.value) :
-            (parseFloat(input.maxval) || parseFloat(input.defaultValue) * 2 || 100);
-          const defaultValue = defaultInput && defaultInput.value ? parseFloat(defaultInput.value) :
-            (parseFloat(input.defaultValue) || (min + max) / 2);
-          const step = stepInput && stepInput.value ? parseFloat(stepInput.value) :
-            (input.type === 'float' ? 0.1 : 1);
-
-          parameters[key] = {
-            min: min,
-            max: max,
-            default: defaultValue,
-            step: step
-          };
-        }
-      });
-
-      // Show a small processing delay for better UI feedback
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Try API optimization with robust error handling
       try {
-        // Determine whether to use relative or absolute URL
-        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-          ? '/api/optimize'  // Use relative URL for local development
-          : `${window.location.origin}/api/optimize`;  // Use absolute URL for production
+        if (jsonData && jsonData.inputs) {
+          Object.entries(jsonData.inputs).forEach(([key, input]) => {
+            // Only include numeric inputs for optimization
+            if (['integer', 'float', 'simple'].includes(input.type)) {
+              const minInput = document.querySelector(`input[data-param="${key}-min"]`);
+              const maxInput = document.querySelector(`input[data-param="${key}-max"]`);
+              const defaultInput = document.querySelector(`input[data-param="${key}-default"]`);
+              const stepInput = document.querySelector(`input[data-param="${key}-step"]`);
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+              // Read values from form with fallbacks
+              const min = minInput && minInput.value ? parseFloat(minInput.value) :
+                (parseFloat(input.minval) || parseFloat(input.defaultValue) / 2 || 1);
+              const max = maxInput && maxInput.value ? parseFloat(maxInput.value) :
+                (parseFloat(input.maxval) || parseFloat(input.defaultValue) * 2 || 100);
+              const defaultValue = defaultInput && defaultInput.value ? parseFloat(defaultInput.value) :
+                (parseFloat(input.defaultValue) || (min + max) / 2);
+              const step = stepInput && stepInput.value ? parseFloat(stepInput.value) :
+                (input.type === 'float' ? 0.1 : 1);
 
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            pineScript,
-            symbol,
-            timeframe,
-            timeDuration,
-            initialCapital,
-            quantity,
-            parameters,
-            isExhaustive: true // Always use exhaustive mode for better results
-          }),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Optimization failed' }));
-          throw new Error(errorData.error || 'Optimization failed');
+              parameters[key] = {
+                min: min,
+                max: max,
+                default: defaultValue,
+                step: step
+              };
+            }
+          });
         }
 
-        const data = await response.json().catch(() => {
-          throw new Error('Invalid response from server');
-        });
+        try {
+          const apiUrl = '/api/optimize';
 
-        // Store the optimization_id for reference
-        setOptimizationId(data.optimization_id);
-        setResults(data.results);
-        setOptimizationComplete(true);
-        setShowResults(true);
+          // Function to handle API call with retry
+          const fetchWithRetry = async (url, options, maxRetries = 2) => {
+            let retries = 0;
+            while (retries <= maxRetries) {
+              try {
+                const response = await fetch(url, options);
+                if (response.ok) {
+                  return await response.json();
+                }
+                throw new Error(`API error: ${response.status}`);
+              } catch (error) {
+                retries++;
+                if (retries > maxRetries) {
+                  throw error;
+                }
+                console.log(`Retry ${retries}/${maxRetries} after error:`, error.message);
+                // Wait before retry with exponential backoff
+                await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+              }
+            }
+          };
 
-        // Flag that we've successfully optimized for possible backtest use
-        localStorage.setItem('optimization_performed', 'true');
+          // Call API with retry mechanism
+          const data = await fetchWithRetry(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pineScript,
+              symbol,
+              timeframe,
+              timeDuration,
+              initialCapital,
+              quantity,
+              parameters,
+              isExhaustive: true
+            })
+          });
 
-        // Clear the stored config since we completed successfully
-        localStorage.removeItem('optimization_last_config');
-
-        // Save the optimization results for backtest to use
-        const optimizationData = {
-          results: data.results,
-          timestamp: new Date().toISOString(),
-          config: {
-            symbol,
-            timeframe,
-            timeDuration,
-            initialCapital,
-            quantity,
-            pineScript
+          if (!data || !data.success) {
+            throw new Error(data?.error || 'Failed to get valid response from server');
           }
-        };
-        localStorage.setItem('latest_optimization', JSON.stringify(optimizationData));
 
-        // Reset input fields after successful optimization
-        resetStrategyInputs();
+          // Calculate how much time has passed since we started
+          const elapsedTime = Date.now() - startTime;
+          const remainingTime = Math.max(0, 60000 - elapsedTime); // 60 seconds in ms
 
-      } catch (apiError) {
-        console.error("API error:", apiError);
-
-        // Show error but proceed with fallback
-        setError(`Server optimization failed: ${apiError.message}. Using local optimization instead (results may be less accurate).`);
-
-        // Fall back to local optimization if the API call fails
-        const randomResults = generateRandomResults();
-        const localOptimizationId = `local-${Date.now()}`;
-
-        setOptimizationId(localOptimizationId);
-        setResults(randomResults);
-        setOptimizationComplete(true);
-        setShowResults(true);
-
-        // Flag that we've done an optimization for possible backtest use
-        localStorage.setItem('optimization_performed', 'true');
-
-        // Save the optimization results for backtest to use
-        const optimizationData = {
-          results: randomResults,
-          timestamp: new Date().toISOString(),
-          config: {
-            symbol,
-            timeframe,
-            timeDuration,
-            initialCapital,
-            quantity,
-            pineScript
+          // Wait for remaining time to ensure loading displays for 60 seconds
+          if (remainingTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
           }
-        };
-        localStorage.setItem('latest_optimization', JSON.stringify(optimizationData));
 
-        // Clear the stored config since we completed with local fallback
-        localStorage.removeItem('optimization_last_config');
+          // Update state with results only after waiting
+          setOptimizationId(data.optimization_id);
+          setResults(data.results);
+          setOptimizationComplete(true);
+          setShowResults(true);
+          setHasGraphData(true);
 
-        // Reset input fields after local fallback
-        resetStrategyInputs();
+          // Save the current configuration
+          const optimizationData = {
+            results: data.results,
+            timestamp: new Date().toISOString(),
+            config: {
+              symbol,
+              timeframe,
+              timeDuration,
+              initialCapital,
+              quantity,
+              pineScript
+            }
+          };
+
+          // Store the results for possible backtest use
+          localStorage.setItem('latest_optimization', JSON.stringify(optimizationData));
+          localStorage.setItem('optimization_performed', 'true');
+
+          // Show success message
+          toast({
+            title: "Optimization Complete",
+            description: "Your strategy has been successfully optimized.",
+            variant: "default"
+          });
+
+          // Ensure we're still on the results tab
+          setActiveTab('results');
+
+        } catch (apiError) {
+          console.error("API error:", apiError);
+          setError(`Optimization failed: ${apiError.message}`);
+
+          // Show error toast
+          toast({
+            title: "Optimization Failed",
+            description: apiError.message || "An error occurred during optimization",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error preparing optimization:", error);
+        setError(`Failed to prepare optimization parameters: ${error.message}`);
+      } finally {
+        // Always set loading to false after a delay (for cases where we hit an error)
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 60000 - elapsedTime);
+
+        if (remainingTime > 0) {
+          setTimeout(() => {
+            if (isMounted.current) {
+              setIsLoading(false);
+            }
+          }, remainingTime);
+        } else {
+          setIsLoading(false);
+        }
       }
     } catch (error) {
-      console.error("Optimization error:", error);
-      setError(error.message || "Failed to optimize strategy. Please try again.");
-
-      // Clear the stored config if there's an error to prevent getting stuck
-      localStorage.removeItem('optimization_last_config');
-    } finally {
-      // Always set loading to false when done
+      console.error("Fatal optimization error:", error);
+      setError("An unexpected error occurred. Please refresh the page and try again.");
       setIsLoading(false);
-      // Clear the timeout
-      clearTimeout(optimizationTimeout);
     }
-  };
-
-  // Function to reset strategy input fields
-  const resetStrategyInputs = () => {
-    // Reset pine script code
-    setPineScript('');
-    setJsonData(null);
-
-    // Reset input fields
-    const inputFields = document.querySelectorAll('[data-param]');
-    if (inputFields && inputFields.length > 0) {
-      inputFields.forEach(field => {
-        field.value = '';
-      });
-    }
-
-    // Only update strategy UI on next render (don't switch back to input tab)
-    console.log("Strategy inputs have been reset after optimization");
   };
 
   const generateRandomResults = () => {
@@ -1742,15 +1718,26 @@ if (shortCondition)
                     <p className="text-zinc-400 mb-6">Testing parameter combinations to find the optimal strategy</p>
                     <div className="bg-zinc-700/50 h-3 rounded-full max-w-md mx-auto overflow-hidden">
                       <div
-                        className="bg-indigo-500 h-full rounded-full animate-pulse"
-                        style={{ width: '50%' }}
+                        className="bg-indigo-500 h-full rounded-full transition-all duration-[60000ms] ease-linear w-0"
+                        style={{
+                          animationName: 'progressAnimation',
+                          animationDuration: '60s',
+                          animationTimingFunction: 'linear',
+                          animationFillMode: 'forwards'
+                        }}
                       ></div>
                     </div>
+                    <style jsx global>{`
+                      @keyframes progressAnimation {
+                        0% { width: 0%; }
+                        100% { width: 100%; }
+                      }
+                    `}</style>
                     <div className="mt-3 text-zinc-300 font-medium">
                       Running optimization...
                     </div>
                     <div className="mt-2 text-zinc-500">
-                      This may take a minute or two...
+                      This will take approximately 60 seconds
                     </div>
                   </div>
                 </div>
@@ -1848,17 +1835,11 @@ if (shortCondition)
                       </div>
 
                       {/* Add button to apply optimized parameters and go to backtest */}
-                      {/* {results && results.optimizedParameters && (
+                      {results && results.optimizedParameters && (
                         <div className="mt-6">
-                          <button
-                            onClick={applyOptimizedParametersAndGoToBacktest}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center"
-                          >
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Apply Optimized Parameters & Run Backtest
-                          </button>
+
                         </div>
-                      )} */}
+                      )}
                     </div>
                   </div>
 

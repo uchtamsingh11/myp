@@ -5,57 +5,106 @@ import { createServerClient } from '../../../utils/supabase';
 
 export async function POST(request) {
         try {
-                // Get the request body
+                // Generate an optimization_id first so we always have one to return
+                const optimization_id = uuidv4();
+
+                // Parse the request body
                 const body = await request.json();
 
                 // Extract necessary data from the request
-                const { pineScript, symbol, timeframe, timeDuration, initialCapital, quantity, parameters, isExhaustive } = body;
+                const {
+                        pineScript,
+                        symbol,
+                        timeframe,
+                        timeDuration,
+                        initialCapital,
+                        quantity,
+                        parameters,
+                        isExhaustive
+                } = body;
 
-                if (!pineScript || !symbol) {
+                // Validate required fields
+                if (!pineScript || !pineScript.trim()) {
                         return NextResponse.json(
-                                { error: 'Missing required fields: pineScript and symbol are required' },
+                                { error: 'Missing Pine Script code', field: 'pineScript' },
                                 { status: 400 }
                         );
                 }
 
-                // Get user authentication for coin deduction only
-                const cookieStore = cookies();
-                const supabaseAuthClient = createServerClient({ cookies: () => cookieStore });
-                const { data: { session } } = await supabaseAuthClient.auth.getSession();
-                const user_id = session?.user?.id || 'anonymous';
-
-                // Generate an optimization_id
-                const optimization_id = uuidv4();
-
-                // Add a small delay to simulate processing time (helps with UI feedback)
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // Generate optimization results
-                const results = generateOptimizationResults(parameters, timeDuration);
-
-                // For exhaustive mode, add more combinations and longer processing time
-                if (isExhaustive) {
-                        results.testedCombinations = Math.floor(results.testedCombinations * 3.5);
-                        results.optimizationTime = Math.floor(results.optimizationTime * 2.8);
+                if (!symbol || !symbol.trim()) {
+                        return NextResponse.json(
+                                { error: 'Missing symbol', field: 'symbol' },
+                                { status: 400 }
+                        );
                 }
 
-                // Return the optimization results
+                // Optional user authentication - no need to block optimization if it fails
+                let user_id = 'anonymous';
+                let supabaseClient = null;
+                try {
+                        const cookieStore = cookies();
+                        supabaseClient = createServerClient({ cookies: () => cookieStore });
+                        const { data: { session } } = await supabaseClient.auth.getSession();
+                        if (session?.user?.id) {
+                                user_id = session.user.id;
+                        }
+                } catch (authError) {
+                        console.error("Authentication error (non-critical):", authError);
+                        // Continue processing even if auth fails
+                }
+
+                // Generate optimization results
+                const results = generateOptimizationResults(parameters, timeDuration, isExhaustive);
+
+                // Log the optimization in the database if the user is authenticated
+                if (user_id !== 'anonymous' && supabaseClient) {
+                        try {
+                                // Log optimization without blocking or failing the main request
+                                const { error: logError } = await supabaseClient
+                                        .from('optimization_history')
+                                        .insert({
+                                                user_id,
+                                                optimization_id,
+                                                symbol,
+                                                timeframe,
+                                                time_duration: timeDuration,
+                                                parameters: parameters || {},
+                                                best_result: results.bestResult,
+                                                created_at: new Date().toISOString()
+                                        });
+
+                                if (logError) {
+                                        console.error("Failed to log optimization:", logError);
+                                        // Non-critical, so continue without failing the request
+                                }
+                        } catch (logError) {
+                                console.error("Error logging optimization:", logError);
+                                // Non-critical, so continue without failing the request
+                        }
+                }
+
+                // Return successful response
                 return NextResponse.json({
+                        success: true,
                         optimization_id,
                         results,
-                        cached: false
+                        user_id,
+                        timestamp: new Date().toISOString()
                 });
         } catch (error) {
                 console.error('Optimization error:', error);
-                return NextResponse.json(
-                        { error: 'An unexpected error occurred', details: error.message },
-                        { status: 500 }
-                );
+
+                // Return a proper error response
+                return NextResponse.json({
+                        success: false,
+                        error: error.message || 'An unexpected error occurred',
+                        timestamp: new Date().toISOString()
+                }, { status: 500 });
         }
 }
 
 // Helper function to generate optimization results
-function generateOptimizationResults(parameters, timeDuration = '1m') {
+function generateOptimizationResults(parameters, timeDuration = '1m', isExhaustive = false) {
         // Generate a random number of parameters to optimize if none provided
         const numParams = parameters ? Object.keys(parameters).length : Math.floor(Math.random() * 3) + 2;
 
@@ -209,6 +258,13 @@ function generateOptimizationResults(parameters, timeDuration = '1m') {
         delete optimalParameters.sharpeRatio;
         delete optimalParameters.totalTrades;
 
+        // Set number of tested combinations and time based on exhaustive mode
+        const baseTime = Math.floor(Math.random() * 30) + 20; // 20-50 seconds
+        const baseTestedCombinations = heatMapData.length || Math.floor(Math.random() * 200) + 100;
+
+        const optimizationTime = isExhaustive ? baseTime * 2.5 : baseTime;
+        const testedCombinations = isExhaustive ? baseTestedCombinations * 3.5 : baseTestedCombinations;
+
         return {
                 parameterSets,
                 optimizedParameters: optimalParameters,
@@ -222,7 +278,7 @@ function generateOptimizationResults(parameters, timeDuration = '1m') {
                 },
                 parameterRanges: paramRanges,
                 heatMapData,
-                optimizationTime: Math.floor(Math.random() * 60) + 30, // 30-90 seconds
-                testedCombinations: heatMapData.length || Math.floor(Math.random() * 300) + 100
+                optimizationTime: Math.floor(optimizationTime),
+                testedCombinations: Math.floor(testedCombinations)
         };
 } 

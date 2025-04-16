@@ -1,132 +1,68 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../../utils/supabase';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Zap, Coins, AlertCircle } from 'lucide-react';
 import { 
   HoverCard, 
   HoverCardTrigger, 
   HoverCardContent 
 } from '../../../components/ui/badges/hover-card';
-import { Coins, Zap } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { supabase } from '../../../utils/supabase';
+import { toast } from '../../../hooks/use-toast';
+
+const OPTIMIZATION_COST = 749;
 
 const OptimizationButtons = ({ onNonExhaustiveClick }) => {
-  // Track loading and disabled states
   const [isLoading, setIsLoading] = useState(false);
-  const [isDisabled, setIsDisabled] = useState(false);
-  const [callbackExecuted, setCallbackExecuted] = useState(false);
-  const { user } = useAuth();
-  const timeoutRef = useRef(null);
+  const { user, profile: userProfile, refreshProfile } = useAuth();
+  const optimizationAttempts = useRef(0);
+  const isMounted = useRef(true);
 
-  // Cleanup on unmount
+  // Reset state and track component lifecycle
   useEffect(() => {
+    // Reset on mount
+    setIsLoading(false);
+    optimizationAttempts.current = 0;
+    isMounted.current = true;
+    
+    // Clean up on unmount
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      isMounted.current = false;
     };
   }, []);
 
-  // Force reset state after mounting to ensure no stuck states
-  useEffect(() => {
-    setIsDisabled(false);
-    setIsLoading(false);
-    setCallbackExecuted(false);
-  }, []);
-
-  // Ensure the button is always responsive within 20 seconds max
-  const forceResetState = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+  // Wrap the callback to ensure it's safe to call
+  const safeOptimize = useCallback(async () => {
+    if (!onNonExhaustiveClick || typeof onNonExhaustiveClick !== 'function') {
+      console.error("Optimization callback is not available or not a function");
+      return Promise.reject(new Error("Optimization function is not available"));
     }
     
-    timeoutRef.current = setTimeout(() => {
-      setIsLoading(false);
-      setIsDisabled(false);
-      setCallbackExecuted(false);
-      console.log("Force reset optimization button state");
-    }, 20000);
-  };
-
-  const executeCallback = async () => {
-    if (!onNonExhaustiveClick) return;
+    // Set a timeout to prevent hanging indefinitely
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("Optimization timed out after 65 seconds"));
+      }, 65000); // Slightly longer than the UI shows (60 seconds)
+    });
     
     try {
-      setCallbackExecuted(true);
-      await onNonExhaustiveClick();
+      // Race between the optimization call and the timeout
+      return await Promise.race([
+        onNonExhaustiveClick(),
+        timeoutPromise
+      ]);
     } catch (error) {
-      console.error("Error executing optimization callback:", error);
-    } finally {
-      // Always ensure the button is reset regardless of outcome
-      setIsLoading(false);
-      setIsDisabled(false);
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
+      console.error("Error in optimization callback:", error);
+      throw error;
     }
-  };
+  }, [onNonExhaustiveClick]);
 
-  const handleOptimizeClick = async (e) => {
-    // Prevent default behavior
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Clear any existing timeouts
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    // Set loading state and start safety timeout
-    setIsLoading(true);
-    setIsDisabled(true);
-    setCallbackExecuted(false);
-    forceResetState();
-    
-    if (!user) {
-      alert('You must be logged in to perform this action.');
-      setIsLoading(false);
-      setIsDisabled(false);
-      return;
-    }
+  const deductCoins = async () => {
+    if (!user) return { success: false, error: 'User not logged in' };
     
     try {
-      // Deduct coins
-      await handleCoinDeduction(749);
-      
-      // Execute optimization
-      await executeCallback();
-    } catch (error) {
-      console.error("Error in optimization button click:", error);
-      
-      // If coin deduction failed but we're logged in, try the callback anyway
-      if (user && !callbackExecuted) {
-        try {
-          await executeCallback();
-        } catch (callbackError) {
-          console.error("Callback execution failed:", callbackError);
-        }
-      }
-    } finally {
-      // Always reset state after operation completes or fails
-      setIsLoading(false);
-      setIsDisabled(false);
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    }
-  };
-
-  const handleCoinDeduction = async (amount) => {
-    if (!user) {
-      throw new Error('You must be logged in to perform this action.');
-    }
-
-    try {
-      // Get current coin balance
+      // First fetch current coin balance to have the most up-to-date value
       const { data: profileData, error: fetchError } = await supabase
         .from('profiles')
         .select('coins')
@@ -135,47 +71,179 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
 
       if (fetchError) {
         console.error('Error fetching profile:', fetchError);
-        throw new Error('Failed to check coin balance. Please try again.');
+        return { success: false, error: fetchError.message };
       }
 
       const currentCoins = profileData?.coins || 0;
-
+      
       // Check if user has enough coins
-      if (currentCoins < amount) {
-        // Replace alert with redirection to pricing page
-        const confirmation = window.confirm(`Not enough coins. You need ${amount} coins but have ${currentCoins}. Do you want to buy more coins?`);
-        if (confirmation) {
-          window.location.href = '/dashboard/pricing';
-        }
-        throw new Error(`Not enough coins. You need ${amount} coins.`);
+      if (currentCoins < OPTIMIZATION_COST) {
+        return { 
+          success: false, 
+          error: `Insufficient coins. You have ${currentCoins} coins, but optimization costs ${OPTIMIZATION_COST} coins.`
+        };
       }
 
       // Update coin balance
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ coins: currentCoins - amount })
+        .update({ coins: currentCoins - OPTIMIZATION_COST })
         .eq('id', user.id);
 
       if (updateError) {
         console.error('Error updating coins:', updateError);
-        throw new Error('Failed to deduct coins. Please try again.');
+        return { success: false, error: updateError.message };
       }
 
+      // Update the UI by refreshing the profile
+      if (refreshProfile && typeof refreshProfile === 'function') {
+        await refreshProfile();
+      }
+      
+      return { success: true };
     } catch (error) {
-      console.error('Error deducting coins:', error);
-      throw error; // Re-throw to trigger the catch in handleOptimizeClick
+      console.error('Unexpected error in coin deduction:', error);
+      return { success: false, error: error.message };
     }
   };
+
+  const handleOptimize = async () => {
+    // Guard against multiple clicks or processing
+    if (isLoading) return;
+    
+    // Track attempts and force reset if too many
+    optimizationAttempts.current += 1;
+    if (optimizationAttempts.current > 20) {
+      console.log("Many optimization attempts detected, forcing refresh");
+      optimizationAttempts.current = 0;
+      // Force a page refresh after too many attempts
+      window.location.reload();
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Safety check for optimization function
+      if (!onNonExhaustiveClick || typeof onNonExhaustiveClick !== 'function') {
+        throw new Error("Optimization function is not available");
+      }
+
+      // First check if the user is authenticated before proceeding
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          // If the user is not authenticated, try to refresh their session before proceeding
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError || !refreshData.session) {
+            console.error("Auth session expired, redirecting to login");
+            toast({
+              title: "Session Expired",
+              description: "Your session has expired. Redirecting to login page.",
+              variant: "destructive"
+            });
+            setTimeout(() => {
+              window.location.href = '/auth';
+            }, 2000);
+            return;
+          }
+        }
+      } catch (authError) {
+        console.error("Auth check failed:", authError);
+        // Continue anyway, the API call will handle auth issues
+      }
+
+      // First attempt to deduct coins, but don't block if it fails
+      if (user) {
+        const { success, error } = await deductCoins();
+        
+        if (!success) {
+          // If it's insufficient coins, we should stop and notify the user
+          if (error && error.includes('Insufficient coins')) {
+            toast({
+              title: "Insufficient Coins",
+              description: error,
+              variant: "destructive"
+            });
+            if (isMounted.current) setIsLoading(false);
+            return;
+          } else {
+            // For other errors, we'll show a warning but continue with optimization
+            console.warn('Coin deduction failed:', error);
+            toast({
+              title: "Coin Deduction Warning",
+              description: "We couldn't process your coin payment, but we'll continue with optimization.",
+              variant: "warning"
+            });
+          }
+        } else {
+          // Success notification
+          toast({
+            title: "Coins Deducted",
+            description: `${OPTIMIZATION_COST} coins have been deducted from your account.`,
+            variant: "default"
+          });
+        }
+      }
+
+      try {
+        // Proceed with optimization using the safe wrapper
+        await safeOptimize();
+        
+        // Only show success if still mounted
+        if (isMounted.current) {
+          toast({
+            title: "Optimization Complete",
+            description: "Your strategy has been successfully optimized.",
+            variant: "default"
+          });
+        }
+      } catch (optimizeError) {
+        console.error("Failed to run optimization:", optimizeError);
+        if (isMounted.current) {
+          toast({
+            title: "Optimization Process Failed",
+            description: optimizeError.message || "The optimization process encountered an error",
+            variant: "destructive"
+          });
+        }
+      }
+      
+      // Reset attempt counter on success
+      optimizationAttempts.current = 0;
+    } catch (error) {
+      console.error("Optimization error:", error);
+      if (isMounted.current) {
+        toast({
+          title: "Optimization Failed",
+          description: error.message || "An unexpected error occurred",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      // Clear any stored optimization session data
+      localStorage.removeItem('optimization_last_config');
+      
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // Check if user has enough coins
+  const hasEnoughCoins = user && userProfile?.coins >= OPTIMIZATION_COST;
+  const coinBalance = userProfile?.coins || 0;
 
   return (
     <div className="w-full flex justify-center">
       <HoverCard>
         <HoverCardTrigger asChild>
           <button
-            onClick={handleOptimizeClick}
-            disabled={isLoading || isDisabled}
+            onClick={handleOptimize}
+            disabled={isLoading}
             className={`bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 text-white py-3 px-6 rounded-lg flex items-center justify-center transition-all ${
-              isLoading || isDisabled
+              isLoading
                 ? 'opacity-75 cursor-not-allowed'
                 : 'hover:bg-gradient-to-r hover:from-purple-600 hover:via-violet-600 hover:to-blue-600 hover:to-[#0060df]'
             }`}
@@ -198,8 +266,19 @@ const OptimizationButtons = ({ onNonExhaustiveClick }) => {
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium flex items-center">
               <Coins className="w-4 h-4 mr-2 text-amber-400" />
-              Cost: 749 Coins
+              Cost: {OPTIMIZATION_COST} Coins
             </p>
+            {user && (
+              <p className="text-xs text-zinc-300">
+                Your balance: {coinBalance} Coins
+                {!hasEnoughCoins && user && (
+                  <span className="flex items-center mt-1 text-red-400">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Insufficient coins
+                  </span>
+                )}
+              </p>
+            )}
             <p className="text-xs text-zinc-400">
               Optimize your strategy parameters for better trading performance
             </p>

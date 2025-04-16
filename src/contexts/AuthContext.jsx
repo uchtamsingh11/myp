@@ -268,6 +268,23 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Refresh user profile
+  const refreshProfile = async () => {
+    try {
+      if (!user) return { success: false, error: 'User not logged in' };
+      
+      const profileData = await fetchProfile(user.id);
+      if (profileData) {
+        setProfile(profileData);
+        return { success: true, data: profileData };
+      }
+      return { success: false, error: 'Could not fetch profile' };
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   // Initialize authentication state on mount
   useEffect(() => {
     const initializeAuth = async () => {
@@ -332,6 +349,7 @@ export function AuthProvider({ children }) {
     signInWithMagicLink,
     resetPassword,
     updateProfile,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils.js";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { MotionStyle, Transition } from "framer-motion";
 
